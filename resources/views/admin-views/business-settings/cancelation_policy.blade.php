@@ -13,7 +13,7 @@
             <h1 class="d-flex flex-wrap justify-content-between page-header-title">
                 <span class="page-header-icon">
                     <img src="{{asset('public/assets/admin/img/privacy-policy.png')}}" class="w--26" alt="">
-                    {{translate('messages.Cancellation Policy')}}
+                    {{translate('messages.Cancelation Policy')}}
                 </span>
             </h1>
             <h5 class="d-flex flex-wrap justify-content-end">
@@ -36,7 +36,7 @@
 
                     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
                     @php($language = $language->value ?? null)
-                    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
+                    @php($default_lang = str_replace('_', '-', app()->getLocale()))
                     @if ($language)
                     <ul class="nav nav-tabs mb-4 border-0">
                         <li class="nav-item">
@@ -92,23 +92,25 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin/ckeditor/ckeditor.js')}}"></script>
-    <script type="text/javascript">
-        "use strict";
+<script src="//cdn.ckeditor.com/4.14.1/standard/ckeditor.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.ckeditor').ckeditor();
+    });
+
 
     $(document).ready(function () {
                 $('body').on('change','#data_status', function(){
-                    let status;
                 if(this.checked){
-                 status = 1;
+                var status = 1;
                 }else{
-                 status = 0;
+                var status = 0;
                 }
-
+            url= '{{ url('admin/business-settings/pages/cancellation-policy') }}/'+status;
             $.ajax({
-                url: '{{ url('admin/business-settings/pages/cancellation-policy') }}/'+status,
+                url: url,
                 method: 'get',
-                success: function() {
+                success: function(result) {
                     toastr.success('{{ translate('messages.status updated!') }}', {
                     CloseButton: true,
                     ProgressBar: true
@@ -119,5 +121,15 @@
             });
         });
 </script>
-
+<script>
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        $("#"+lang+"-form").removeClass('d-none');
+    });
+</script>
 @endpush

@@ -2,8 +2,7 @@
 <div id="grow-sale-chart"></div>
 
 <script>
-    "use strict";
-    options = {
+    var options = {
           series: [{
           name: 'Gross Sale',
           data: [{{ implode(",",$data['total_sell']) }}]
@@ -47,9 +46,11 @@
         },
         };
 
-        chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
+        var chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
         chart.render();
+    </script>
 
+    <script>
         // INITIALIZATION OF CHARTJS
         // =======================================================
         Chart.plugins.unregister(ChartDataLabels);
@@ -58,5 +59,5 @@
             $.HSCore.components.HSChartJS.init($(this));
         });
 
-        updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+        var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
     </script>

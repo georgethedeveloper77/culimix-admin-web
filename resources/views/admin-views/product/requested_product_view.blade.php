@@ -27,14 +27,9 @@
                 <div class="row flex-wrap">
                     <div>
                         <div class="d-flex flex-wrap align-items-center food--media position-relative mr-4">
-                            <img class="avatar avatar-xxl avatar-4by3 onerror-image"
-                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
-                                $product['image'] ?? '',
-                                asset('storage/app/public/product').'/'.$product['image'] ?? '',
-                                asset('public/assets/admin/img/160x160/img2.jpg'),
-                                'product/'
-                            ) }}" 
-                                data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                            <img class="avatar avatar-xxl avatar-4by3"
+                                src="{{ asset('storage/app/public/product') }}/{{ $product['image'] }}"
+                                onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
                                 alt="Image Description">
                                 @if ($product['is_rejected'] == 1 )
 
@@ -44,7 +39,7 @@
                     </div>
                     <div class="w-70 flex-grow">
                         @php($language = \App\Models\BusinessSetting::where('key', 'language')->first()?->value ?? null)
-                        @php($defaultLang = str_replace('_', '-', app()->getLocale()))
+                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
                         <div class="d-flex flex-wrap gap-2 justify-content-between">
                             @if ($language)
                             <ul class="nav nav-tabs border-0 mb-3">
@@ -66,15 +61,15 @@
                                     </a>
                                     @if($product->is_rejected == 0)
                                     <a data-toggle="tooltip" data-placement="top"
-                                    data-original-title="{{ translate('messages.Reject') }}" data-url="{{ route('admin.item.deny', ['id'=> $product['id']]) }}" data-message="{{ translate('you_want_to_deny_this_product') }}"
-                                        href="javascript:" class="btn btn-sm btn--danger cancelled_status">
+                                    data-original-title="{{ translate('messages.Reject') }}" onclick="cancelled_status('{{ route('admin.item.deny', ['id'=> $product['id']]) }}','{{ translate('you_want_to_deny_this_product') }}')"
+                                        href="javascript:" class="btn btn-sm btn--danger">
                                         {{ translate('messages.Reject') }}
                                     </a>
                                     @endif
                                     <a data-toggle="tooltip" data-placement="top"
                                     data-original-title="{{ translate('messages.approve') }}"
-                                     data-url="{{route('admin.item.approved',[ 'id'=> $product['id']])}}" data-message="{{translate('messages.you_want_to_approve_this_product')}}"
-                                        href="javascript:" class="btn btn-sm btn--primary request_alert">
+                                    onclick="request_alert('{{route('admin.item.approved',[ 'id'=> $product['id']])}}','{{translate('messages.you_want_to_approve_this_product')}}')"
+                                        href="javascript:" class="btn btn-sm btn--primary">
                                         {{ translate('messages.approve') }}
                                     </a>
                                 </div>
@@ -299,10 +294,7 @@
 
 @push('script_2')
 <script>
-    "use strict";
-    $(".request_alert").on("click", function () {
-        const url = $(this).data('url');
-        const message = $(this).data('message');
+        function request_alert(url, message) {
             Swal.fire({
                 title: '{{translate('messages.are_you_sure')}}',
                 text: message,
@@ -318,12 +310,24 @@
                     location.href = url;
                 }
             })
-        })
+        }
+    $(".lang_link").click(function(e) {
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
 
-    $(".cancelled_status").on("click", function () {
-            const route = $(this).data('url');
-            const message = $(this).data('message');
-            const processing = false;
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        console.log(lang);
+        $("#" + lang + "-form").removeClass('d-none');
+        if (lang == 'en') {
+            $("#from_part_2").removeClass('d-none');
+        } else {
+            $("#from_part_2").addClass('d-none');
+        }
+    })
+    function cancelled_status(route, message, processing = false) {
             Swal.fire({
                     //text: message,
                     title: '{{ translate('messages.Are you sure ?') }}',
@@ -342,6 +346,6 @@
                     },
                     allowOutsideClick: () => !Swal.isLoading()
                 })
-        })
+        }
 </script>
 @endpush

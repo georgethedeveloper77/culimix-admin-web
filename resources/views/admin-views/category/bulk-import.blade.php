@@ -94,11 +94,21 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin')}}/js/view-pages/category-import-export.js"></script>
 <script>
-    "use strict";
+    $('#reset_btn').click(function(){
+        $('#bulk__import').val(null);
+    })
+</script>
+    <script>
 
-    function myFunction(data) {
+$(document).on("click", ".submit_btn", function(e){
+    e.preventDefault();
+        var data = $(this).val();
+        myFunction(data)
+});
+
+
+function myFunction(data) {
     Swal.fire({
     title: '{{ translate('Are you sure?') }}' ,
     text: "{{ translate('You_want_to_') }}" +data,
@@ -119,20 +129,6 @@
         // }
     })
 }
-
-    $('.submit_btn').on('click', function (){
-        let buttonValue = $(this).val();
-        changeFormAction(buttonValue);
-    })
-
-    function changeFormAction(buttonValue) {
-        var form = document.getElementById('import_form');
-        if (buttonValue === 'update') {
-            form.action = '{{ route('admin.category.bulk-update') }}';
-        } else {
-            form.action = '{{ route('admin.category.bulk-import') }}';
-        }
-    }
-</script>
+    </script>
 @endpush
 

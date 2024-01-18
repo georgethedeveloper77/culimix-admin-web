@@ -18,8 +18,6 @@ class FlashSaleItem extends Model
         'available_stock' => 'integer',
         'price' => 'double',
         'discounted_price' => 'double',
-        'discount' => 'double',
-        'discount_amount' => 'double',
     ];
 
     public function item()

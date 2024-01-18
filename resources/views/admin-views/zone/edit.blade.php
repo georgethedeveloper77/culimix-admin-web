@@ -55,6 +55,9 @@
                 </div>
                 <div class="col-md-6 col-xl-7 zone-setup">
                     <div class="form-group">
+                        @php($language=\App\Models\BusinessSetting::where('key','language')->first())
+                        @php($language = $language->value ?? null)
+                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
                         @if($language)
                             <ul class="nav nav-tabs mb-4">
                                 <li class="nav-item">
@@ -62,7 +65,7 @@
                                     href="#"
                                     id="default-link">{{translate('messages.default')}}</a>
                                 </li>
-                                @foreach ($language as $lang)
+                                @foreach (json_decode($language) as $lang)
                                     <li class="nav-item">
                                         <a class="nav-link lang_link"
                                             href="#"
@@ -76,10 +79,10 @@
                         @if($language)
                                 <div class="form-group lang_form" id="default-form">
                                     <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{ translate('messages.default') }})</label>
-                                    <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_zone')}}" maxlength="191" value="{{$zone?->getRawOriginal('name')}}"  >
+                                    <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_zone')}}" maxlength="191" value="{{$zone?->getRawOriginal('name')}}" oninvalid="document.getElementById('en-link').click()">
                                 </div>
                                 <input type="hidden" name="lang[]" value="default">
-                                @foreach($language as $lang)
+                                @foreach(json_decode($language) as $lang)
                                     <?php
                                         if(count($zone['translations'])){
                                             $translate = [];
@@ -93,7 +96,7 @@
                                     ?>
                                     <div class="form-group d-none lang_form" id="{{$lang}}-form">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{strtoupper($lang)}})</label>
-                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_zone')}}" maxlength="191" value="{{$translate[$lang]['name']??''}}"  >
+                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_zone')}}" maxlength="191" value="{{$translate[$lang]['name']??''}}" oninvalid="document.getElementById('en-link').click()">
                                     </div>
                                     <input type="hidden" name="lang[]" value="{{$lang}}">
                                 @endforeach
@@ -104,6 +107,25 @@
                                 </div>
                                 <input type="hidden" name="lang[]" value="{{$lang}}">
                             @endif
+                        {{-- <div class="d-flex flex-wrap select--all-checkes">
+                            <h5 class="input-label m-0 text-capitalize">{{translate('messages.Payment Method')}} </h5>
+                        </div>
+                        <div class="check--item-wrapper mb-1">
+                            <div class="check-item">
+                                <div class="form-group form-check form--check">
+                                    <input type="checkbox" name="cash_on_delivery" value="cash_on_delivery" class="form-check-input"
+                                           id="cash_on_delivery" {{$zone->cash_on_delivery == 1 ?'checked':''}}>
+                                    <label class="form-check-label qcont text-dark" for="cash_on_delivery">{{translate('messages.Cash On Delivery')}}</label>
+                                </div>
+                            </div>
+                            <div class="check-item">
+                                <div class="form-group form-check form--check">
+                                    <input type="checkbox" name="digital_payment" value="digital_payment" class="form-check-input"
+                                           id="digital_payment" {{$zone->digital_payment == 1 ?'checked':''}}>
+                                    <label class="form-check-label qcont text-dark" for="digital_payment">{{translate('messages.digital payment')}}</label>
+                                </div>
+                            </div>
+                        </div> --}}
                         <div class="form-group d-none">
                             <label class="input-label" for="exampleFormControlInput1">{{ translate('messages.Coordinates') }}
                                 <span class="form-label-secondary" data-toggle="tooltip" data-placement="right" data-original-title="{{translate('messages.draw_your_zone_on_the_map')}}">
@@ -116,6 +138,24 @@
                                 @endforeach
                             </textarea>
                         </div>
+                        {{-- <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group mb-3">
+                                    <label class="input-label">
+                                        {{ translate('messages.Minimum delivery charge') }} ({{\App\CentralLogics\Helpers::currency_symbol()}})
+                                    </label>
+                                    <input type="number" id="minimum_delivery_charge" name="minimum_delivery_charge" class="form-control h--45px" placeholder="{{ translate('Ex:') }} 10" value="{{$zone->minimum_shipping_charge}}" required="">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group mb-3">
+                                    <label class="input-label">
+                                        {{ translate('messages.Delivery charge per KM') }} ({{\App\CentralLogics\Helpers::currency_symbol()}})
+                                    </label>
+                                    <input type="number" id="delivery_charge_per_km" name="per_km_delivery_charge" class="form-control h--45px" placeholder="{{ translate('messages.Ex:') }} 10" value="{{$zone->per_km_shipping_charge}}"  required="">
+                                </div>
+                            </div>
+                        </div> --}}
                         <div class="map-warper rounded mt-0">
                             <input id="pac-input" class="controls rounded initial--33" title="{{translate('messages.search_your_location_here')}}" type="text" placeholder="{{translate('messages.search_here')}}"/>
                             <div id="map-canvas" class="initial--34"></div>
@@ -135,7 +175,6 @@
 @push('script_2')
 <script src="https://maps.googleapis.com/maps/api/js?v=3.45.8&key={{\App\Models\BusinessSetting::where('key', 'map_api_key')->first()->value}}&libraries=drawing,places"></script>
 <script>
-    "use strict";
     auto_grow();
     function auto_grow() {
         let element = document.getElementById("coordinates");
@@ -143,12 +182,14 @@
         element.style.height = (element.scrollHeight)+"px";
     }
 
-    let map; // Global declaration of the map
-    let lat_longs = new Array();
-    let drawingManager;
-    let lastpolygon = null;
-    let bounds = new google.maps.LatLngBounds();
-    let polygons = [];
+</script>
+<script>
+    var map; // Global declaration of the map
+    var lat_longs = new Array();
+    var drawingManager;
+    var lastpolygon = null;
+    var bounds = new google.maps.LatLngBounds();
+    var polygons = [];
 
 
     function resetMap(controlDiv) {
@@ -183,8 +224,8 @@
     }
 
     function initialize() {
-        let myLatlng = new google.maps.LatLng({{trim(explode(' ',$zone->center)[1], 'POINT()')}}, {{trim(explode(' ',$zone->center)[0], 'POINT()')}});
-        let myOptions = {
+        var myLatlng = new google.maps.LatLng({{trim(explode(' ',$zone->center)[1], 'POINT()')}}, {{trim(explode(' ',$zone->center)[0], 'POINT()')}});
+        var myOptions = {
             zoom: 13,
             center: myLatlng,
             mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -198,7 +239,7 @@
             @endforeach
         ];
 
-        let zonePolygon = new google.maps.Polygon({
+        var zonePolygon = new google.maps.Polygon({
             paths: polygonCoords,
             strokeColor: "#050df2",
             strokeOpacity: 0.8,
@@ -230,7 +271,7 @@
         drawingManager.setMap(map);
 
         google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
-            let newShape = event.overlay;
+            var newShape = event.overlay;
             newShape.type = event.type;
         });
 
@@ -313,7 +354,7 @@
             success: function (data) {
 
                 console.log(data);
-                for(let i=0; i<data.length;i++)
+                for(var i=0; i<data.length;i++)
                 {
                     polygons.push(new google.maps.Polygon({
                         paths: data[i],
@@ -339,8 +380,33 @@
     });
 
     $('#reset_btn').click(function(){
+        // $('#zone_name').val('');
+        // $('#coordinates').val('');
+        // $('#min_delivery_charge').val('');
+        // $('#delivery_charge_per_km').val('');
         location.reload(true);
     })
 
+</script>
+<script>
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
+
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        console.log(lang);
+        $("#"+lang+"-form").removeClass('d-none');
+        if(lang == '{{$default_lang}}')
+        {
+            $(".from_part_2").removeClass('d-none');
+        }
+        else
+        {
+            $(".from_part_2").addClass('d-none');
+        }
+    });
 </script>
 @endpush

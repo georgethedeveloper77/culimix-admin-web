@@ -1,7 +1,15 @@
-
+@php($background_Change = \App\Models\BusinessSetting::where(['key' => 'backgroundChange'])->first())
+@php($background_Change = isset($background_Change->value) ? json_decode($background_Change->value, true) : null)
 <!DOCTYPE html>
 <?php
     $landing_site_direction = session()->get('landing_site_direction');
+    // if (env('APP_MODE') == 'demo') {
+    //     $landing_site_direction = session()->get('landing_site_direction');
+    // }else{
+    //     $landing_site_direction = \App\Models\BusinessSetting::where('key', 'landing_site_direction')->first();
+    //     $landing_site_direction = $landing_site_direction->value ?? 'ltr';
+    // }
+
 ?>
 <html dir="{{ $landing_site_direction }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -52,16 +60,9 @@
                     @php($fav = \App\Models\BusinessSetting::where(['key' => 'icon'])->first()->value ?? '')
                     @php($logo = \App\Models\BusinessSetting::where(['key' => 'logo'])->first()->value ?? '')
                     <a href="{{route('home')}}" class="logo">
-                        <img class="onerror-image"  data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
-
-                    src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
-                        $fav,
-                        asset('storage/app/public/business/').'/'. $fav,
-                        asset('public/assets/admin/img/160x160/img2.jpg'),
-                        'business/'
-                    ) }}"
-
-                    alt="image">
+                        <img
+                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
+                    src="{{ asset('storage/app/public/business/' . $fav) }}" alt="">
                     </a>
                     <ul class="menu">
                         <li>
@@ -91,7 +92,7 @@
                         <span></span>
                         <span></span>
                     </div>
-                    @php( $local = session()->has('landing_local')?session('landing_local'):null)
+                    @php( $local = session()->has('landing_local')?session('landing_local'):'en')
                     @php($lang = \App\Models\BusinessSetting::where('key', 'system_language')->first())
                     @if ($lang)
                         <div class="dropdown--btn-hover position-relative">
@@ -102,9 +103,7 @@
                                 @foreach(json_decode($lang['value'],true) as $data)
                                 @if($data['code']==$local)
                                             <span class="me-1">{{$data['code']}}</span>
-                                    @elseif(!$local &&  $data['default'] == true)
-                                            <span class="me-1">{{$data['code']}}</span>
-                                    @endif
+                                        @endif
                                     @endforeach
                             </a>
                             <ul class="dropdown-list py-0" style="min-width:120px; top:100%">
@@ -210,7 +209,8 @@
                     <div class="footer-widget">
                         <div class="footer-logo">
                             <a class="logo">
-                                <img  class="onerror-image"  data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}" src="{{ \App\CentralLogics\Helpers::onerror_image_helper($logo, asset('storage/app/public/business/') .'/'. $logo, asset('public/assets/admin/img/upload-img.png') , 'business/') }}" alt="image">
+                                <img onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
+                            src="{{ asset('storage/app/public/business/' . $logo) }}" alt="">
                             </a>
                         </div>
                         <div class="txt">
@@ -349,8 +349,8 @@
 
 
     <script>
-     "use strict";
- $(".main-category-slider").owlCarousel({
+
+        $(".main-category-slider").owlCarousel({
             loop: true,
             nav: false,
             dots: true,
@@ -384,10 +384,10 @@
         });
         $(".owl-prev").html('<i class="fas fa-angle-left">');
         $(".owl-next").html('<i class="fas fa-angle-right">');
-        let sync1 = $("#sync1");
-         let sync2 = $("#sync2");
-         let thumbnailItemClass = ".owl-item";
-         let slides = sync1
+        var sync1 = $("#sync1");
+        var sync2 = $("#sync2");
+        var thumbnailItemClass = ".owl-item";
+        var slides = sync1
             .owlCarousel({
                 startPosition: 12,
                 items: 1,
@@ -406,12 +406,12 @@
             .on("changed.owl.carousel", syncPosition);
 
         function syncPosition(el) {
-            let  $owl_slider = $(this).data("owl.carousel");
-            let loop = $owl_slider.options.loop;
-            let current;
+            $owl_slider = $(this).data("owl.carousel");
+            var loop = $owl_slider.options.loop;
+
             if (loop) {
-                let count = el.item.count - 1;
-                 current = Math.round(
+                var count = el.item.count - 1;
+                var current = Math.round(
                     el.item.index - el.item.count / 2 - 0.5
                 );
                 if (current < 0) {
@@ -421,24 +421,24 @@
                     current = 0;
                 }
             } else {
-                 current = el.item.index;
+                var current = el.item.index;
             }
 
-            let owl_thumbnail = sync2.data("owl.carousel");
-            let itemClass = "." + owl_thumbnail.options.itemClass;
+            var owl_thumbnail = sync2.data("owl.carousel");
+            var itemClass = "." + owl_thumbnail.options.itemClass;
 
-            let thumbnailCurrentItem = sync2
+            var thumbnailCurrentItem = sync2
                 .find(itemClass)
                 .removeClass("synced")
                 .eq(current);
             thumbnailCurrentItem.addClass("synced");
 
             if (!thumbnailCurrentItem.hasClass("active")) {
-                let duration = 500;
+                var duration = 500;
                 sync2.trigger("to.owl.carousel", [current, duration, true]);
             }
         }
-        let thumbs = sync2
+        var thumbs = sync2
             .owlCarousel({
                 startPosition: 12,
                 items: 2,
@@ -463,7 +463,7 @@
                     },
                 },
                 onInitialized: function (e) {
-                    let thumbnailCurrentItem = $(e.target)
+                    var thumbnailCurrentItem = $(e.target)
                         .find(thumbnailItemClass)
                         .eq(this._current);
                     thumbnailCurrentItem.addClass("synced");
@@ -471,13 +471,13 @@
             })
             .on("click", thumbnailItemClass, function (e) {
                 e.preventDefault();
-                let duration = 500;
-                let itemIndex = $(e.target).parents(thumbnailItemClass).index();
+                var duration = 500;
+                var itemIndex = $(e.target).parents(thumbnailItemClass).index();
                 sync1.trigger("to.owl.carousel", [itemIndex, duration, true]);
             })
             .on("changed.owl.carousel", function (el) {
-                let number = el.item.index;
-                let  $owl_slider = sync1.data("owl.carousel");
+                var number = el.item.index;
+                $owl_slider = sync1.data("owl.carousel");
                 $owl_slider.to(number, 500, true);
             });
         sync1.owlCarousel();

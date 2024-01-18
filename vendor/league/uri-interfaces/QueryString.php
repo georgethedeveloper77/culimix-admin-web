@@ -16,14 +16,12 @@ namespace League\Uri;
 use League\Uri\Exceptions\SyntaxError;
 use League\Uri\KeyValuePair\Converter;
 use Stringable;
-
 use function array_key_exists;
 use function array_keys;
 use function is_array;
 use function rawurldecode;
 use function strpos;
 use function substr;
-
 use const PHP_QUERY_RFC3986;
 
 /**
@@ -50,7 +48,7 @@ final class QueryString
      * @see https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
      *
      * @param iterable<array{0:string, 1:string|float|int|bool|null}> $pairs
-     * @param non-empty-string $separator
+     * @param non-empty-string                                        $separator
      *
      * @throws SyntaxError If the encoding type is invalid
      * @throws SyntaxError If a pair is invalid
@@ -83,12 +81,12 @@ final class QueryString
     {
         $keyValuePairs = [];
         foreach ($pairs as $pair) {
-            if (!is_array($pair) || [0, 1] !== array_keys($pair)) {
+            if ([0, 1] !== array_keys($pair)) { /* @phpstan-ignore-line */
                 throw new SyntaxError('A pair must be a sequential array starting at `0` and containing two elements.');
             }
 
-            $keyValuePairs[] = [(string) Encoder::encodeQueryKeyValue($pair[0]), match(null) {
-                $pair[1] => null,
+            $keyValuePairs[] = [(string) Encoder::encodeQueryKeyValue($pair[0]), match(true) {
+                null === $pair[1] => null,
                 default => Encoder::encodeQueryKeyValue($pair[1]),
             }];
         }
@@ -171,8 +169,8 @@ final class QueryString
         $decodePair = static function (array $pair, int $pairValueState): array {
             [$key, $value] = $pair;
 
-            return match ($pairValueState) {
-                self::PAIR_VALUE_PRESERVED => [(string) Encoder::decodeAll($key), $value],
+            return match (true) {
+                self::PAIR_VALUE_PRESERVED === $pairValueState => [(string) Encoder::decodeAll($key), $value],
                 default => [(string) Encoder::decodeAll($key), Encoder::decodeAll($value)],
             };
         };
@@ -219,9 +217,9 @@ final class QueryString
      * @see https://github.com/php/php-src/blob/master/ext/standard/tests/strings/parse_str_basic3.phpt
      * @see https://github.com/php/php-src/blob/master/ext/standard/tests/strings/parse_str_basic4.phpt
      *
-     * @param array $data the submitted array
-     * @param array|string $name the pair key
-     * @param string $value the pair value
+     * @param array        $data  the submitted array
+     * @param array|string $name  the pair key
+     * @param string       $value the pair value
      */
     private static function extractPhpVariable(array $data, array|string $name, string $value = ''): array
     {

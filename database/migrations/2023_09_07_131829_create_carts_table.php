@@ -17,12 +17,12 @@ return new class extends Migration
             $table->foreignId('module_id');
             $table->foreignId('item_id');
             $table->boolean('is_guest')->default(0);
-            $table->text('add_on_ids')->nullable();
-            $table->text('add_on_qtys')->nullable();
+            $table->text('add_on_ids')->default(json_encode([]))->nullable();
+            $table->text('add_on_qtys')->default(json_encode([]))->nullable();
             $table->string('item_type');
             $table->double('price', 24, 3);
             $table->integer('quantity');
-            $table->text('variation')->nullable();
+            $table->text('variation')->default(json_encode([]))->nullable();
             $table->timestamps();
         });
     }

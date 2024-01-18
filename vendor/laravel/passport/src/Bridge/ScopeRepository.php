@@ -12,17 +12,17 @@ class ScopeRepository implements ScopeRepositoryInterface
     /**
      * The client repository.
      *
-     * @var \Laravel\Passport\ClientRepository|null
+     * @var \Laravel\Passport\ClientRepository
      */
-    protected ?ClientRepository $clients;
+    protected ClientRepository $clients;
 
     /**
      * Create a new scope repository.
      *
-     * @param  \Laravel\Passport\ClientRepository|null  $clients
+     * @param  \Laravel\Passport\ClientRepository  $clients
      * @return void
      */
-    public function __construct(?ClientRepository $clients = null)
+    public function __construct(ClientRepository $clients)
     {
         $this->clients = $clients;
     }
@@ -50,12 +50,11 @@ class ScopeRepository implements ScopeRepositoryInterface
             })->values()->all();
         }
 
-        $client = $this->clients?->findActive($clientEntity->getIdentifier());
+        $client = $this->clients->findActive($clientEntity->getIdentifier());
 
-        return collect($scopes)->filter(function ($scope) {
-            return Passport::hasScope($scope->getIdentifier());
-        })->when($client, function ($scopes, $client) {
-            return $scopes->filter(fn ($scope) => $client->hasScope($scope->getIdentifier()));
+        return collect($scopes)->filter(function ($scope) use ($client) {
+            return Passport::hasScope($scope->getIdentifier())
+                && $client->hasScope($scope->getIdentifier());
         })->values()->all();
     }
 }

@@ -23,6 +23,9 @@
                 </span>
             </div>
         </div>
+        {{--<div class="col-12 text-right mt--xl--10">
+          <span class="badge badge-soft-primary">{{translate('messages.zone')}} : {{$zone_name}}</span>
+        </div>--}}
     </div>
     <!-- End Row -->
 
@@ -110,7 +113,6 @@
 </div>
 
 <script>
-    "use strict";
     // INITIALIZATION OF CHARTJS
     // =======================================================
     Chart.plugins.unregister(ChartDataLabels);
@@ -119,5 +121,5 @@
         $.HSCore.components.HSChartJS.init($(this));
     });
 
-    let updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+    var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
 </script>

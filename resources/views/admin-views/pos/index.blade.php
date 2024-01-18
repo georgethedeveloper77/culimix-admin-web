@@ -35,21 +35,26 @@
                         <div class="card-header">
                             <div class="w-100">
                                 <div class="row g-2 justify-content-around">
+                                    {{-- <div class="col-sm-6 col-12">
+                                        <select name="module_id" class="form-control js-select2-custom" onchange="set_filter('{{url()->full()}}',this.value,'module_id')" title="{{translate('messages.select_modules')}}">
+                                            <option value="" {{!request('module_id') ? 'selected':''}}>{{translate('messages.select_a_module')}}</option>
+                                            @foreach (\App\Models\Module::notParcel()->get() as $module)
+                                                <option
+                                                    value="{{$module->id}}" {{request('module_id') == $module->id?'selected':''}}>
+                                                    {{$module['module_name']}}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div> --}}
                                     <div class="col-sm-6 col-12">
-                                        <select name="store_id" id="store_select"
-                                                data-url="{{url()->full()}}"
-                                                data-filter="store_id"
-                                                data-placeholder="{{translate('messages.select_store')}}" class="js-data-example-ajax form-control h--45px set-filter">
+                                        <select name="store_id" id="store_select" onchange="set_filter('{{url()->full()}}',this.value, 'store_id')" data-placeholder="{{translate('messages.select_store')}}" class="js-data-example-ajax form-control h--45px">
                                             @if($store)
                                             <option value="{{$store->id}}" selected>{{$store->name}}</option>
                                             @endif
                                         </select>
                                     </div>
                                     <div class="col-sm-6 col-12">
-                                        <select name="category" id="category" class="form-control js-select2-custom mx-1 set-filter"
-                                                data-url="{{url()->full()}}"
-                                                data-filter="category_id"
-                                                title="{{translate('messages.select_category')}}" disabled>
+                                        <select name="category" id="category" class="form-control js-select2-custom mx-1" title="{{translate('messages.select_category')}}" onchange="set_category_filter('{{url()->full()}}',this.value)" disabled>
                                             <option value="">{{translate('messages.all_categories')}}</option>
                                             @foreach ($categories as $item)
                                             <option value="{{$item->id}}" {{$category==$item->id?'selected':''}}>{{Str::limit($item->name,20 ,'...')}}</option>
@@ -60,7 +65,7 @@
                                         <form id="search-form" class="search-form">
                                             <!-- Search -->
                                             <div class="input-group input--group">
-                                                <input id="datatableSearch" type="search" value="{{$keyword??''}}" name="search" class="form-control h--45px" placeholder="{{translate('messages.ex_:_search_here')}}" aria-label="{{translate('messages.search_here')}}" disabled>
+                                                <input id="datatableSearch" type="search" value="{{$keyword?$keyword:''}}" name="search" class="form-control h--45px" placeholder="{{translate('messages.ex_:_search_here')}}" aria-label="{{translate('messages.search_here')}}" disabled>
                                                 <button type="submit" class="btn btn--secondary h--45px">
                                                     <i class="tio-search"></i>
                                                 </button>
@@ -125,7 +130,7 @@
                                         <span class="card-title-icon">
                                             <i class="tio-user"></i>
                                         </span>
-                                        <span>{{ translate('Delivery Information') }} <small>({{ translate('Home Delivery') }})</small></span>
+                                        <span>{{ translate('Delivery Infomation') }} <small>({{ translate('Home Delivery') }})</small></span>
                                     </h5>
                                     <span class="delivery--edit-icon text-primary" id="delivery_address" data-toggle="modal" data-target="#deliveryAddrModal"><i class="tio-edit"></i></span>
                                 </div>
@@ -165,11 +170,11 @@
                 </div>
                 <div class="modal-body row ff-emoji">
                     <div class="col-md-12">
-                        <div class="text-center"> 
-                            <input type="button" class="btn btn--primary non-printable text-white print-Div"
+                        <center>
+                            <input type="button" class="btn btn--primary non-printable text-white" onclick="printDiv('printableArea')"
                                 value="{{ translate('Proceed, If thermal printer is ready.') }}"/>
                             <a href="{{url()->previous()}}" class="btn btn-danger non-printable">{{ translate('messages.back') }}</a>
-                        </div>
+                        </center>
                         <hr class="non-printable">
                     </div>
                     <div class="row m-auto" id="print-modal-content">
@@ -198,32 +203,32 @@
                         <div class="row" >
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="f_name" class="input-label" >{{translate('first_name')}} <span
+                                    <label class="input-label" >{{translate('first_name')}} <span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input id="f_name" type="text" name="f_name" class="form-control" value="{{ old('f_name') }}"  placeholder="{{translate('first_name')}}" required>
+                                    <input type="text" name="f_name" class="form-control" value="{{ old('f_name') }}"  placeholder="{{translate('first_name')}}" required>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="l_name" class="input-label" >{{translate('last_name')}} <span
+                                    <label class="input-label" >{{translate('last_name')}} <span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input id="l_name" type="text" name="l_name" class="form-control" value="{{ old('l_name') }}"  placeholder="{{translate('last_name')}}" required>
+                                    <input type="text" name="l_name" class="form-control" value="{{ old('l_name') }}"  placeholder="{{translate('last_name')}}" required>
                                 </div>
                             </div>
                         </div>
                         <div class="row" >
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="email" class="input-label" >{{translate('email')}}<span
+                                    <label class="input-label" >{{translate('email')}}<span
                                         class="input-label-secondary text-danger">*</span></label>
-                                    <input id="email" type="email" name="email" class="form-control" value="{{ old('email') }}"  placeholder="{{translate('Ex_:_ex@example.com')}}" required>
+                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}"  placeholder="{{translate('Ex_:_ex@example.com')}}" required>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="phone" class="input-label" >{{translate('phone')}} ({{translate('with_country_code')}})<span
+                                    <label class="input-label" >{{translate('phone')}} ({{translate('with_country_code')}})<span
                                         class="input-label-secondary text-danger">*</span></label>
-                                    <input id="phone" type="text" name="phone" class="form-control" value="{{ old('phone') }}"  placeholder="{{translate('phone')}}" required>
+                                    <input type="text" name="phone" class="form-control" value="{{ old('phone') }}"  placeholder="{{translate('phone')}}" required>
                                 </div>
                             </div>
                         </div>
@@ -243,27 +248,7 @@
 @push('script_2')
 <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Models\BusinessSetting::where('key', 'map_api_key')->first()->value }}&libraries=places&callback=initMap&v=3.49">
 </script>
-<script src="{{asset('public/assets/admin/js/view-pages/pos.js')}}"></script>
-
 <script>
-    "use strict";
-    $(document).on('click', '.place-order-submit', function (event) {
-        event.preventDefault();
-        let customer_id = document.getElementById('customer');
-        if(customer_id.value)
-        {
-            document.getElementById('customer_id').value = customer_id.value;
-            let form = document.getElementById('order_place');
-            form.submit();
-        } else{
-            toastr.error('{{ translate('messages.customer_not_selected') }}', {
-                CloseButton: true,
-                ProgressBar: true
-            });
-        }
-    });
-
-
     function initMap() {
         let map = new google.maps.Map(document.getElementById("map"), {
             zoom: 13,
@@ -281,7 +266,7 @@
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                   let myLatlng = {
+                    myLatlng = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     };
@@ -307,7 +292,7 @@
         searchBox.addListener("places_changed", () => {
             const places = searchBox.getPlaces();
 
-            if (places.length === 0) {
+            if (places.length == 0) {
                 return;
             }
             // Clear out the old markers.
@@ -321,6 +306,7 @@
                     console.log("Returned place contains no geometry");
                     return;
                 }
+                console.log(place.geometry.location);
                 if(!google.maps.geometry.poly.containsLocation(
                     place.geometry.location,
                     zonePolygon
@@ -390,23 +376,20 @@
                             content: JSON.stringify(mapsMouseEvent.latLng.toJSON(), null,
                                 2),
                         });
-                        let coordinates;
-
-                         coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
-                         coordinates = JSON.parse(coordinates);
+                        var coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
+                        var coordinates = JSON.parse(coordinates);
 
                         document.getElementById('latitude').value = coordinates['lat'];
                         document.getElementById('longitude').value = coordinates['lng'];
                         infoWindow.open(map);
 
-                        let geocoder;
-                        geocoder = new google.maps.Geocoder();
-                        let latlng = new google.maps.LatLng( coordinates['lat'], coordinates['lng'] ) ;
+                        var geocoder = geocoder = new google.maps.Geocoder();
+                        var latlng = new google.maps.LatLng( coordinates['lat'], coordinates['lng'] ) ;
 
                         geocoder.geocode({ 'latLng': latlng }, function (results, status) {
-                            if (status === google.maps.GeocoderStatus.OK) {
+                            if (status == google.maps.GeocoderStatus.OK) {
                                 if (results[1]) {
-                                    let address = results[1].formatted_address;
+                                    var address = results[1].formatted_address;
                                     // initialize services
                                     const geocoder = new google.maps.Geocoder();
                                     const service = new google.maps.DistanceMatrixService();
@@ -427,9 +410,11 @@
                                     // get distance matrix response
                                     service.getDistanceMatrix(request).then((response) => {
                                         // put response
-                                        let distancMeter = response.rows[0].elements[0].distance['value'];
-                                        let distanceMile = distancMeter/1000;
-                                        let distancMileResult = Math.round((distanceMile + Number.EPSILON) * 100) / 100;
+                                        var distancMeter = response.rows[0].elements[0].distance['value'];
+                                        console.log(distancMeter);
+                                        var distanceMile = distancMeter/1000;
+                                        var distancMileResult = Math.round((distanceMile + Number.EPSILON) * 100) / 100;
+                                        console.log(distancMileResult);
                                         document.getElementById('distance').value = distancMileResult;
                                         <?php
                                         $module_wise_delivery_charge = $store->zone->modules()->where('modules.id', $store->module_id)->first();
@@ -443,6 +428,8 @@
                                             $maximum_shipping_charge = 0;
                                         }
 
+                                        // $original_delivery_charge = ($request->distance * $per_km_shipping_charge > $minimum_shipping_charge) ? $request->distance * $per_km_shipping_charge : $minimum_shipping_charge;
+
                                         ?>
 
                                         $.get({
@@ -452,18 +439,18 @@
                                                     distancMileResult: distancMileResult,
                                                 },
                                                 success: function(data) {
-                                                 let   extra_charge = data;
-                                                    let original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
-                                                    let delivery_amount = ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge + extra_charge > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge + extra_charge);
-                                                    let delivery_charge =Math.round(( delivery_amount + Number.EPSILON) * 100) / 100;
+                                                    extra_charge = data;
+                                                    var original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
+                                                    var delivery_amount = ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge + extra_charge > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge + extra_charge);
+                                                    var delivery_charge =Math.round(( delivery_amount + Number.EPSILON) * 100) / 100;
                                                 document.getElementById('delivery_fee').value = delivery_charge;
                                                 $('#delivery_fee').siblings('strong').html(delivery_charge + '{{ \App\CentralLogics\Helpers::currency_symbol() }}');
 
                                                 },
                                                 error:function(){
-                                                    let original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
+                                                    var original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
 
-                                                    let delivery_charge =Math.round((
+                                                    var delivery_charge =Math.round((
                                                 ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge  > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge)
                                                 + Number.EPSILON) * 100) / 100;
                                                 document.getElementById('delivery_fee').value = delivery_charge;
@@ -471,6 +458,12 @@
                                                 }
                                             });
 
+                                        // var original_delivery_charge = (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
+                                        // var delivery_charge =Math.round((original_delivery_charge + Number.EPSILON) * 100) / 100;
+                                        // document.getElementById('delivery_fee').value = delivery_charge;
+                                        // $('#delivery_fee').siblings('strong').html(delivery_charge + '{{ \App\CentralLogics\Helpers::currency_symbol() }}');
+
+                                        // console.log(Math.round((original_delivery_charge + Number.EPSILON) * 100) / 100);
                                     });
 
                                 }
@@ -483,7 +476,24 @@
 
     }
 
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(
+            browserHasGeolocation ?
+            "Error: {{ translate('The Geolocation service failed') }}." :
+            "Error: {{ translate('Your browser doesn`t support geolocation') }}."
+        );
+        infoWindow.open(map);
+    }
 
+    $("#order_place").on('keydown', function(e) {
+        if (e.keyCode === 13) {
+            e.preventDefault();
+        }
+    })
+</script>
+
+<script>
     $(document).on('ready', function () {
         $('#store_select').select2({
             ajax: {
@@ -501,7 +511,7 @@
                     };
                 },
                 __port: function (params, success, failure) {
-                    let $request = $.ajax(params);
+                    var $request = $.ajax(params);
 
                     $request.then(success);
                     $request.fail(failure);
@@ -511,28 +521,54 @@
             }
         });
     });
+    function printDiv(divName) {
+        var printContents = document.getElementById(divName).innerHTML;
+        var originalContents = document.body.innerHTML;
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        // location.reload();
+    }
 
+    // function set_category_filter(id) {
+    //     var nurl = new URL('{!!url()->full()!!}');
+    //     nurl.searchParams.set('category_id', id);
+    //     location.href = nurl;
+    // }
 
 
     $('#search-form').on('submit', function (e) {
         e.preventDefault();
-        let keyword= $('#datatableSearch').val();
-        let url = new URL('{!!url()->full()!!}');
-        url.searchParams.set('keyword', keyword);
-        location.href = url;
+        var keyword= $('#datatableSearch').val();
+        var nurl = new URL('{!!url()->full()!!}');
+        nurl.searchParams.set('keyword', keyword);
+        location.href = nurl;
     });
 
-    $(document).on('click', '.quick-View', function () {
+    function addon_quantity_input_toggle(e)
+    {
+        var cb = $(e.target);
+        if(cb.is(":checked"))
+        {
+            cb.siblings('.addon-quantity-input').css({'visibility':'visible'});
+        }
+        else
+        {
+            cb.siblings('.addon-quantity-input').css({'visibility':'hidden'});
+        }
+    }
+    function quickView(product_id) {
         $.get({
             url: '{{route('admin.pos.quick-view')}}',
             dataType: 'json',
             data: {
-                product_id: $(this).data('id')
+                product_id: product_id
             },
             beforeSend: function () {
                 $('#loading').show();
             },
             success: function (data) {
+                console.log("success...")
                 $('#quick-view').modal('show');
                 $('#quick-view-modal').empty().html(data.view);
             },
@@ -540,22 +576,21 @@
                 $('#loading').hide();
             },
         });
-    });
+    }
 
-
-
-    $(document).on('click', '.quick-View-Cart-Item', function () {
+    function quickViewCartItem(product_id, item_key) {
         $.get({
             url: '{{route('admin.pos.quick-view-cart-item')}}',
             dataType: 'json',
             data: {
-                product_id:  $(this).data('product-id'),
-                item_key:  $(this).data('item-key'),
+                product_id: product_id,
+                item_key: item_key
             },
             beforeSend: function () {
                 $('#loading').show();
             },
             success: function (data) {
+                console.log("success...")
                 $('#quick-view').modal('show');
                 $('#quick-view-modal').empty().html(data.view);
             },
@@ -563,31 +598,127 @@
                 $('#loading').hide();
             },
         });
-    });
-
+    }
 
     function checkAddToCartValidity() {
-        let names = {};
-        $('#add-to-cart-form input:radio').each(function () {
+        var names = {};
+        $('#add-to-cart-form input:radio').each(function () { // find unique names
             names[$(this).attr('name')] = true;
         });
-        let count = 0;
-        $.each(names, function () {
+        var count = 0;
+        $.each(names, function () { // then count them
             count++;
         });
-        if ($('input:radio:checked').length === count) {
+        if ($('input:radio:checked').length == count) {
             return true;
         }
         return true;
     }
 
+    function cartQuantityInitialize() {
+        $('.btn-number').click(function (e) {
+            e.preventDefault();
 
+            var fieldName = $(this).attr('data-field');
+            var type = $(this).attr('data-type');
+            var input = $("input[name='" + fieldName + "']");
+            var currentVal = parseInt(input.val());
 
+            if (!isNaN(currentVal)) {
+                if (type == 'minus') {
 
+                    if (currentVal > input.attr('min')) {
+                        input.val(currentVal - 1).change();
+                    }
+                    if (parseInt(input.val()) == input.attr('min')) {
+                        $(this).attr('disabled', true);
+                    }
 
+                } else if (type == 'plus') {
+
+                    if (currentVal < input.attr('max')) {
+                        input.val(currentVal + 1).change();
+                    }
+                    if (parseInt(input.val()) == input.attr('max')) {
+                        $(this).attr('disabled', true);
+                    }
+
+                }
+            } else {
+                input.val(0);
+            }
+        });
+
+        $('.input-number').focusin(function () {
+            $(this).data('oldValue', $(this).val());
+        });
+
+        $('.input-number').change(function () {
+
+            minValue = parseInt($(this).attr('min'));
+            maxValue = parseInt($(this).attr('max'));
+            valueCurrent = parseInt($(this).val());
+
+            var name = $(this).attr('name');
+            if (valueCurrent >= minValue) {
+                $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cart',
+                    text: 'Sorry, the minimum value was reached'
+                });
+                $(this).val($(this).data('oldValue'));
+            }
+            if (valueCurrent <= maxValue) {
+                $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cart',
+                    text: 'Sorry, stock limit exceeded.'
+                });
+                $(this).val($(this).data('oldValue'));
+            }
+        });
+        $(".input-number").keydown(function (e) {
+            // Allow: backspace, delete, tab, escape, enter and .
+            if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
+                // Allow: Ctrl+A
+                (e.keyCode == 65 && e.ctrlKey === true) ||
+                // Allow: home, end, left, right
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
+                // let it happen, don't do anything
+                return;
+            }
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    function getUrlParameter(sParam) {
+            var sPageURL = window.location.search.substring(1);
+            var sURLVariables = sPageURL.split('&');
+            for (var i = 0; i < sURLVariables.length; i++) {
+                var sParameterName = sURLVariables[i].split('=');
+                if (sParameterName[0] == sParam) {
+                    return sParameterName[1];
+                }
+            }
+        }
+        // function checkModule() {
+        //     var module_id = getUrlParameter('module_id');
+        //     if(module_id){
+        //         $('#store_select').prop("disabled", false);
+        //     }
+        // }
+
+        // checkModule();
         function checkStore() {
-            let module_id = {{Config::get('module.current_module_id')}};
-            let store_id = getUrlParameter('store_id');
+            var module_id = {{Config::get('module.current_module_id')}};
+            var store_id = getUrlParameter('store_id');
             if(module_id && store_id){
                 $('#category').prop("disabled", false);
                 $('#datatableSearch').prop("disabled", false);
@@ -608,28 +739,25 @@
                     url: '{{ route('admin.pos.variant_price') }}',
                     data: $('#add-to-cart-form').serializeArray(),
                     success: function(data) {
-                        if(data.error === 'quantity_error'){
+                        if(data.error == 'quantity_error'){
                             toastr.error(data.message);
                         }
                             else{
-                            $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
-                            $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
-                        }
+                        $('#add-to-cart-form #chosen_price_div').removeClass('d-none');
+                        $('#add-to-cart-form #chosen_price_div #chosen_price').html(data.price);
+                    }
                     }
                 });
         }
     }
 
-
-    $(document).on('click', '.add-To-Cart', function () {
-
+    function addToCart(form_id = 'add-to-cart-form') {
         if (checkAddToCartValidity()) {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
                 }
             });
-           let form_id = 'add-to-cart-form'
             $.post({
                 url: '{{ route('admin.pos.add-to-cart') }}',
                 data: $('#' + form_id).serializeArray(),
@@ -637,7 +765,7 @@
                     $('#loading').show();
                 },
                 success: function (data) {
-                    if (data.data === 1) {
+                    if (data.data == 1) {
                         Swal.fire({
                             icon: 'info',
                             title: 'Cart',
@@ -645,7 +773,7 @@
                         });
                         return false;
                     }
-                    else if (data.data === 2) {
+                    else if (data.data == 2) {
                         updateCart();
                         Swal.fire({
                             icon: 'info',
@@ -655,7 +783,7 @@
 
                         return false;
                     }
-                    else if (data.data === 0) {
+                    else if (data.data == 0) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Cart',
@@ -663,7 +791,7 @@
                         });
                         return false;
                     }
-                    else if (data.data === -1) {
+                    else if (data.data == -1) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Cart',
@@ -671,7 +799,7 @@
                         });
                         return false;
                     }
-                    else if (data.data === 'variation_error') {
+                    else if (data.data == 'variation_error') {
                         Swal.fire({
                             icon: 'error',
                             title: 'Cart',
@@ -695,57 +823,49 @@
         } else {
             Swal.fire({
                 type: 'info',
-                title: '{{translate('Cart')}}',
-                text: '{{translate("Please choose all the options")}}'
+                title: 'Cart',
+                text: 'Please choose all the options'
+            });
+        }
+    }
+
+    function deliveryAdressStore(form_id = 'delivery_address_store') {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
+                }
+            });
+            $.post({
+                url: '{{ route('admin.pos.add-delivery-address') }}',
+                data: $('#' + form_id).serializeArray(),
+                beforeSend: function() {
+                    $('#loading').show();
+                },
+                success: function(data) {
+                    if (data.errors) {
+                        for (var i = 0; i < data.errors.length; i++) {
+                            toastr.error(data.errors[i].message, {
+                                CloseButton: true,
+                                ProgressBar: true
+                            });
+                        }
+                    } else {
+                        $('#del-add').empty().html(data.view);
+                    }
+                    updateCart();
+                    $('.call-when-done').click();
+                },
+                complete: function() {
+                    $('#loading').hide();
+                    $('#deliveryAddrModal').modal('hide');
+                }
             });
         }
 
-    });
-
-
-    $(document).on('click', '.delivery-Address-Store', function () {
-
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
-            }
-        });
-        let form_id = 'delivery_address_store';
-        $.post({
-            url: '{{ route('admin.pos.add-delivery-address') }}',
-            data: $('#' + form_id).serializeArray(),
-            beforeSend: function() {
-                $('#loading').show();
-            },
-            success: function(data) {
-                if (data.errors) {
-                    for (let i = 0; i < data.errors.length; i++) {
-                        toastr.error(data.errors[i].message, {
-                            CloseButton: true,
-                            ProgressBar: true
-                        });
-                    }
-                } else {
-                    $('#del-add').empty().html(data.view);
-                }
-                updateCart();
-                $('.call-when-done').click();
-            },
-            complete: function() {
-                $('#loading').hide();
-                $('#deliveryAddrModal').modal('hide');
-            }
-        });
-
-
-
-    });
-
-    $(document).on('click', '.remove-From-Cart', function () {
-      let key=  $(this).data('product-id')
+    function removeFromCart(key) {
         $.post('{{ route('admin.pos.remove-from-cart') }}', {_token: '{{ csrf_token() }}', key: key}, function (data) {
             if (data.errors) {
-                for (let i = 0; i < data.errors.length; i++) {
+                for (var i = 0; i < data.errors.length; i++) {
                     toastr.error(data.errors[i].message, {
                         CloseButton: true,
                         ProgressBar: true
@@ -760,12 +880,12 @@
             }
 
         });
-    });
+    }
 
-    $(document).on('click', '.empty-Cart', function () {
+    function emptyCart() {
             $.post('{{ route('admin.pos.emptyCart') }}', {
                 _token: '{{ csrf_token() }}'
-            }, function() {
+            }, function(data) {
                 $('#del-add').empty();
                 updateCart();
                 toastr.info('{{ translate('messages.item_has_been_removed_from_cart') }}', {
@@ -773,11 +893,10 @@
                     ProgressBar: true
                 });
             });
-    });
-
+        }
 
     function updateCart() {
-        $.post('<?php echo e(route('admin.pos.cart_items')); ?>?store_id={{request()?->store_id}}', {_token: '<?php echo e(csrf_token()); ?>'}, function (data) {
+        $.post('<?php echo e(route('admin.pos.cart_items')); ?>?store_id={{request()->store_id}}', {_token: '<?php echo e(csrf_token()); ?>'}, function (data) {
             $('#cart').empty().html(data);
         });
     }
@@ -787,56 +906,70 @@
     });
 
 
-    $(document).on('change', '.update-Quantity', function (event) {
+    function updateQuantity(e){
+        var element = $( e.target );
+        var minValue = parseInt(element.attr('min'));
+        maxValue = parseInt(element.attr('max'));
+        var valueCurrent = parseInt(element.val());
 
-        let element = $( event.target );
-        let minValue = parseInt(element.attr('min'));
-        let maxValue = parseInt(element.attr('max'));
-        let valueCurrent = parseInt(element.val());
-
-        let key = element.data('key');
+        var key = element.data('key');
+        // if (valueCurrent <= maxValue) {
+        //     $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
+        // } else {
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Cart',
+        //         text: 'Sorry, cart limit exceeded.'
+        //     });
+        //     $(this).val($(this).data('oldValue'));
+        // }
 
         if (valueCurrent >= minValue && valueCurrent <= maxValue) {
-            $.post('{{ route('admin.pos.updateQuantity') }}', {_token: '{{ csrf_token() }}', key: key, quantity:valueCurrent}, function () {
+            $.post('{{ route('admin.pos.updateQuantity') }}', {_token: '{{ csrf_token() }}', key: key, quantity:valueCurrent}, function (data) {
                 updateCart();
             });
         } else if(valueCurrent > maxValue){
-            Swal.fire({
-                icon: 'error',
-                title: 'Cart',
-                text: 'Sorry, cart limit exceeded.'
-            });
-            element.val(element.data('oldValue'));
-        }
-        else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Cart',
-                text: '{{ translate('Sorry, the minimum value was reached') }}'
-            });
-            element.val(element.data('oldValue'));
-        }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cart',
+                    text: 'Sorry, cart limit exceeded.'
+                });
+                element.val(element.data('oldValue'));
+            }
+            else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cart',
+                    text: '{{ translate('Sorry, the minimum value was reached') }}'
+                });
+                element.val(element.data('oldValue'));
+            }
 
 
         // Allow: backspace, delete, tab, escape, enter and .
-        if(event.type === 'keydown')
+        if(e.type == 'keydown')
         {
-            if ($.inArray(event.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
+            if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
                 // Allow: Ctrl+A
-                (event.keyCode === 65 && event.ctrlKey === true) ||
+                (e.keyCode == 65 && e.ctrlKey === true) ||
                 // Allow: home, end, left, right
-                (event.keyCode >= 35 && event.keyCode <= 39)) {
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
                 // let it happen, don't do anything
                 return;
             }
             // Ensure that it is a number and stop the keypress
-            if ((event.shiftKey || (event.keyCode < 48 || event.keyCode > 57)) && (event.keyCode < 96 || event.keyCode > 105)) {
-                event.preventDefault();
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
             }
         }
 
-    });
+    };
 
+    // INITIALIZATION OF SELECT2
+    // =======================================================
+    $('.js-select2-custom').each(function () {
+        var select2 = $.HSCore.components.HSSelect2.init($(this));
+    });
 
     $('#customer').select2({
         ajax: {
@@ -853,7 +986,7 @@
                 };
             },
             __port: function (params, success, failure) {
-                let $request = $.ajax(params);
+                var $request = $.ajax(params);
 
                 $request.then(success);
                 $request.fail(failure);
@@ -863,6 +996,26 @@
         }
     });
 
+    $( "#customer" ).change(function() {
+        if($(this).val())
+        {
+            $('#customer_id').val($(this).val());
+        }
+    });
+
+    $('#delivery_address').on('click', function() {
+            console.log('delivery_address clicked');
+            console.log(document.getElementById('customer'));
+            initMap();
+        });
+        initMap();
+
+    function set_filter(url, id, filter_by) {
+        var nurl = new URL(url);
+        nurl.searchParams.set(filter_by, id);
+        location.href = nurl;
+    }
+
     function print_invoice(order_id) {
         $.get({
             url: '{{url('/')}}/admin/pos/invoice/'+order_id,
@@ -871,6 +1024,7 @@
                 $('#loading').show();
             },
             success: function (data) {
+                console.log("success...")
                 $('#print-invoice').modal('show');
                 $('#print-modal-content').empty().html(data.view);
             },

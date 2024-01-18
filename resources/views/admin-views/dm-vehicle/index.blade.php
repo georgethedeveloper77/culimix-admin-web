@@ -24,6 +24,9 @@
             <div class="card-body">
                 <form action="{{route('admin.users.delivery-man.vehicle.store')}}" method="post" enctype="multipart/form-data" id="vehicle-form">
                     @csrf
+                    @php($language=\App\Models\BusinessSetting::where('key','language')->first())
+                    @php($language = $language->value ?? null)
+                    @php($default_lang = str_replace('_', '-', app()->getLocale()))
                     @if($language)
                         <ul class="nav nav-tabs mb-4">
                             <li class="nav-item">
@@ -31,7 +34,7 @@
                                 href="#"
                                 id="default-link">{{translate('messages.default')}}</a>
                             </li>
-                            @foreach ($language as $lang)
+                            @foreach (json_decode($language) as $lang)
                                 <li class="nav-item">
                                     <a class="nav-link lang_link"
                                         href="#"
@@ -47,13 +50,13 @@
                                     @if ($language)
                                     <div class="form-group lang_form" id="default-form">
                                         <label class="input-label text-capitalize" for="title">{{translate('messages.Vehicle_type')}} ({{ translate('messages.default') }})</label>
-                                        <input type="text" name="type[]" class="form-control h--45px" placeholder="{{translate('messages.ex_:_bike')}}" maxlength="191" required  >
+                                        <input type="text" name="type[]" class="form-control h--45px" placeholder="{{translate('messages.ex_:_bike')}}" maxlength="191" required oninvalid="document.getElementById('en-link').click()">
                                     </div>
                                     <input type="hidden" name="lang[]" value="default">
-                                        @foreach($language as $lang)
+                                        @foreach(json_decode($language) as $lang)
                                             <div class="form-group d-none lang_form" id="{{$lang}}-form">
                                                 <label class="input-label text-capitalize" for="title">{{translate('messages.Vehicle_type')}} ({{strtoupper($lang)}})</label>
-                                                <input type="text" name="type[]" class="form-control h--45px" placeholder="{{translate('messages.ex_:_bike')}}" maxlength="191"  >
+                                                <input type="text" name="type[]" class="form-control h--45px" placeholder="{{translate('messages.ex_:_bike')}}" maxlength="191" oninvalid="document.getElementById('en-link').click()">
                                             </div>
                                             <input type="hidden" name="lang[]" value="{{$lang}}">
                                         @endforeach
@@ -105,12 +108,24 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin')}}/js/view-pages/dm-vehichle.js"></script>
     <script>
-        "use strict";
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#viewer').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        $("#customFileEg1").change(function () {
+            readURL(this);
+        });
+
         $('#vehicle-form').on('submit', function (e) {
             e.preventDefault();
-            let formData = new FormData(this);
+            var formData = new FormData(this);
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -124,7 +139,7 @@
                 processData: false,
                 success: function (data) {
                     if (data.errors) {
-                        for (let i = 0; i < data.errors.length; i++) {
+                        for (var i = 0; i < data.errors.length; i++) {
                             toastr.error(data.errors[i].message, {
                                 CloseButton: true,
                                 ProgressBar: true
@@ -143,9 +158,34 @@
             });
         });
 
-        $('#reset_btn').click(function(){
-            $('#choice_item').val(null).trigger('change');
-            $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');
-        })
     </script>
+
+<script>
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
+
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        console.log(lang);
+        $("#"+lang+"-form").removeClass('d-none');
+        if(lang == '{{$default_lang}}')
+        {
+            $(".from_part_2").removeClass('d-none');
+        }
+        else
+        {
+            $(".from_part_2").addClass('d-none');
+        }
+    });
+</script>
+
+        <script>
+            $('#reset_btn').click(function(){
+                $('#choice_item').val(null).trigger('change');
+                $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');
+            })
+        </script>
 @endpush

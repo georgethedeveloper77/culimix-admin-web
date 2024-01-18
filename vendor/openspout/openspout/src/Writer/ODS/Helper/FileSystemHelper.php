@@ -27,11 +27,11 @@ final class FileSystemHelper implements FileSystemWithRootFolderHelperInterface
     public const MIMETYPE_FILE_NAME = 'mimetype';
     public const STYLES_XML_FILE_NAME = 'styles.xml';
 
-    private readonly string $baseFolderRealPath;
+    private string $baseFolderRealPath;
 
     /** @var string document creator */
-    private readonly string $creator;
-    private readonly CommonFileSystemHelper $baseFileSystemHelper;
+    private string $creator;
+    private CommonFileSystemHelper $baseFileSystemHelper;
 
     /** @var string Path to the root folder inside the temp folder where the files to create the ODS will be stored */
     private string $rootFolder;
@@ -43,7 +43,7 @@ final class FileSystemHelper implements FileSystemWithRootFolderHelperInterface
     private string $sheetsContentTempFolder;
 
     /** @var ZipHelper Helper to perform tasks with Zip archive */
-    private readonly ZipHelper $zipHelper;
+    private ZipHelper $zipHelper;
 
     /**
      * @param string    $baseFolderPath The path of the base folder where all the I/O can occur

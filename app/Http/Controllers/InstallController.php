@@ -123,12 +123,7 @@ class InstallController extends Controller
 
         Helpers::remove_dir('storage/app/public');
         Storage::disk('public')->makeDirectory('/');
-
-        try {
-            Madzipper::make('installation/backup/public.zip')->extractTo('storage/app');
-        }catch (\Exception $exception){
-            info($exception);
-        }
+        Madzipper::make('installation/backup/public.zip')->extractTo('storage/app');
 
         //sleep(5);
         return view('installation.step6');
@@ -174,7 +169,7 @@ class InstallController extends Controller
                     BUYER_USERNAME=' . session('username') . '
                     SOFTWARE_ID=MzY3NzIxMTI=
 
-                    SOFTWARE_VERSION=2.5.1
+                    SOFTWARE_VERSION=2.4.0
                     REACT_APP_KEY=45370351
                     ';
             $file = fopen(base_path('.env'), 'w');

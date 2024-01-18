@@ -31,8 +31,7 @@
             <div class="card-body">
                 <div class="row align-items-md-center">
                     <div class="col-md-6 col-lg-4 mb-3 mb-md-0">
-                            <img class="rounded img--ratio-3 onerror-image" src="{{\App\CentralLogics\Helpers::onerror_image_helper($campaign['image'], asset('storage/app/public/campaign/').'/'.$campaign['image'], asset('public/assets/admin/img/900x400/img1.jpg'), 'campaign/') }}"
-                            data-onerror-image="{{asset('/public/assets/admin/img/900x400/img1.jpg')}}" alt="Image Description">
+                            <img class="rounded img--ratio-3" src="{{asset('storage/app/public/campaign')}}/{{$campaign['image']}}" onerror="this.src='{{asset('/public/assets/admin/img/900x400/img1.jpg')}}'" alt="Image Description">
                     </div>
                     <div class="col-md-6">
                         <span class="d-block mb-1">
@@ -67,9 +66,9 @@
                             <div class="w-100 my-2">
                                 <a href="{{route('admin.store.view', $campaign->store_id)}}" title="{{$campaign->store['name']}}">
                                     <img
-                                        class="img--70 circle onerror-image"
-                                        data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
-                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper($campaign->store->logo, asset('storage/app/public/store/').'/'.$campaign->store->logo, asset('public/assets/admin/img/160x160/img1.jpg'), 'store/') }}"
+                                        class="img--70 circle"
+                                        onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
+                                        src="{{asset('storage/app/public/store/'.$campaign->store->logo)}}"
                                         alt="Image Description">
                                     <h5 class="input-label mt-2">{{$campaign->store['name']}}</h5>
                                 </a>
@@ -98,7 +97,7 @@
                                             <h4 class="m-0">{{translate('messages.variations')}}</h4>
                                         </th>
                                         <th class="px-4 border-0 w--120px">
-                                            <h4 class="m-0">{{ translate('Addons') }}</h4>
+                                            <h4 class="m-0">Addons</h4>
                                         </th>
                                     </tr>
                                 </thead>

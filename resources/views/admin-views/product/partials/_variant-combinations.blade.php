@@ -49,13 +49,12 @@
         </tbody>
     </table>
     <script>
-        "use strict";
         update_qty();
         function update_qty()
         {
-            let total_qty = 0;
-            let qty_elements = $('input[name^="stock_"]');
-            for(let i=0; i<qty_elements.length; i++)
+            var total_qty = 0;
+            var qty_elements = $('input[name^="stock_"]');
+            for(var i=0; i<qty_elements.length; i++)
             {
                 total_qty += parseInt(qty_elements.eq(i).val());
             }
@@ -70,17 +69,13 @@
             }
         }
         $('input[name^="stock_"]').on('keyup', function () {
-            let total_qty = 0;
-            let qty_elements = $('input[name^="stock_"]');
-            for(let i=0; i<qty_elements.length; i++)
+            var total_qty = 0;
+            var qty_elements = $('input[name^="stock_"]');
+            for(var i=0; i<qty_elements.length; i++)
             {
                 total_qty += parseInt(qty_elements.eq(i).val());
             }
             $('input[name="current_stock"]').val(total_qty);
-        });
-
-        $('.update_qty').on('keyup', function () {
-            update_qty();
         });
 
     </script>

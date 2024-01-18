@@ -33,9 +33,9 @@ final class EncodingHelper
     /** @var array<string, string> Map representing the encodings supporting BOMs (key) and their associated BOM (value) */
     private array $supportedEncodingsWithBom;
 
-    private readonly bool $canUseIconv;
+    private bool $canUseIconv;
 
-    private readonly bool $canUseMbString;
+    private bool $canUseMbString;
 
     public function __construct(bool $canUseIconv, bool $canUseMbString)
     {

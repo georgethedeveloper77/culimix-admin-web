@@ -22,6 +22,9 @@
                     @csrf
                     <div class="row g-3">
                         <div class="col-12">
+                            @php($language=\App\Models\BusinessSetting::where('key','language')->first())
+                            @php($language = $language->value ?? null)
+                            @php($default_lang = str_replace('_', '-', app()->getLocale()))
                             @if($language)
                                         <ul class="nav nav-tabs mb-4">
                                             <li class="nav-item">
@@ -29,7 +32,7 @@
                                                 href="#"
                                                 id="default-link">{{translate('messages.default')}}</a>
                                             </li>
-                                            @foreach ($language as $lang)
+                                            @foreach (json_decode($language) as $lang)
                                                 <li class="nav-item">
                                                     <a class="nav-link lang_link"
                                                         href="#"
@@ -42,19 +45,19 @@
                                                 <div class="col-6">
                                                     <div class="form-group">
                                                         <label class="input-label" for="default_title">{{translate('messages.Bonus_Title')}} ({{translate('messages.default')}})</label>
-                                                        <input type="text" name="title[]" id="default_title" class="form-control" placeholder="{{translate('messages.title')}}" value="{{$bonus?->getRawOriginal('title')}}"  >
+                                                        <input type="text" name="title[]" id="default_title" class="form-control" placeholder="{{translate('messages.title')}}" value="{{$bonus?->getRawOriginal('title')}}" oninvalid="document.getElementById('en-link').click()">
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
                                                     <div class="form-group">
                                                         <label class="input-label" for="default_description">{{translate('messages.Short_Description')}} ({{translate('messages.default')}})</label>
-                                                        <input type="text" name="description[]" id="default_description" class="form-control" placeholder="{{translate('messages.description')}}" value="{{$bonus?->getRawOriginal('description')}}"  >
+                                                        <input type="text" name="description[]" id="default_description" class="form-control" placeholder="{{translate('messages.description')}}" value="{{$bonus?->getRawOriginal('description')}}" oninvalid="document.getElementById('en-link').click()">
                                                     </div>
                                                 </div>
                                             </div>
                                             <input type="hidden" name="lang[]" value="default">
                                         </div>
-                                        @foreach($language as $lang)
+                                        @foreach(json_decode($language) as $lang)
                                             <?php
                                                 if(count($bonus['translations'])){
                                                     $translate = [];
@@ -74,13 +77,13 @@
                                                     <div class="col-6">
                                                         <div class="form-group">
                                                             <label class="input-label" for="{{$lang}}_title">{{translate('messages.Bonus_Title')}} ({{strtoupper($lang)}})</label>
-                                                            <input type="text" name="title[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('messages.title')}}" value="{{$translate[$lang]['title']??''}}"  >
+                                                            <input type="text" name="title[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('messages.title')}}" value="{{$translate[$lang]['title']??''}}" oninvalid="document.getElementById('en-link').click()">
                                                         </div>
                                                     </div>
                                                     <div class="col-6">
                                                         <div class="form-group">
                                                             <label class="input-label" for="{{$lang}}_description">{{translate('messages.Short_Description')}} ({{strtoupper($lang)}})</label>
-                                                            <input type="text" name="description[]" id="{{$lang}}_description" class="form-control" placeholder="{{translate('messages.description')}}" value="{{$translate[$lang]['description']??''}}"  >
+                                                            <input type="text" name="description[]" id="{{$lang}}_description" class="form-control" placeholder="{{translate('messages.description')}}" value="{{$translate[$lang]['description']??''}}" oninvalid="document.getElementById('en-link').click()">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -189,13 +192,66 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin')}}/js/view-pages/wallet-bonus-edit.js"></script>
     <script>
-        "use strict";
         $(document).on('ready', function () {
+            $('#bonus_type').on('change', function() {
+                if($('#bonus_type').val() == 'amount')
+                {
+                    $('#maximum_bonus_amount').attr("readonly","true");
+                    $('#maximum_bonus_amount').val(null);
+                    $('#percentage').addClass('d-none');
+                    $('#cuttency_symbol').removeClass('d-none');
+                }
+                else
+                {
+                    $('#maximum_bonus_amount').removeAttr("readonly");
+                    $('#percentage').removeClass('d-none');
+                    $('#cuttency_symbol').addClass('d-none');
+                }
+            });
             $('#date_from').attr('min',(new Date()).toISOString().split('T')[0]);
             $('#date_from').attr('max','{{date("Y-m-d",strtotime($bonus["end_date"]))}}');
             $('#date_to').attr('min','{{date("Y-m-d",strtotime($bonus["start_date"]))}}');
+
+            // INITIALIZATION OF FLATPICKR
+            // =======================================================
+            $('.js-flatpickr').each(function () {
+                $.HSCore.components.HSFlatpickr.init($(this));
+            });
         });
+        $("#date_from").on("change", function () {
+            $('#date_to').attr('min',$(this).val());
+        });
+
+        $("#date_to").on("change", function () {
+            $('#date_from').attr('max',$(this).val());
+        });
+    </script>
+    <script>
+        $(".lang_link").click(function(e){
+            e.preventDefault();
+            $(".lang_link").removeClass('active');
+            $(".lang_form").addClass('d-none');
+            $(this).addClass('active');
+
+            let form_id = this.id;
+            let lang = form_id.substring(0, form_id.length - 5);
+            console.log(lang);
+            $("#"+lang+"-form").removeClass('d-none');
+            if(lang == 'en')
+            {
+                $("#from_part_2").removeClass('d-none');
+            }
+            else
+            {
+                $("#from_part_2").addClass('d-none');
+            }
+        })
+    </script>
+    <script>
+        $('#reset_btn').click(function(){
+            location.reload(true);
+        })
+
     </script>
 @endpush

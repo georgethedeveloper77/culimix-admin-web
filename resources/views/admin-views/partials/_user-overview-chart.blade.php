@@ -32,8 +32,7 @@
 
 
 <script>
-    "use strict";
-    options = {
+    var options = {
         series: [{{ $data['customer']}}, {{$data['stores']}}, {{$data['delivery_man']}}],
         chart: {
             width: 320,
@@ -63,12 +62,13 @@
         },
     };
 
-    chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
+    var chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
     chart.render();
 
+</script>
 
 <!-- Dognut Pie Chart -->
-
+    <script>
         // INITIALIZATION OF CHARTJS
         // =======================================================
         Chart.plugins.unregister(ChartDataLabels);
@@ -77,5 +77,5 @@
             $.HSCore.components.HSChartJS.init($(this));
         });
 
-        updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+        var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
     </script>

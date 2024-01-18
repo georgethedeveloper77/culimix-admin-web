@@ -23,7 +23,8 @@
                 </div>
 
                 <div class="col-sm-auto min--280">
-                    <select name="zone_id" class="form-control js-select2-custom fetch_data_zone_wise">
+                    <select name="zone_id" class="form-control js-select2-custom"
+                            onchange="fetch_data_zone_wise(this.value)">
                         <option value="all">{{ translate('messages.All_Zones') }}</option>
                         @foreach(\App\Models\Zone::orderBy('name')->get() as $zone)
                             <option
@@ -211,6 +212,19 @@
         </div>
         <!-- End Stats -->
 
+        {{-- <div class="row gx-2 gx-lg-3">
+            <div class="col-lg-12 mb-3 mb-lg-12">
+                <!-- Card -->
+                <div class="card h-100" id="monthly-earning-graph">
+                    <!-- Body -->
+                @include('admin-views.partials._monthly-earning-graph',['total_sell'=>$total_sell,'commission'=>$commission,'delivery_commission'=>$delivery_commission])
+                <!-- End Body -->
+                </div>
+                <!-- End Card -->
+            </div>
+        </div> --}}
+        <!-- End Row -->
+
         <div class="row g-2">
             <div class="col-lg-8 col--xl-8">
                 <div class="card h-100">
@@ -247,7 +261,8 @@
                         <h5 class="card-header-title">
                             {{translate('User Statistics')}}
                         </h5>
-                        <select class="custom-select border-0 text-center w-auto user_overview_stats_update" name="user_overview">
+                        <select class="custom-select border-0 text-center w-auto" name="user_overview"
+                                onchange="user_overview_stats_update(this.value)">
                             <option
                                 value="this_month" {{$params['user_overview'] == 'this_month'?'selected':''}}>
                                 {{translate('This month')}}
@@ -377,10 +392,7 @@
 
     <!-- Dognut Pie Chart -->
     <script>
-        "use strict";
-        let options;
-        let chart;
-        options = {
+        var options = {
             series: [{{ $data['customer']}}, {{$data['stores']}}, {{$data['delivery_man']}}],
             chart: {
                 width: 320,
@@ -410,10 +422,13 @@
             },
         };
 
-        chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
+        var chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
         chart.render();
 
-    options = {
+    </script>
+
+    <script>
+    var options = {
           series: [{
           name: 'Gross Sale',
           data: [60, 40, 80, 31, 42, 109, 100, 50, 30, 80, 65, 35]
@@ -447,10 +462,12 @@
         },
         };
 
-        chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
+        var chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
         chart.render();
+    </script>
 
     <!-- Dognut Pie Chart -->
+    <script>
         // INITIALIZATION OF CHARTJS
         // =======================================================
         Chart.plugins.unregister(ChartDataLabels);
@@ -459,8 +476,10 @@
             $.HSCore.components.HSChartJS.init($(this));
         });
 
-        let updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+        var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+    </script>
 
+    <script>
         function order_stats_update(type) {
             $.ajaxSetup({
                 headers: {
@@ -485,8 +504,7 @@
             });
         }
 
-        $('.fetch_data_zone_wise').on('change', function (){
-            let zone_id = $(this).val();
+        function fetch_data_zone_wise(zone_id) {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -516,10 +534,9 @@
                     $('#loading').hide()
                 }
             });
-        })
+        }
 
-        $('.user_overview_stats_update').on('change', function (){
-            let type = $(this).val();
+        function user_overview_stats_update(type) {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -541,13 +558,15 @@
                     $('#loading').hide()
                 }
             });
-        })
+        }
+    </script>
 
+    <script>
         function insert_param(key, value) {
             key = encodeURIComponent(key);
             value = encodeURIComponent(value);
             // kvp looks like ['key1=value1', 'key2=value2', ...]
-            let kvp = document.location.search.substr(1).split('&');
+            var kvp = document.location.search.substr(1).split('&');
             let i = 0;
 
             for (; i < kvp.length; i++) {

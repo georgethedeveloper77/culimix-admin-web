@@ -274,7 +274,7 @@ class SocialAuthController extends Controller
                 'password' => $user->social_id
             ];
             $customer_verification = BusinessSetting::where('key','customer_verification')->first()->value;
-            if (auth()->loginUsingId($user->id)) {
+            if (auth()->attempt($data)) {
                 $token = auth()->user()->createToken('RestaurantCustomerAuth')->accessToken;
                 if(!auth()->user()->status)
                 {

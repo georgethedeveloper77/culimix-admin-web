@@ -13,9 +13,22 @@
             <h1 class="page-header-title"><i class="tio-filter-list"></i> {{translate('messages.stores')}} <span class="badge badge-soft-dark ml-2" id="itemCount">{{$stores->total()}}</span></h1>
             <div class="page-header-select-wrapper">
 
+                {{-- <div class="select-item">
+                    <select name="module_id" class="form-control js-select2-custom"
+                            onchange="set_filter('{{url()->full()}}',this.value,'module_id')" title="{{translate('messages.select_modules')}}">
+                        <option value="" {{!request('module_id') ? 'selected':''}}>{{translate('messages.all_modules')}}</option>
+                        @foreach (\App\Models\Module::notParcel()->get() as $module)
+                            <option
+                                value="{{$module->id}}" {{request('module_id') == $module->id?'selected':''}}>
+                                {{$module['module_name']}}
+                            </option>
+                        @endforeach
+                    </select>
+                </div> --}}
                 @if(!isset(auth('admin')->user()->zone_id))
                 <div class="select-item">
-                    <select name="zone_id" class="form-control js-select2-custom set-filter" data-url="{{url()->full()}}" data-filter="zone_id">
+                    <select name="zone_id" class="form-control js-select2-custom"
+                            onchange="set_filter('{{url()->full()}}',this.value,'zone_id')">
                         <option value="" {{!request('zone_id')?'selected':''}}>{{ translate('messages.All_Zones') }}</option>
                         @foreach(\App\Models\Zone::orderBy('name')->get() as $z)
                             <option
@@ -185,16 +198,8 @@
                             <td>
                                 <div>
                                     <a href="{{route('admin.store.view', $store->id)}}" class="table-rest-info" alt="view store">
-                                    <img class="img--60 circle onerror-image" data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
-
-                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
-                                                $store['logo'] ?? '',
-                                                asset('storage/app/public/store').'/'.$store['logo'] ?? '',
-                                                asset('public/assets/admin/img/160x160/img1.jpg'),
-                                                'store/'
-                                            ) }}"
-
-                                            >
+                                    <img class="img--60 circle" onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
+                                            src="{{asset('storage/app/public/store')}}/{{$store['logo']}}">
                                         <div class="info"><div class="text--title">
                                             {{Str::limit($store->name,20,'...')}}
                                             </div>
@@ -220,10 +225,11 @@
                             </td>
                             <td>
                                 {{$store->zone?$store->zone->name:translate('messages.zone_deleted')}}
+                                {{--<span class="d-block font-size-sm">{{$banner['image']}}</span>--}}
                             </td>
                             <td>
                                 <label class="toggle-switch toggle-switch-sm" for="featuredCheckbox{{$store->id}}">
-                                    <input type="checkbox" data-url="{{route('admin.store.featured',[$store->id,$store->featured?0:1])}}" class="toggle-switch-input redirect-url" id="featuredCheckbox{{$store->id}}" {{$store->featured?'checked':''}}>
+                                    <input type="checkbox" onclick="location.href='{{route('admin.store.featured',[$store->id,$store->featured?0:1])}}'" class="toggle-switch-input" id="featuredCheckbox{{$store->id}}" {{$store->featured?'checked':''}}>
                                     <span class="toggle-switch-label">
                                         <span class="toggle-switch-indicator"></span>
                                     </span>
@@ -234,7 +240,7 @@
                                 @if(isset($store->vendor->status))
                                     @if($store->vendor->status)
                                     <label class="toggle-switch toggle-switch-sm" for="stocksCheckbox{{$store->id}}">
-                                        <input type="checkbox" data-url="{{route('admin.store.status',[$store->id,$store->status?0:1])}}" data-message="{{translate('messages.you_want_to_change_this_store_status')}}" class="toggle-switch-input status_change_alert" id="stocksCheckbox{{$store->id}}" {{$store->status?'checked':''}}>
+                                        <input type="checkbox" onclick="status_change_alert('{{route('admin.store.status',[$store->id,$store->status?0:1])}}', '{{translate('messages.you_want_to_change_this_store_status')}}', event)" class="toggle-switch-input" id="stocksCheckbox{{$store->id}}" {{$store->status?'checked':''}}>
                                         <span class="toggle-switch-label">
                                             <span class="toggle-switch-indicator"></span>
                                         </span>
@@ -257,8 +263,8 @@
                                     <a class="btn action-btn btn--primary btn-outline-primary"
                                     href="{{route('admin.store.edit',[$store['id']])}}" title="{{translate('messages.edit_store')}}"><i class="tio-edit"></i>
                                     </a>
-                                    <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:"
-                                    data-url="vendor-{{$store['id']}}" data-message="{{translate('You want to remove this store')}}" title="{{translate('messages.delete_store')}}"><i class="tio-delete-outlined"></i>
+                                    <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
+                                    onclick="form_alert('vendor-{{$store['id']}}','{{translate('You want to remove this store')}}')" title="{{translate('messages.delete_store')}}"><i class="tio-delete-outlined"></i>
                                     </a>
                                     <form action="{{route('admin.store.delete',[$store['id']])}}" method="post" id="vendor-{{$store['id']}}">
                                         @csrf @method('delete')
@@ -294,13 +300,6 @@
 
 @push('script_2')
     <script>
-        "use strict";
-        $('.status_change_alert').on('click', function (event) {
-            let url = $(this).data('url');
-            let message = $(this).data('message');
-            status_change_alert(url, message, event)
-        })
-
         function status_change_alert(url, message, e) {
             e.preventDefault();
             Swal.fire({
@@ -322,7 +321,7 @@
         $(document).on('ready', function () {
             // INITIALIZATION OF DATATABLES
             // =======================================================
-            let datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
 
             $('#column1_search').on('keyup', function () {
                 datatable
@@ -356,7 +355,7 @@
             // INITIALIZATION OF SELECT2
             // =======================================================
             $('.js-select2-custom').each(function () {
-                let select2 = $.HSCore.components.HSSelect2.init($(this));
+                var select2 = $.HSCore.components.HSSelect2.init($(this));
             });
         });
     </script>

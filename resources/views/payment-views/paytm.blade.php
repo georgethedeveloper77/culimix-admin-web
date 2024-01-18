@@ -5,7 +5,7 @@
 @endpush
 
 @section('content')
-    <div class="text-center"> <h1>Please do not refresh this page...</h1></div>
+    <center><h1>Please do not refresh this page...</h1></center>
     <form method="post" action="<?php echo \Illuminate\Support\Facades\Config::get('paytm_config.PAYTM_TXN_URL') ?>" id="form">
         <table border="1">
             <tbody>

@@ -34,22 +34,22 @@ final class RowIterator implements RowIteratorInterface
     public const XML_ATTRIBUTE_CELL_INDEX = 'r';
 
     /** @var string Path of the XLSX file being read */
-    private readonly string $filePath;
+    private string $filePath;
 
     /** @var string Path of the sheet data XML file as in [Content_Types].xml */
-    private readonly string $sheetDataXMLFilePath;
+    private string $sheetDataXMLFilePath;
 
     /** @var XMLReader The XMLReader object that will help read sheet's XML data */
-    private readonly XMLReader $xmlReader;
+    private XMLReader $xmlReader;
 
     /** @var XMLProcessor Helper Object to process XML nodes */
-    private readonly XMLProcessor $xmlProcessor;
+    private XMLProcessor $xmlProcessor;
 
     /** @var Helper\CellValueFormatter Helper to format cell values */
-    private readonly Helper\CellValueFormatter $cellValueFormatter;
+    private Helper\CellValueFormatter $cellValueFormatter;
 
     /** @var RowManager Manages rows */
-    private readonly RowManager $rowManager;
+    private RowManager $rowManager;
 
     /**
      * TODO: This variable can be deleted when row indices get preserved.
@@ -62,7 +62,7 @@ final class RowIterator implements RowIteratorInterface
     private Row $currentlyProcessedRow;
 
     /** @var null|Row Buffer used to store the current row, while checking if there are more rows to read */
-    private ?Row $rowBuffer = null;
+    private ?Row $rowBuffer;
 
     /** @var bool Indicates whether all rows have been read */
     private bool $hasReachedEndOfFile = false;
@@ -71,7 +71,7 @@ final class RowIterator implements RowIteratorInterface
     private int $numColumns = 0;
 
     /** @var bool Whether empty rows should be returned or skipped */
-    private readonly bool $shouldPreserveEmptyRows;
+    private bool $shouldPreserveEmptyRows;
 
     /** @var int Last row index processed (one-based) */
     private int $lastRowIndexProcessed = 0;

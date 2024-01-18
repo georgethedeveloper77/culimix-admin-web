@@ -1,6 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', translate('Order Details'))
+<style>
+    .select2-container--open {
+    z-index: 99999999999999;
+}
+    #offline_payment_cancelation_note {
+    z-index: 99999999999999;
+}
+</style>
 
 @section('content')
     <?php
@@ -154,7 +162,8 @@
                                 @if (  !$parcel_order &&  !$editing && in_array($order->order_status, ['pending', 'confirmed', 'processing', 'accepted']) &&
                                         isset($order->store) &&
                                         $order->prescription_order == 0 && count($order?->payments) == 0 && $order?->flash_admin_discount_amount == 0 && ($order->payment_method == 'cash_on_delivery'))
-                                    <button class="btn btn-sm btn--danger btn-outline-danger font-regular edit-order" type="button">
+                                    <button class="btn btn-sm btn--danger btn-outline-danger font-regular" type="button"
+                                        onclick="edit_order()">
                                         <i class="tio-edit"></i> {{ translate('messages.edit') }}
                                     </button>
                                 @endif
@@ -398,8 +407,9 @@
                                         <div class="col-sm-6">
                                             <div class="input-group header-item w-100">
                                                 <select name="category" id="category"
-                                                    class="form-control js-select2-custom mx-1 set-category-filter"
-                                                    title="{{ translate('messages.select_category') }}">
+                                                    class="form-control js-select2-custom mx-1"
+                                                    title="{{ translate('messages.select_category') }}"
+                                                    onchange="set_category_filter(this.value)">
                                                     <option value="">{{ translate('messages.all_categories') }}
                                                     </option>
                                                     @foreach ($categories as $item)
@@ -450,9 +460,9 @@
                                 <div class="media align-items-center cart--media pb-2">
                                     <div class="avatar avatar-xl mr-3"
                                         title="{{ $order->parcel_category ? $order->parcel_category->name : translate('messages.parcel_category_not_found') }}">
-                                        <img class="img-fluid onerror-image"
-                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper($order->parcel_category ? $order->parcel_category->image : '', asset('storage/app/public/parcel_category').'/'.($order->parcel_category ? $order->parcel_category->image : ''), asset('public/assets/admin/img/160x160/img2.jpg'), 'parcel_category/') }}"
-                                            data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}">
+                                        <img class="img-fluid"
+                                            src="{{ asset('storage/app/public/parcel_category') }}/{{ $order->parcel_category ? $order->parcel_category->image : '' }}"
+                                            onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'">
                                     </div>
                                     <div class="media-body">
                                         <div class="row">
@@ -549,23 +559,23 @@
                                                     <td>
                                                         <div class="media media--sm">
                                                             @if ($editing)
-                                                                <div class="avatar avatar-xl mr-3 cursor-pointer quick-view-cart-item" data-key="{{ $key }}"
+                                                                <div class="avatar avatar-xl mr-3 cursor-pointer"
+                                                                    onclick="quick_view_cart_item({{ $key }})"
                                                                     title="{{ translate('messages.click_to_edit_this_item') }}">
                                                                     <span
                                                                         class="avatar-status avatar-lg-status avatar-status-dark"><i
                                                                             class="tio-edit"></i></span>
-                                                                    <img class="img-fluid rounded aspect-ratio-1 onerror-image"
-                                                                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($detail->item['image'], asset('storage/app/public/product/').'/'. $detail->item['image'], asset('public/assets/admin/img/160x160/img2.jpg') , 'product/') }}"
-
-                                                                        data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                                    <img class="img-fluid rounded aspect-ratio-1"
+                                                                        src="{{ asset('storage/app/public/product') }}/{{ $detail->item['image'] }}"
+                                                                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
                                                                         alt="Image Description">
                                                                 </div>
                                                             @else
                                                                 <a class="avatar avatar-xl mr-3"
                                                                     href="{{ route('admin.item.view', [$detail->item['id'],'module_id' => $order->module_id]) }}">
-                                                                    <img class="img-fluid rounded aspect-ratio-1 onerror-image"
-                                                                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($detail->item['image'], asset('storage/app/public/product/').'/'. $detail->item['image'], asset('public/assets/admin/img/160x160/img2.jpg') , 'product/') }}"
-                                                                        data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                                    <img class="img-fluid rounded aspect-ratio-1"
+                                                                        src="{{ asset('storage/app/public/product') }}/{{ $detail->item['image'] }}"
+                                                                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
                                                                         alt="Image Description">
                                                                 </a>
                                                             @endif
@@ -685,22 +695,23 @@
                                                     <td>
                                                         <div class="media media--sm">
                                                             @if ($editing)
-                                                                <div class="avatar avatar-xl mr-3  cursor-pointer quick-view-cart-item" data-key="{{ $key }}"
+                                                                <div class="avatar avatar-xl mr-3  cursor-pointer"
+                                                                    onclick="quick_view_cart_item({{ $key }})"
                                                                     title="{{ translate('messages.click_to_edit_this_item') }}">
                                                                     <span
                                                                         class="avatar-status avatar-lg-status avatar-status-dark"><i
                                                                             class="tio-edit"></i></span>
-                                                                    <img class="img-fluid rounded onerror-image"
-                                                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper($detail->campaign['image'], asset('storage/app/public/campaign/').'/'. $detail->campaign['image'], asset('public/assets/admin/img/160x160/img2.jpg') , 'campaign/') }}"
-                                                                        data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                                    <img class="img-fluid rounded"
+                                                                        src="{{ asset('storage/app/public/campaign') }}/{{ $detail->campaign['image'] }}"
+                                                                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
                                                                         alt="Image Description">
                                                                 </div>
                                                             @else
                                                                 <a class="avatar avatar-xl mr-3"
                                                                     href="{{ route('admin.campaign.view', ['item', $detail->campaign['id']]) }}">
-                                                                    <img class="img-fluid rounded onerror-image"
-                                                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper($detail->campaign['image'], asset('storage/app/public/campaign/').'/'. $detail->campaign['image'], asset('public/assets/admin/img/160x160/img2.jpg') , 'campaign/') }}"
-                                                                        data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                                    <img class="img-fluid rounded"
+                                                                        src="{{ asset('storage/app/public/campaign') }}/{{ $detail->campaign['image'] }}"
+                                                                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
                                                                         alt="Image Description">
                                                                 </a>
                                                             @endif
@@ -950,8 +961,10 @@
                             @if ($editing)
                                 <div class="col-12">
                                     <div class="btn--container justify-content-end">
-                                        <button class="btn btn-sm btn--reset cancel-edit-order" type="button" >{{ translate('messages.cancel') }}</button>
-                                        <button class="btn btn-sm btn--primary submit-edit-order" type="button">{{ translate('messages.submit') }}</button>
+                                        <button class="btn btn-sm btn--reset" type="button"
+                                            onclick="cancle_editing_order()">{{ translate('messages.cancel') }}</button>
+                                        <button class="btn btn-sm btn--primary" type="button"
+                                            onclick="update_order()">{{ translate('messages.submit') }}</button>
                                     </div>
                                 </div>
                             @endif
@@ -1057,10 +1070,10 @@
                                     @if ($data)
                                         @foreach ($data as $key => $img)
                                             <div class="col-3">
-                                                <img class="img__aspect-1 rounded border w-100 onerror-image" data-toggle="modal"
+                                                <img class="img__aspect-1 rounded border w-100" data-toggle="modal"
                                                     data-target="#imagemodal{{ $key }}"
-                                                    data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
-                                                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($img, asset('storage/app/public/refund/').'/'. $img, asset('public/assets/admin/img/160x160/img2.jpg') , 'refund/') }}">
+                                                    onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                    src="{{ asset('storage/app/public/refund') . '/' . $img }}">
                                             </div>
                                             <div class="modal fade" id="imagemodal{{ $key }}" tabindex="-1"
                                                 role="dialog" aria-labelledby="myModalLabel{{ $key }}"
@@ -1093,8 +1106,8 @@
                                         @endforeach
                                     @else
                                         <div class="col-3">
-                                            <img class="img__aspect-1 rounded border w-100 onerror-image"
-                                                data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                            <img class="img__aspect-1 rounded border w-100"
+                                                onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                                 src="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}">
                                         </div>
                                     @endif
@@ -1135,10 +1148,12 @@
                                         (($refund && $refund->value == true) || $order->order_status == 'refund_requested') &&
                                             $order->payment_status == 'paid' &&
                                             $order->order_status != 'refunded')
-                                        <button class="btn btn--primary btn--sm route-alert"
-                                                data-url="{{ route('admin.order.status', ['id' => $order['id'],'order_status' => 'refunded',
-                                            ]) }}" data-message="{{ translate('messages.you_want_to_refund_this_order', ['amount' => $refund_amount . ' ' . \App\CentralLogics\Helpers::currency_code()]) }}" data-title="{{ translate('messages.are_you_sure_want_to_refund') }}"
-                                        ><i
+                                        <button class="btn btn--primary btn--sm"
+                                            onclick="route_alert('{{ route('admin.order.status', [
+                                                'id' => $order['id'],
+                                                // 'refund_method'=> 'bank',
+                                                'order_status' => 'refunded',
+                                            ]) }}','{{ translate('messages.you_want_to_refund_this_order', ['amount' => $refund_amount . ' ' . \App\CentralLogics\Helpers::currency_code()]) }}', '{{ translate('messages.are_you_sure_want_to_refund') }}')"><i
                                                 class="tio-money"></i> <span
                                                 class="ml-1">{{ translate('messages.Refund') }}</span> </button>
                                     @endif
@@ -1218,32 +1233,34 @@
                                         </button>
                                         @php($order_delivery_verification = (bool) \App\Models\BusinessSetting::where(['key' => 'order_delivery_verification'])->first()->value)
                                         <div class="dropdown-menu text-capitalize" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item {{ $order['order_status'] == 'pending' ? 'active' : '' }} route-alert"
-                                                   data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'pending']) }}" data-message="{{ translate('Change status to pending ?') }}"
+                                                <a class="dropdown-item {{ $order['order_status'] == 'pending' ? 'active' : '' }}"
+                                                    onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'pending']) }}','{{ translate('Change status to pending ?') }}')"
                                                     href="javascript:">{{ translate('messages.pending') }}</a>
-                                                <a class="dropdown-item {{ $order['order_status'] == 'confirmed' ? 'active' : '' }} route-alert"
-                                                   data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'confirmed']) }}" data-message="{{ translate('Change status to confirmed ?') }}"
+                                                <a class="dropdown-item {{ $order['order_status'] == 'confirmed' ? 'active' : '' }}"
+                                                    onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'confirmed']) }}','{{ translate('Change status to confirmed ?') }}')"
                                                     href="javascript:">{{ translate('messages.confirmed') }}</a>
                                                 @if ($order->order_type != 'parcel')
                                                     @if ($order->store && $order->store->module->module_type == 'food')
-                                                    <a class="dropdown-item {{ $order['order_status'] == 'processing' ? 'active' : '' }} order_status_change_alert" data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'processing']) }}" data-message="{{ translate('Change status to cooking ?') }}" data-processing={{ $max_processing_time }}
+                                                    <a class="dropdown-item {{ $order['order_status'] == 'processing' ? 'active' : '' }}"
+                                                    onclick="order_status_change_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'processing']) }}','{{ translate('Change status to cooking ?') }}', {{ $max_processing_time }})"
                                                         href="javascript:">{{ translate('messages.processing') }}</a>
                                                     @else
-                                                    <a class="dropdown-item {{ $order['order_status'] == 'processing' ? 'active' : '' }} route-alert"
-                                                       data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'processing']) }}" data-message="{{ translate('Change status to processing ?') }}"
+                                                    <a class="dropdown-item {{ $order['order_status'] == 'processing' ? 'active' : '' }}"
+                                                        onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'processing']) }}','{{ translate('Change status to processing ?') }}')"
                                                         href="javascript:">{{ translate('messages.processing') }}</a>
                                                     @endif
-                                                    <a class="dropdown-item {{ $order['order_status'] == 'handover' ? 'active' : '' }} route-alert"
-                                                       data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'handover']) }}" data-message="{{ translate('Change status to handover ?') }}"
+                                                    <a class="dropdown-item {{ $order['order_status'] == 'handover' ? 'active' : '' }}"
+                                                        onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'handover']) }}','{{ translate('Change status to handover ?') }}')"
                                                         href="javascript:">{{ translate('messages.handover') }}</a>
                                                 @endif
-                                                <a class="dropdown-item {{ $order['order_status'] == 'picked_up' ? 'active' : '' }} route-alert"
-                                                   data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'picked_up']) }}" data-message="{{ translate('Change status to out for delivery ?') }}"
+                                                <a class="dropdown-item {{ $order['order_status'] == 'picked_up' ? 'active' : '' }}"
+                                                    onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'picked_up']) }}','{{ translate('Change status to out for delivery ?') }}')"
                                                     href="javascript:">{{ translate('messages.out_for_delivery') }}</a>
-                                                <a class="dropdown-item {{ $order['order_status'] == 'delivered' ? 'active' : '' }} route-alert"
-                                                   data-url="{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'delivered']) }}" data-message="{{ translate('Change status to delivered (payment status will be paid if not)?') }}"
+                                                <a class="dropdown-item {{ $order['order_status'] == 'delivered' ? 'active' : '' }}"
+                                                    onclick="route_alert('{{ route('admin.order.status', ['id' => $order['id'], 'order_status' => 'delivered']) }}','{{ translate('Change status to delivered (payment status will be paid if not)?') }}')"
                                                     href="javascript:">{{ translate('messages.delivered') }}</a>
-                                                <a class="dropdown-item {{ $order['order_status'] == 'canceled' ? 'active' : '' }} canceled-status">{{ translate('messages.canceled') }}</a>
+                                                <a class="dropdown-item {{ $order['order_status'] == 'canceled' ? 'active' : '' }}"
+                                                onclick="cancelled_status()">{{ translate('messages.canceled') }}</a>
                                             </div>
 
                                     </div>
@@ -1280,9 +1297,9 @@
                                 <a class="media align-items-center deco-none customer--information-single"
                                     href="{{ route('admin.users.delivery-man.preview', [$order->delivery_man['id']]) }}">
                                     <div class="avatar avatar-circle">
-                                        <img class="avatar-img onerror-image"
-                                            data-onerror-image="{{ asset('public/assets/admin/img/160x160/img1.jpg') }}"
-                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper($order->delivery_man->image, asset('storage/app/public/delivery-man/').'/'. $order->delivery_man->image, asset('public/assets/admin/img/160x160/img1.jpg') , 'delivery-man/') }}"
+                                        <img class="avatar-img"
+                                            onerror="this.src='{{ asset('public/assets/admin/img/160x160/img1.jpg') }}'"
+                                            src="{{ asset('storage/app/public/delivery-man/' . $order->delivery_man->image) }}"
                                             alt="Image Description">
                                     </div>
                                     <div class="media-body">
@@ -1343,9 +1360,9 @@
                             <a class="media align-items-center deco-none customer--information-single"
                                 href="{{ route('admin.users.customer.view', [$order->customer['id']]) }}">
                                 <div class="avatar avatar-circle">
-                                    <img class="avatar-img onerror-image"
-                                        data-onerror-image="{{ asset('public/assets/admin/img/160x160/img1.jpg') }}"
-                                        src="{{ \App\CentralLogics\Helpers::onerror_image_helper($order->customer->image, asset('storage/app/public/profile/').'/'. $order->customer->image, asset('public/assets/admin/img/160x160/img1.jpg') , 'profile/') }}"
+                                    <img class="avatar-img"
+                                        onerror="this.src='{{ asset('public/assets/admin/img/160x160/img1.jpg') }}'"
+                                        src="{{ asset('storage/app/public/profile/' . $order->customer->image) }}"
                                         alt="Image Description">
                                 </div>
                                 <div class="media-body">
@@ -1377,15 +1394,6 @@
                                         <a class="deco-none info d-flex"
                                             href="tel:{{ $receiver_details['contact_person_number'] }}">
                                             {{ $receiver_details['contact_person_number'] }}</a>
-
-                                            <span class="name">{{ translate('Floor')  }}</span> <span
-                                            class="info">{{ $receiver_details['floor']  ?? translate('messages.N/A') }}</span>
-                                            <span class="name">{{ translate('House')  }}</span> <span
-                                            class="info">{{ $receiver_details['house'] ?? translate('messages.N/A') }}</span>
-                                            <span class="name">{{ translate('Road') }}</span> <span
-                                                class="info">{{  $receiver_details['road'] ?? translate('messages.N/A') }}</span>
-                                        <hr class="w-100">
-
                                         @if (isset($receiver_details['address']))
                                             @if (isset($receiver_details['latitude']) && isset($receiver_details['longitude']))
                                                 <a class="mt-2 d-flex" target="_blank"
@@ -1478,10 +1486,10 @@
                         <div class="row g-3">
                                 @foreach ($data as $key => $img)
                                     <div class="col-3">
-                                        <img class="img__aspect-1 rounded border w-100 onerror-image" data-toggle="modal"
+                                        <img class="img__aspect-1 rounded border w-100" data-toggle="modal"
                                             data-target="#imagemodal{{ $key }}"
-                                            data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
-                                            src="{{\App\CentralLogics\Helpers::onerror_image_helper($img , asset('storage/app/public/order/') .'/'. $img , asset('public/assets/admin/img/160x160/img2.jpg'), 'order/') }}">
+                                            onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                            src="{{ asset('storage/app/public/order') . '/' . $img }}">
                                     </div>
                                     <div class="modal fade" id="imagemodal{{ $key }}" tabindex="-1"
                                         role="dialog" aria-labelledby="order_proof_{{ $key }}"
@@ -1532,9 +1540,9 @@
                             <a class="media align-items-center deco-none resturant--information-single"
                                 href="{{ route('admin.store.view', [$order->store['id'],'module_id' => $order->module_id]) }}">
                                 <div class="avatar avatar-circle">
-                                    <img class="avatar-img w-75px onerror-image"
-                                        data-onerror-image="{{ asset('public/assets/admin/img/100x100/1.png') }}"
-                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper($order->store->logo , asset('storage/app/public/store/') .'/'. $order->store->logo , asset('public/assets/admin/img/100x100/1.png'), 'store/') }}"
+                                    <img class="avatar-img w-75px"
+                                        onerror="this.src='{{ asset('public/assets/admin/img/100x100/1.png') }}'"
+                                        src="{{ asset('storage/app/public/store/' . $order->store->logo) }}"
                                         alt="Image Description">
                                 </div>
                                 <div class="media-body">
@@ -1861,14 +1869,15 @@
                                 @foreach ($deliveryMen as $dm)
                                     <li class="list-group-item">
                                         <span class="dm_list" role='button' data-id="{{ $dm['id'] }}">
-                                            <img class="avatar avatar-sm avatar-circle mr-1 onerror-image"
-                                                data-onerror-image="{{ asset('public/assets/admin/img/160x160/img1.jpg') }}"
-                                                src="{{\App\CentralLogics\Helpers::onerror_image_helper($dm['image'], asset('storage/app/public/delivery-man/') .'/'. $dm['image'], asset('public/assets/admin/img/160x160/img1.jpg'), 'delivery-man/') }}"
+                                            <img class="avatar avatar-sm avatar-circle mr-1"
+                                                onerror="this.src='{{ asset('public/assets/admin/img/160x160/img1.jpg') }}'"
+                                                src="{{ asset('storage/app/public/delivery-man') }}/{{ $dm['image'] }}"
                                                 alt="{{ $dm['name'] }}">
                                             {{ $dm['name'] }}
                                         </span>
 
-                                        <a class="btn btn-primary btn-xs float-right add-delivery-man" data-id="{{ $dm['id'] }}">{{ translate('messages.assign') }}</a>
+                                        <a class="btn btn-primary btn-xs float-right"
+                                            onclick="addDeliveryMan({{ $dm['id'] }})">{{ translate('messages.assign') }}</a>
                                     </li>
                                 @endforeach
                             </ul>
@@ -2001,10 +2010,10 @@
                         @if ($order?->offline_payments->status != 'denied')
                         <button type="button" class="btn btn--danger btn-outline-danger offline_payment_cancelation_note" data-toggle="modal" data-target="#offline_payment_cancelation_note" data-id="{{ $order['id'] }}" class="btn btn--reset">{{translate('Payment_Didn’t_Recerive')}}</button>
                         @elseif ($order?->offline_payments->status == 'denied')
-                            <button type="button" data-url="{{ route('admin.order.offline_payment', [ 'id' => $order['id'], 'verify' => 'switched_to_cod', ]) }}" data-message="{{ translate('messages.Make_the_payment_verified_for_this_order') }}" class="btn btn-info mb-2 route-alert">{{translate('Switched_to_COD')}}</button>
+                            <button type="button" onclick="route_alert('{{ route('admin.order.offline_payment', [ 'id' => $order['id'], 'verify' => 'switched_to_cod', ]) }}','{{ translate('messages.Make_the_payment_verified_for_this_order') }}')" onclick="" class="btn btn-info mb-2">{{translate('Switched_to_COD')}}</button>
                         @endif
 
-                        <button type="button" data-url="{{ route('admin.order.offline_payment', [ 'id' => $order['id'], 'verify' => 'yes', ]) }}" data-message="{{ translate('messages.Make_the_payment_verified_for_this_order') }}" class="btn btn--primary mb-2 route-alert">{{translate('Yes,_Payment_Received')}}</button>
+                        <button type="button" onclick="route_alert('{{ route('admin.order.offline_payment', [ 'id' => $order['id'], 'verify' => 'yes', ]) }}','{{ translate('messages.Make_the_payment_verified_for_this_order') }}')" onclick="" class="btn btn--primary mb-2">{{translate('Yes,_Payment_Received')}}</button>
                     </div>
                     @endif
                 </div>
@@ -2051,16 +2060,11 @@
             location.href = nurl;
         });
 
-        $('.set-category-filter').on('change', function() {
-            let id = $(this).val();
+        function set_category_filter(id) {
             var nurl = new URL('{!! url()->full() !!}');
             nurl.searchParams.set('category_id', id);
             location.href = nurl;
-        })
-
-        $('.addon_quantity_input_toggle').on('change', function(event) {
-            addon_quantity_input_toggle(event);
-        })
+        }
 
         function addon_quantity_input_toggle(e) {
             var cb = $(e.target);
@@ -2075,8 +2079,7 @@
             }
         }
 
-        $('.quick-view-cart-item').on('click',function (){
-            let key = $(this).data('key');
+        function quick_view_cart_item(key) {
             $.get({
                 url: '{{ route('admin.order.quick-view-cart-item') }}',
                 dataType: 'json',
@@ -2095,12 +2098,7 @@
                     $('#loading').hide();
                 },
             });
-        })
-
-        $('.quick-view').on('click',function (){
-            let product_id = $(this).data('product-id');
-            quickView(product_id);
-        })
+        }
 
         function quickView(product_id) {
             $.get({
@@ -2226,13 +2224,6 @@
             }
         }
 
-
-        $(document).on('click', '.update_order_item', function () {
-
-
-            update_order_item();
-        })
-
         function update_order_item(form_id = 'add-to-cart-form') {
             $.ajaxSetup({
                 headers: {
@@ -2282,12 +2273,6 @@
             });
         }
 
-
-        $(document).on('click', '.removeFromCart', function () {
-            let key = $(this).data('key');
-            removeFromCart(key);
-        })
-
         function removeFromCart(key) {
             Swal.fire({
                 title: '{{ translate('messages.are_you_sure') }}',
@@ -2328,7 +2313,7 @@
 
         }
 
-        $('.edit-order').on('click',function (){
+        function edit_order() {
             Swal.fire({
                 title: '{{ translate('messages.are_you_sure') }}',
                 text: '{{ translate('messages.you_want_to_edit_this_order') }}',
@@ -2344,9 +2329,9 @@
                     location.href = '{{ route('admin.order.edit', $order->id) }}';
                 }
             })
-        })
+        }
 
-        $('.cancel-edit-order').on('click',function (){
+        function cancle_editing_order() {
             Swal.fire({
                 title: '{{ translate('messages.are_you_sure') }}',
                 text: '{{ translate('messages.you_want_to_cancel_editing') }}',
@@ -2362,9 +2347,9 @@
                     location.href = '{{ route('admin.order.edit', $order->id) }}?cancle=true';
                 }
             })
-        })
+        }
 
-        $('.submit-edit-order').on('click',function (){
+        function update_order() {
             Swal.fire({
                 title: '{{ translate('messages.are_you_sure') }}',
                 text: '{{ translate('messages.you_want_to_submit_all_changes_for_this_order') }}',
@@ -2380,7 +2365,7 @@
                     location.href = '{{ route('admin.order.update', $order->id) }}';
                 }
             })
-        })
+        }
     </script>
 
     <script
@@ -2393,8 +2378,7 @@
             var select2 = $.HSCore.components.HSSelect2.init($(this));
         });
 
-            $('.add-delivery-man').on('click',function (){
-                id = $(this).data('id');
+        function addDeliveryMan(id) {
             $.ajax({
                 type: "GET",
                 url: '{{ url('/') }}/admin/order/add-delivery-man/{{ $order['id'] }}/' + id,
@@ -2414,14 +2398,7 @@
                     });
                 }
             });
-        })
-
-        $('.order_status_change_alert').on('click', function (){
-            let route = $(this).data('url');
-            let message = $(this).data('message');
-            let processing = $(this).data('processing');
-            order_status_change_alert(route, message, processing);
-        })
+        }
 
         function order_status_change_alert(route, message, processing = false) {
             if (processing) {
@@ -2469,7 +2446,7 @@
                 ProgressBar: true
             });
         }
-            $('.canceled-status').on('click', function (){
+        function cancelled_status() {
             Swal.fire({
                 title: '{{ translate('messages.are_you_sure') }}',
                 text: '{{ translate('messages.Change status to canceled ?') }}',
@@ -2504,7 +2481,7 @@
                     location.href = '{!! route('admin.order.status', ['id' => $order['id'],'order_status' => 'canceled']) !!}&reason='+reason,'{{ translate('Change status to canceled ?') }}';
                 }
             })
-        })
+        }
     </script>
     <script>
         var deliveryMan = <?php echo json_encode($deliveryMen); ?>;

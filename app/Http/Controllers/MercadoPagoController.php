@@ -15,9 +15,11 @@ use MercadoPago\Payer;
 class MercadoPagoController extends Controller
 {
     use Processor;
+
     private PaymentRequest $paymentRequest;
     private $config;
     private $user;
+
     public function __construct(PaymentRequest $paymentRequest, User $user)
     {
         $config = $this->payment_config('mercadopago', 'payment_config');
@@ -29,14 +31,18 @@ class MercadoPagoController extends Controller
         $this->paymentRequest = $paymentRequest;
         $this->user = $user;
     }
+
+
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'payment_id' => 'required|uuid'
         ]);
+
         if ($validator->fails()) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_400, null, $this->error_processor($validator)), 400);
         }
+
         $data = $this->paymentRequest::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
         if (!isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
@@ -44,6 +50,7 @@ class MercadoPagoController extends Controller
         $config = $this->config;
         return view('payment-views.payment-view-marcedo-pogo', compact('config', 'data'));
     }
+
     public function make_payment(Request $request)
     {
         SDK::setAccessToken($this->config->access_token);
@@ -54,6 +61,7 @@ class MercadoPagoController extends Controller
         $payment->installments = (int)$request['installments'];
         $payment->payment_method_id = $request['paymentMethodId'];
         $payment->issuer_id = (int)$request['issuer'];
+
         $payer = new Payer();
         $payer->email = $request['payer']['email'];
         $payer->identification = array(
@@ -62,6 +70,7 @@ class MercadoPagoController extends Controller
         );
         $payment->payer = $payer;
         $payment->save();
+
         if ($payment->status == 'approved') {
             $this->paymentRequest::where(['id' => $request['payment_id']])->update([
                 'payment_method' => 'mercadopago',
@@ -80,6 +89,7 @@ class MercadoPagoController extends Controller
         }
         return $this->payment_response($payment_data,'fail');
     }
+
     public function get_test_user(Request $request)
     {
         $curl = curl_init();

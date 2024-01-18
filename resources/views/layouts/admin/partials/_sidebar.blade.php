@@ -5,12 +5,8 @@
                 <!-- Logo -->
                 @php($store_logo = \App\Models\BusinessSetting::where(['key' => 'logo'])->first()->value)
                 <a class="navbar-brand" href="{{ route('admin.dashboard') }}" aria-label="Front">
-                    <img class="navbar-brand-logo initial--36 onerror-image onerror-image" data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
-                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($store_logo, asset('storage/app/public/business/').'/' . $store_logo, asset('public/assets/admin/img/160x160/img1.jpg') ,'business/' )}}"
-                    alt="Logo">
-                    <img class="navbar-brand-logo-mini initial--36 onerror-image onerror-image" data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
-                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($store_logo, asset('storage/app/public/business/').'/' . $store_logo, asset('public/assets/admin/img/160x160/img2.jpg') ,'business/' )}}"
-                    alt="Logo">
+                    <img class="navbar-brand-logo initial--36" onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'" src="{{ asset('storage/app/public/business/' . $store_logo) }}" alt="Logo">
+                    <img class="navbar-brand-logo-mini initial--36" onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'" src="{{ asset('storage/app/public/business/' . $store_logo) }}" alt="Logo">
                 </a>
                 <!-- End Logo -->
 
@@ -1113,11 +1109,9 @@
                                 }'>
                             <div class="cmn--media right-dropdown-icon d-flex align-items-center">
                                 <div class="avatar avatar-sm avatar-circle">
-                                    <img class="avatar-img onerror-image"
-                                        data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
-
-                                        src="{{\App\CentralLogics\Helpers::onerror_image_helper(auth('admin')->user()->image, asset('storage/app/public/admin/').'/'.auth('admin')->user()->image, asset('public/assets/admin/img/160x160/img1.jpg') ,'admin/')}}"
-
+                                    <img class="avatar-img"
+                                        onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
+                                        src="{{asset('storage/app/public/admin')}}/{{auth('admin')->user()->image}}"
                                         alt="Image Description">
                                     <span class="avatar-status avatar-sm-status avatar-status-success"></span>
                                 </div>
@@ -1136,10 +1130,9 @@
                             <div class="dropdown-item-text">
                                 <div class="media align-items-center">
                                     <div class="avatar avatar-sm avatar-circle mr-2">
-                                        <img class="avatar-img onerror-image"
-                                                data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
-                                                src="{{\App\CentralLogics\Helpers::onerror_image_helper(auth('admin')->user()->image, asset('storage/app/public/admin/').'/'.auth('admin')->user()->image, asset('public/assets/admin/img/160x160/img1.jpg') ,'admin/')}}"
-
+                                        <img class="avatar-img"
+                                                onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
+                                                src="{{asset('storage/app/public/admin')}}/{{auth('admin')->user()->image}}"
                                                 alt="Image Description">
                                     </div>
                                     <div class="media-body">
@@ -1157,7 +1150,21 @@
 
                             <div class="dropdown-divider"></div>
 
-                            <a class="dropdown-item log-out" href="javascript:">
+                            <a class="dropdown-item" href="javascript:" onclick="Swal.fire({
+                                title: '{{translate("logout_warning_message")}}',
+                                showDenyButton: true,
+                                showCancelButton: true,
+                                confirmButtonColor: '#FC6A57',
+                                cancelButtonColor: '#363636',
+                                confirmButtonText: `{{ translate('yes')}}`,
+                                cancelButtonText: '{{ translate('Don`t_Logout')}}',
+                                }).then((result) => {
+                                if (result.value) {
+                                location.href='{{route('logout')}}';
+                                } else{
+                                Swal.fire('{{ translate('messages.canceled') }}', '', 'info')
+                                }
+                                })">
                                 <span class="text-truncate pr-2" title="Sign out">{{translate('messages.sign_out')}}</span>
                             </a>
                         </div>

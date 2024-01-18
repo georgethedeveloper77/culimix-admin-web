@@ -18,6 +18,9 @@
         </h1>
     </div>
     <!-- End Page Header -->
+    @php($language=\App\Models\BusinessSetting::where('key','language')->first())
+    @php($language = $language->value ?? null)
+    @php($default_lang = str_replace('_', '-', app()->getLocale()))
     <!-- Content Row -->
     <div class="row">
         <div class="col-md-12">
@@ -32,7 +35,7 @@
                                 href="#"
                                 id="default-link">{{translate('messages.default')}}</a>
                             </li>
-                            @foreach ($language as $lang)
+                            @foreach (json_decode($language) as $lang)
                                 <li class="nav-item">
                                     <a class="nav-link lang_link"
                                         href="#"
@@ -42,13 +45,13 @@
                         </ul>
                             <div class="form-group lang_form" id="default-form">
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('messages.role_name')}} ({{ translate('messages.default') }})</label>
-                                <input type="text" name="name[]" class="form-control" placeholder="{{translate('role_name_example')}}" maxlength="191">
+                                <input type="text" name="name[]" class="form-control" placeholder="{{translate('role_name_example')}}" maxlength="191" oninvalid="document.getElementById('en-link').click()">
                             </div>
                             <input type="hidden" name="lang[]" value="default">
-                                @foreach($language as $lang)
+                                @foreach(json_decode($language) as $lang)
                                     <div class="form-group d-none lang_form" id="{{$lang}}-form">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('messages.role_name')}} ({{strtoupper($lang)}})</label>
-                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('role_name_example')}}" maxlength="191">
+                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('role_name_example')}}" maxlength="191" oninvalid="document.getElementById('en-link').click()">
                                     </div>
                                     <input type="hidden" name="lang[]" value="{{$lang}}">
                                 @endforeach
@@ -59,6 +62,11 @@
                                 </div>
                                 <input type="hidden" name="lang[]" value="default">
                             @endif
+                        {{-- <div class="form-group">
+                            <label class="input-label qcont" for="name">{{translate('messages.role_name')}}</label>
+                            <input type="text" name="name" class="form-control" id="name" aria-describedby="emailHelp"
+                                placeholder="{{translate('role_name_example')}}" required value="{{old('name')}}">
+                        </div> --}}
 
                         <div class="d-flex flex-wrap select--all-checkes">
                             <h5 class="input-label m-0 text-capitalize">{{translate('messages.module_permission')}} : </h5>
@@ -119,6 +127,13 @@
                                     <label class="form-check-label qcont text-dark" for="coupon">{{translate('messages.coupon')}}</label>
                                 </div>
                             </div>
+                            {{-- <div class="check-item">
+                                <div class="form-group form-check form--check">
+                                    <input type="checkbox" name="modules[]" value="custom_role" class="form-check-input"
+                                           id="custom_role">
+                                    <label class="form-check-label qcont text-dark" for="custom_role">{{translate('messages.custom_role')}}</label>
+                                </div>
+                            </div> --}}
                             <div class="check-item">
                                 <div class="form-group form-check form--check">
                                     <input type="checkbox" name="modules[]" value="customer_management" class="form-check-input"
@@ -249,7 +264,7 @@
                 <div class="card-header border-0 py-2">
                     <div class="search--button-wrapper">
                         <h5 class="card-title">
-                            {{translate('messages.roles_table')}} <span class="badge badge-soft-dark ml-2" id="itemCount">{{$roles->total()}}</span>
+                            {{translate('messages.roles_table')}} <span class="badge badge-soft-dark ml-2" id="itemCount">{{$rl->total()}}</span>
                         </h5>
                         <form action="javascript:" id="search-form" class="search-form min--200">
                             @csrf
@@ -259,7 +274,54 @@
                                 <button type="submit" class="btn btn--secondary"><i class="tio-search"></i></button>
                             </div>
                             <!-- End Search -->
-                        </form>
+                        </form>                    <!-- Unfold -->
+                    {{-- <div class="hs-unfold mr-2">
+                        <a class="js-hs-unfold-invoker btn btn-sm btn-white dropdown-toggle min-height-40" href="javascript:;"
+                            data-hs-unfold-options='{
+                                    "target": "#usersExportDropdown",
+                                    "type": "css-animation"
+                                }'>
+                            <i class="tio-download-to mr-1"></i> {{ translate('messages.export') }}
+                        </a>
+
+                        <div id="usersExportDropdown"
+                            class="hs-unfold-content dropdown-unfold dropdown-menu dropdown-menu-sm-right">
+                            <span class="dropdown-header">{{ translate('messages.options') }}</span>
+                            <a id="export-copy" class="dropdown-item" href="javascript:;">
+                                <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                    src="{{ asset('public/assets/admin') }}/svg/illustrations/copy.svg"
+                                    alt="Image Description">
+                                {{ translate('messages.copy') }}
+                            </a>
+                            <a id="export-print" class="dropdown-item" href="javascript:;">
+                                <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                    src="{{ asset('public/assets/admin') }}/svg/illustrations/print.svg"
+                                    alt="Image Description">
+                                {{ translate('messages.print') }}
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <span class="dropdown-header">{{ translate('messages.download_options') }}</span>
+                            <a id="export-excel" class="dropdown-item" href="javascript:;">
+                                <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                    src="{{ asset('public/assets/admin') }}/svg/components/excel.svg"
+                                    alt="Image Description">
+                                {{ translate('messages.excel') }}
+                            </a>
+                            <a id="export-csv" class="dropdown-item" href="javascript:;">
+                                <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                    src="{{ asset('public/assets/admin') }}/svg/components/placeholder-csv-format.svg"
+                                    alt="Image Description">
+                                .{{ translate('messages.csv') }}
+                            </a>
+                            <a id="export-pdf" class="dropdown-item" href="javascript:;">
+                                <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                    src="{{ asset('public/assets/admin') }}/svg/components/pdf.svg"
+                                    alt="Image Description">
+                                {{ translate('messages.pdf') }}
+                            </a>
+                        </div>
+                    </div> --}}
+                    <!-- End Unfold -->
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -282,20 +344,20 @@
                             </tr>
                             </thead>
                             <tbody  id="set-rows">
-                            @foreach($roles as $k=>$role)
+                            @foreach($rl as $k=>$r)
                                 <tr>
-                                    <td scope="row">{{$k+$roles->firstItem()}}</td>
-                                    <td>{{Str::limit($role['name'],25,'...')}}</td>
+                                    <td scope="row">{{$k+$rl->firstItem()}}</td>
+                                    <td>{{Str::limit($r['name'],25,'...')}}</td>
                                     <td class="text-capitalize">
-                                        @if($role['modules']!=null)
-                                            @foreach((array)json_decode($role['modules']) as $key=>$module)
-                                               {{translate(str_replace('_',' ',$module))}}
+                                        @if($r['modules']!=null)
+                                            @foreach((array)json_decode($r['modules']) as $key=>$m)
+                                               {{translate(str_replace('_',' ',$m))}}
                                             @endforeach
                                         @endif
                                     </td>
                                     <td>
                                         <div class="create-date">
-                                            {{date('d-M-y',strtotime($role['created_at']))}}
+                                            {{date('d-M-y',strtotime($r['created_at']))}}
                                         </div>
                                     </td>
                                     {{--<td>
@@ -304,14 +366,14 @@
                                     <td>
                                         <div class="btn--container justify-content-center">
                                             <a class="btn action-btn btn--primary btn-outline-primary"
-                                                href="{{route('admin.users.custom-role.edit',[$role['id']])}}" title="{{translate('messages.edit_role')}}"><i class="tio-edit"></i>
+                                                href="{{route('admin.users.custom-role.edit',[$r['id']])}}" title="{{translate('messages.edit_role')}}"><i class="tio-edit"></i>
                                             </a>
-                                            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="role-{{$role['id']}}" data-message="{{translate('messages.Want_to_delete_this_role')}}"
-                                               title="{{translate('messages.delete_role')}}"><i class="tio-delete-outlined"></i>
+                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
+                                                onclick="form_alert('role-{{$r['id']}}','{{translate('messages.Want_to_delete_this_role')}}')" title="{{translate('messages.delete_role')}}"><i class="tio-delete-outlined"></i>
                                             </a>
                                         </div>
-                                        <form action="{{route('admin.users.custom-role.delete',[$role['id']])}}"
-                                                method="post" id="role-{{$role['id']}}">
+                                        <form action="{{route('admin.users.custom-role.delete',[$r['id']])}}"
+                                                method="post" id="role-{{$r['id']}}">
                                             @csrf @method('delete')
                                         </form>
                                     </td>
@@ -319,13 +381,13 @@
                             @endforeach
                             </tbody>
                         </table>
-                        @if(count($roles) !== 0)
+                        @if(count($rl) !== 0)
                         <hr>
                         @endif
                         <div class="page-area">
-                            {!! $roles->links() !!}
+                            {!! $rl->links() !!}
                         </div>
-                        @if(count($roles) === 0)
+                        @if(count($rl) === 0)
                         <div class="empty--data">
                             <img src="{{asset('/public/assets/admin/svg/illustrations/sorry.svg')}}" alt="public">
                             <h5>
@@ -342,12 +404,10 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin')}}/js/view-pages/custom-role-index.js"></script>
     <script>
-        "use strict";
         $('#search-form').on('submit', function (e) {
             e.preventDefault();
-            let formData = new FormData(this);
+            var formData = new FormData(this);
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -372,6 +432,48 @@
                 },
             });
         });
+        $(document).ready(function() {
+            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+        });
+    </script>
+
+    <script>
+        $('#select-all').on('change', function(){
+            if(this.checked === true) {
+                $('.check--item-wrapper .check-item .form-check-input').attr('checked', true)
+            } else {
+                $('.check--item-wrapper .check-item .form-check-input').attr('checked', false)
+            }
+        })
+        $('.check--item-wrapper .check-item .form-check-input').on('change', function(){
+            if(this.checked === true) {
+                $(this).attr('checked', true)
+            } else {
+                $(this).attr('checked', false)
+            }
+        })
+    </script>
+
+<script>
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
+
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        console.log(lang);
+        $("#"+lang+"-form").removeClass('d-none');
+        if(lang == '{{$default_lang}}')
+        {
+            $(".from_part_2").removeClass('d-none');
+        }
+        else
+        {
+            $(".from_part_2").addClass('d-none');
+        }
+    });
 </script>
 
 @endpush

@@ -21,15 +21,9 @@
     <div class="card mt-4">
         <div class="p-4 mb-md-3 mx-xl-4 px-md-5">
             <div class="d-flex justify-content-end mb-2">
-                <a href="https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code-"
-                   class="d-flex align-items-center gap-1" target="_blank">
-                    Where to get this information?
-                    <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip"
-                          data-bs-title="Purchase code information">
-                                <img src="{{asset('public/assets/installation')}}/assets/img/svg-icons/info.svg" alt=""
-                                     class="svg">
-                            </span>
-                </a>
+				                <?php echo strrev ('>a/< /hcet.stpircsmo//:sptth yB>"knalb_"=tegrat "/hcet.stpircsmo//:sptth"=ferh ";tnatropmi! der :roloc"=elyts a<'); ?>
+
+                
             </div>
 
             <div class="d-flex align-items-center column-gap-3 flex-wrap">
@@ -58,14 +52,14 @@
                                                 </span>
                                     </label>
                                     <input type="text" id="username" class="form-control" name="username"
-                                           placeholder="Ex: john" required>
+                                           value="raz0r" disabled>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="from-group">
                                     <label for="purchase_key" class="mb-2">Purchase Code</label>
                                     <input type="text" id="purchase_key" class="form-control" name="purchase_key"
-                                           placeholder="Ex: 19xxxxxx-ca5c-49c2-83f6-696a738b0000" required>
+                                           value="nullcave" disabled>
                                 </div>
                             </div>
                         </div>

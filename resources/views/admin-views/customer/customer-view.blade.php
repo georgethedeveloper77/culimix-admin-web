@@ -186,8 +186,7 @@
                         <div class="card-body">
                             <div class="customer--information-single media align-items-center" href="javascript:">
                                 <div class="avatar avatar-circle">
-                                    <img class="avatar-img onerror-image" data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}" src="{{\App\CentralLogics\Helpers::onerror_image_helper($customer->image, asset('storage/app/public/profile/').'/'.$customer->image, asset('public/assets/admin/img/160x160/img1.jpg'), 'profile/') }}"
-                                    alt="Image Description">
+                                    <img class="avatar-img" onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'" src="{{asset('storage/app/public/profile/'.$customer->image)}}" alt="Image Description">
                                 </div>
                                 <div class="media-body">
                                     <ul class="list-unstyled m-0">
@@ -252,7 +251,7 @@
         $(document).on('ready', function () {
             // INITIALIZATION OF DATATABLES
             // =======================================================
-            let datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
 
             $('#column1_search').on('keyup', function () {
                 datatable
@@ -273,7 +272,7 @@
             // INITIALIZATION OF SELECT2
             // =======================================================
             $('.js-select2-custom').each(function () {
-                let select2 = $.HSCore.components.HSSelect2.init($(this));
+                var select2 = $.HSCore.components.HSSelect2.init($(this));
             });
         });
     </script>

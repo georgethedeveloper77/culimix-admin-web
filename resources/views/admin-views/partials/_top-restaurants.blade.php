@@ -9,6 +9,7 @@
     @else
         @php($zone_name = translate('messages.all'))
     @endif
+    {{--<label class="badge badge-soft-primary">{{translate('messages.zone')}} : {{$zone_name}}</label>--}}
         <a href="{{ route('admin.store.list') }}" class="fz-12px font-medium text-006AE5">{{translate('view_all')}}</a>
 </div>
 <!-- End Header -->
@@ -19,13 +20,7 @@
         @foreach($top_restaurants as $key=>$item)
         <a href="{{route('admin.store.view', $item->id)}}">
             <div class="position-relative overflow-hidden">
-                <img class="onerror-image" data-onerror-image="{{asset('public/assets/admin/img/100x100/1.png')}}"
-                src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
-                    $item['logo'] ?? '',
-                    asset('storage/app/public/store').'/'.$item['logo'] ?? '',
-                    asset('public/assets/admin/img/100x100/1.png'),
-                    'store/'
-                ) }}"  >
+                <img onerror="this.src='{{asset('public/assets/admin/img/100x100/1.png')}}'" src="{{asset('storage/app/public/store')}}/{{$item['logo']}}">
                 <h5 class="info m-0">
                     {{translate('order : ')}} {{$item['order_count']}}
                 </h5>
@@ -35,4 +30,3 @@
     </div>
 </div>
 <!-- End Body -->
-<script src="{{asset('public/assets/admin')}}/js/view-pages/common.js"></script>

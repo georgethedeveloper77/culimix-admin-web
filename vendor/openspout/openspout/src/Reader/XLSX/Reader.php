@@ -28,8 +28,8 @@ final class Reader extends AbstractReader
     /** @var SheetIterator To iterator over the XLSX sheets */
     private SheetIterator $sheetIterator;
 
-    private readonly Options $options;
-    private readonly CachingStrategyFactoryInterface $cachingStrategyFactory;
+    private Options $options;
+    private CachingStrategyFactoryInterface $cachingStrategyFactory;
 
     public function __construct(
         ?Options $options = null,

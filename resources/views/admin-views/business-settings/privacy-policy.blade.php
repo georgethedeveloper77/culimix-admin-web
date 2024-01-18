@@ -26,7 +26,7 @@
                     @csrf
                     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
                     @php($language = $language->value ?? null)
-                    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
+                    @php($default_lang = str_replace('_', '-', app()->getLocale()))
                     @if ($language)
                     <ul class="nav nav-tabs mb-4 border-0">
                         <li class="nav-item">
@@ -82,5 +82,21 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin/ckeditor/ckeditor.js')}}"></script>
+<script src="//cdn.ckeditor.com/4.14.1/standard/ckeditor.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.ckeditor').ckeditor();
+    });
+</script>
+<script>
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(this).addClass('active');
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+        $("#"+lang+"-form").removeClass('d-none');
+    });
+</script>
 @endpush

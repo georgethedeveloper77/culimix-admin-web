@@ -29,13 +29,11 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="1" data-day="{{translate('messages.monday')}}"><i class="tio-add"></i></span>
     </div>
@@ -65,13 +63,11 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="2" data-day="{{translate('messages.tuesday')}}"><i class="tio-add"></i></span>
     </div>
@@ -101,20 +97,18 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="3" data-day="{{translate('messages.wednesday')}}"><i class="tio-add"></i></span>
     </div>
 </div>
 
 <div class="schedule-item">
-    <span class="btn">{{translate('messages.thursday')}} :</span>
+    <span class="btn">{{translate('messages.thirsday')}} :</span>
     <div class="schedult-date-content">
         @if(isset($data['4']) && count($data['4']))
             @foreach ($data['4'] as $day)
@@ -137,15 +131,13 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
-        <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="4" data-day="{{translate('messages.thursday')}}"><i class="tio-add"></i></span>
+        <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="4" data-day="{{translate('messages.thirsday')}}"><i class="tio-add"></i></span>
     </div>
 </div>
 
@@ -173,13 +165,11 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="5" data-day="{{translate('messages.friday')}}"><i class="tio-add"></i></span>
     </div>
@@ -209,13 +199,11 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="6" data-day="{{translate('messages.saturday')}}"><i class="tio-add"></i></span>
     </div>
@@ -245,13 +233,11 @@ foreach ($store->schedules as $schedule)
                         {{date(config('timeformat'), strtotime($day['end_time']))}}
                     </span>
                 </span>
-                <span class="dismiss--date delete-schedule"
-                      data-url="{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}"
-                      ><i class="tio-clear-circle-outlined"></i></span>
+                <span class="dismiss--date" onclick="delete_schedule('{{route('vendor.business-settings.remove-schedule',['store_schedule'=>$day['id']])}}')"><i class="tio-clear-circle-outlined"></i></span></span>
             </div>
             @endforeach
         @else
-            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Off_day')}}</span>
+            <span class="btn btn-sm btn-outline-danger m-1 disabled">{{translate('messages.Offday')}}</span>
         @endif
         <span class="btn add--primary" data-toggle="modal" data-target="#exampleModal" data-dayid="0" data-day="{{translate('messages.sunday')}}"><i class="tio-add"></i></span>
     </div>

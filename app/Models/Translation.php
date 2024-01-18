@@ -9,12 +9,7 @@ class Translation extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
-
-
-    protected $casts = [
-        'translationable_id' => 'integer',
-    ];
+    public $timestamps = false; 
     
     protected $fillable = [
         'translationable_type',

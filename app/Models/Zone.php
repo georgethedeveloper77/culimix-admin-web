@@ -4,58 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Carbon;
+// use Grimzy\LaravelMysqlSpatial\Eloquent\SpatialTrait;
 use MatanYadaev\EloquentSpatial\Objects\Polygon;
 use MatanYadaev\EloquentSpatial\Traits\HasSpatial;
 use Illuminate\Database\Eloquent\Builder;
 use App\Scopes\ZoneScope;
 
-/**
- * Class Zone
- *
- * @property int $id
- * @property string $name
- * @property mixed $coordinates
- * @property int $status
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property string|null $store_wise_topic
- * @property string|null $customer_wise_topic
- * @property string|null $deliveryman_wise_topic
- * @property int $cash_on_delivery
- * @property int $digital_payment
- * @property float $increased_delivery_fee
- * @property int $increased_delivery_fee_status
- * @property string|null $increase_delivery_charge_message
- * @property int $offline_payment
- */
 class Zone extends Model
 {
     use HasFactory;
     use HasSpatial;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'name',
-        'coordinates',
-        'status',
-        'store_wise_topic',
-        'customer_wise_topic',
-        'deliveryman_wise_topic',
-        'cash_on_delivery',
-        'digital_payment',
-        'increased_delivery_fee',
-        'increased_delivery_fee_status',
-        'increase_delivery_charge_message',
-        'offline_payment',
+        'coordinates'
     ];
 
     protected $casts = [
@@ -68,7 +29,7 @@ class Zone extends Model
         'coordinates' => Polygon::class,
     ];
 
-    public function translations(): MorphMany
+    public function translations()
     {
         return $this->morphMany(Translation::class, 'translationable');
     }
@@ -85,23 +46,23 @@ class Zone extends Model
         return $value;
     }
 
-    public function stores(): HasMany
+    public function stores()
     {
         return $this->hasMany(Store::class);
     }
 
-    public function deliverymen(): HasMany
+    public function deliverymen()
     {
         return $this->hasMany(DeliveryMan::class);
     }
 
-    public function orders(): HasManyThrough
+    public function orders()
     {
         return $this->hasManyThrough(Order::class, Store::class);
     }
 
 
-    public function campaigns(): HasManyThrough
+    public function campaigns()
     {
         return $this->hasManyThrough(Campaigns::class, Store::class);
     }
@@ -115,7 +76,7 @@ class Zone extends Model
         return $query->whereRaw("ST_Distance_Sphere(coordinates, POINT({$abc}))");
     }
 
-    protected static function booted(): void
+    protected static function booted()
     {
         static::addGlobalScope(new ZoneScope);
 
@@ -126,12 +87,12 @@ class Zone extends Model
         });
     }
 
-    public function modules(): BelongsToMany
+    public function modules()
     {
         return $this->belongsToMany(Module::class)->withPivot(['per_km_shipping_charge','minimum_shipping_charge','maximum_shipping_charge','maximum_cod_order_amount'])->using('App\Models\ModuleZone');
     }
 
-    public static function query(): Builder
+    public static function query()
     {
         return parent::query();
     }

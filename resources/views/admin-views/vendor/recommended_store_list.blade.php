@@ -38,7 +38,7 @@
                                         <div class="w-100 px-2">
                                             <div class="search-form mb-3">
                                                 <button type="button" class="btn"></button>
-                                                <input type="text" class="js-form-search form-control search-bar-input"  placeholder="{{translate('Search Stores')}}...">
+                                                <input type="text" class="js-form-search form-control search-bar-input" onkeyup="search_product()" placeholder="{{translate('Search Stores')}}...">
                                             </div>
                                             <div class="d-flex flex-wrap column-gap-4 row-gap-2 max-h-40vh overflow-y-auto overflow-x-hidden search-result-box" id='hide_class'> </div>
 
@@ -46,7 +46,7 @@
                                     </div>
 
                             <div class="btn--container justify-content-end mt-4">
-                                <button type="reset" class="btn btn--reset remove_all_data">{{translate('messages.reset')}}</button>
+                                <button type="reset" onclick="remove_all_data()" class="btn btn--reset">{{translate('messages.reset')}}</button>
                                 <button type="submit" class="btn btn--primary">{{translate('messages.submit')}}</button>
                             </div>
                         </form>
@@ -62,26 +62,10 @@
                                 {{translate('messages.Recommended_Stores_List')}}<span class="badge badge-soft-dark ml-2" id="itemCount">{{$stores->total()}}</span>
                             </h5>
                             <div class="form-check text-start mb-3">
-                                    <input class="form-check-input dynamic-checkbox"
-                                           data-id="store_shffle"
-                                           data-type="status"
-                                           data-image-on='{{asset('/public/assets/admin/img/modal')}}/counter-on.png'
-                                           data-image-off="{{asset('/public/assets/admin/img/modal')}}/counter-off.png"
-                                           data-title-on="{{translate('Want_to_shuffle_the_store_list?')}}"
-                                           data-title-off="{{translate('Want_to_disable_shuffle_store_list?')}}"
-                                           data-text-on="<p>{{translate('If_enabled,_store_recommended_section_will_be_shuffled.’')}}</p>"
-                                           data-text-off="<p>{{translate('If_disabled,_store_recommended_section_will_not_be_shuffled.')}}</p>"
-                                           type="checkbox" value="1" name="shuffle_store" id="flexCheckDefault" {{ $shuffle_recommended_store == 1 ? 'checked' : '' }} >
+                                    <input class="form-check-input" type="checkbox" value="1" name="shuffle_store" id="flexCheckDefault" {{ $shuffle_recommended_store == 1 ? 'checked' : '' }} >
                                     <label
-                                       data-id="store_shffle"
-                                       data-type="status"
-                                       data-image-on='{{asset('/public/assets/admin/img/modal')}}/counter-on.png'
-                                       data-image-off="{{asset('/public/assets/admin/img/modal')}}/counter-off.png"
-                                       data-title-on="{{translate('Want_to_shuffle_the_store_list?')}}"
-                                       data-title-off="{{translate('Want_to_disable_shuffle_store_list?')}}"
-                                       data-text-on="<p>{{translate('If_enabled,_store_recommended_section_will_be_shuffled.’')}}</p>"
-                                       data-text-off="<p>{{translate('If_disabled,_store_recommended_section_will_not_be_shuffled.')}}</p>" id="store_shffle"
-                                    class="form-check-label dynamic-checkbox" for="flexCheckDefault">
+                                    onclick="toogleStatusModal(event,'store_shffle','counter-on.png','counter-off.png','{{translate('Want_to_shuffle_the_store_list?')}}','{{translate('Want_to_disable_shuffle_store_list?')}}',`<p>{{translate('If_enabled,_store_recommended_section_will_be_shuffled.’')}}</p>`,`<p>{{translate('If_disabled,_store_recommended_section_will_not_be_shuffled.’')}}</p>`)" id="store_shffle"
+                                    class="form-check-label" for="flexCheckDefault">
                                         {{translate('Shuffle_store_when_page_reload?')}}
                                     </label>
                             </div>
@@ -109,14 +93,14 @@
                                  "paging":false
                                }'>
                             <thead class="thead-light">
-                            <tr >
+                            <tr class="text-center">
                                 <th class="border-0">{{translate('sl')}}</th>
                                 <th class="border-0">{{translate('messages.Store_Name')}}</th>
                                 <th class="border-0">{{translate('messages.Ratings')}}</th>
                                 <th class="border-0">{{translate('messages.Total_Products')}}</th>
                                 <th class="border-0">{{translate('messages.Total_Orders')}}</th>
-                                <th class="text-center">{{translate('messages.status')}}</th>
-                                <th class="text-center">{{translate('messages.action')}}</th>
+                                <th class="border-0">{{translate('messages.status')}}</th>
+                                <th class="border-0">{{translate('messages.action')}}</th>
                             </tr>
 
                             </thead>
@@ -124,21 +108,16 @@
                             <tbody id="set-rows">
                             @foreach($stores as $key=>$store)
                                 <tr>
-                                    <td >
+                                    <td class="text-center">
                                         <span class="mr-3">
                                             {{$key+$stores->firstItem()}}
                                         </span>
                                     </td>
-                                    <td >
+                                    <td class="text-center">
                                         <div>
                                             <a href="{{route('admin.store.view', $store->id)}}" class="table-rest-info" alt="view store">
-                                                <img class="img--60 circle onerror-image" data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
-                                                src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
-                                                    $store['logo'] ?? '',
-                                                    asset('storage/app/public/store').'/'.$store['logo'] ?? '',
-                                                    asset('public/assets/admin/img/160x160/img1.jpg'),
-                                                    'store/'
-                                                ) }}"  >
+                                            <img class="img--60 circle" onerror="this.src='{{asset('public/assets/admin/img/160x160/img1.jpg')}}'"
+                                                    src="{{asset('storage/app/public/store')}}/{{$store['logo']}}">
                                                 <div class="info"><div class="text--title">
                                                     {{Str::limit($store->name,20,'...')}}
                                                     </div>
@@ -150,33 +129,33 @@
                                         </div>
                                     </td>
 
-                                    <td >
+                                    <td class="text-center">
                                         <i class="fs-13 tio-star"></i>
                                         @php
                                         $ratings= \App\CentralLogics\StoreLogic::calculate_store_rating($store['rating'])
                                         @endphp
                                         {{ $ratings['rating'] }}
                                         </td>
-                                    <td >
+                                    <td class="text-center">
                                         {{ $store->items_count }}
                                     </td>
-                                    <td >
+                                    <td class="text-center">
                                         {{ $store->orders_count }}
                                     </td>
 
 
 
-                                    <td  >
+                                    <td class="text-center">
                                         <label class="toggle-switch toggle-switch-sm" for="publishCheckbox{{$store->id}}">
-                                            <input type="checkbox" data-url="{{route('admin.store.recommended_store_status',[$store['id'],$store->storeConfig->is_recommended?0:1])}}" class="toggle-switch-input redirect-url" id="publishCheckbox{{$store->id}}" {{$store->storeConfig->is_recommended?'checked':''}}>
+                                            <input type="checkbox" onclick="location.href='{{route('admin.store.recommended_store_status',[$store['id'],$store->Store_config->is_recommended?0:1])}}'"class="toggle-switch-input" id="publishCheckbox{{$store->id}}" {{$store->Store_config->is_recommended?'checked':''}}>
                                             <span class="toggle-switch-label mx-auto">
                                                 <span class="toggle-switch-indicator"></span>
                                             </span>
                                         </label>
                                     </td>
-                                    <td >
+                                    <td class="text-center">
                                         <div class="btn--container justify-content-center">
-                                            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="item-{{$store['id']}}" data-message="{{ translate('Want_to_remove_the_store_from_the_list?') }}" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i>
+                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:" onclick="form_alert('item-{{$store['id']}}','{{ translate('Want_to_remove_the_store_from_the_list?') }}')" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i>
                                             </a>
                                             <form action="{{route('admin.store.recommended_store_remove',[$store['id']])}}"
                                                     method="post" id="item-{{$store['id']}}">
@@ -213,21 +192,22 @@
 
 @push('script_2')
     <script>
-        "use strict";
         let selected_store_ids = [];
+        function search_product(){
+            let name = $(".search-bar-input").val();
+            // $("#hide_class").removeClass('d-none');
+            if (name.length >0) {
+            $("#hide_class").addClass('d-flex');
+            $("#hide_class").addClass('search-result-box');
+            $("#hide_class").removeClass('d-none');
 
-        $(document).on('input', '.search-bar-input', function() {
-        let name = $(this).val();
-        if (name.length > 0) {
-            $("#hide_class").addClass('d-flex search-result-box').removeClass('d-none');
             $("#hide_class_2").addClass('d-none');
 
-            $.get("{{ route('admin.get_all_stores') }}", { name: name }, function(response) {
-                $('.search-result-box').empty().html(response.result);
-            });
+                $.get("{{route('admin.get_all_stores')}}",{name:name},(response)=>{
+                    $('.search-result-box').empty().html(response.result);
+                })
+            }
         }
-    });
-
 
         function selected_stores(key, remove=false) {
             if(remove == true){
@@ -247,14 +227,13 @@
             })
         }
 
-
-        $('.remove_all_data').on('click', function () {
+        function remove_all_data(){
             $("#hide_class").removeClass('d-flex');
             $("#hide_class").removeClass('search-result-box');
             $("#hide_class").addClass('d-none');
             $("#hide_class_2").addClass('d-none');
             selected_store_ids = [];
             $('#store_ids').val(null);
-        })
+        }
     </script>
 @endpush

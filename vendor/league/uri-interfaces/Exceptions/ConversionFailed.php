@@ -15,7 +15,6 @@ namespace League\Uri\Exceptions;
 
 use League\Uri\Idna\Error;
 use League\Uri\Idna\Result;
-use Stringable;
 
 final class ConversionFailed extends SyntaxError
 {
@@ -27,11 +26,11 @@ final class ConversionFailed extends SyntaxError
         parent::__construct($message);
     }
 
-    public static function dueToIdnError(Stringable|string $host, Result $result): self
+    public static function dueToIdnError(string $host, Result $result): self
     {
         $reasons = array_map(fn (Error $error): string => $error->description(), $result->errors());
 
-        return new self('Host `'.$host.'` is invalid: '.implode('; ', $reasons).'.', (string) $host, $result);
+        return new self('Host `'.$host.'` is invalid: '.implode('; ', $reasons).'.', $host, $result);
     }
 
     public function getHost(): string

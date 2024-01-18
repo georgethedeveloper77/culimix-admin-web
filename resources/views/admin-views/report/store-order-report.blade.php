@@ -40,6 +40,9 @@
                 <a href="{{ route('admin.transactions.report.store-order-report') }}"
                     class="nav-link active">{{ translate('Order Report') }}</a>
             </li>
+            {{-- <li class="nav-item">
+            <a href="" class="nav-link">{{translate('Transactions Report')}}</a>
+        </li> --}}
         </ul>
 
         <div class="card filter--card">
@@ -51,7 +54,8 @@
                     @csrf
                     <div class="row g-3">
                         <div class="col-md-4 col-sm-6">
-                            <select name="zone_id" class="form-control js-select2-custom set-filter" data-url="{{ url()->full() }}" data-filter="zone_id" id="zone">
+                            <select name="zone_id" class="form-control js-select2-custom"
+                                onchange="set_zone_filter('{{ url()->full() }}',this.value)" id="zone">
                                 <option value="all">{{ translate('messages.All_Zones') }}</option>
                                 @foreach (\App\Models\Zone::orderBy('name')->get() as $z)
                                     <option value="{{ $z['id'] }}"
@@ -62,9 +66,9 @@
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-6">
-                            <select name="store_id"
+                            <select name="store_id" onchange="set_store_filter('{{ url()->full() }}',this.value)"
                                 data-placeholder="{{ translate('messages.select_store') }}"
-                                class="js-data-example-ajax form-control set-filter" data-url="{{ url()->full() }}" data-filter="store_id">
+                                class="js-data-example-ajax form-control">
                                 @if (isset($store))
                                     <option value="{{ $store->id }}" selected>{{ $store->name }}</option>
                                 @else
@@ -73,7 +77,8 @@
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-6">
-                            <select class="form-control set-filter" data-url="{{ url()->full() }}" data-filter="filter" name="filter">
+                            <select class="form-control" name="filter"
+                                onchange="set_time_filter('{{ url()->full() }}',this.value)">
                                 <option value="all_time" {{ isset($filter) && $filter == 'all_time' ? 'selected' : '' }}>
                                     {{ translate('messages.All Time') }}</option>
                                 <option value="this_year" {{ isset($filter) && $filter == 'this_year' ? 'selected' : '' }}>
@@ -310,6 +315,20 @@
 
                         <div id="usersExportDropdown"
                             class="hs-unfold-content dropdown-unfold dropdown-menu dropdown-menu-sm-right">
+                            {{-- <span class="dropdown-header">{{ translate('messages.options') }}</span>
+                        <a id="export-copy" class="dropdown-item" href="javascript:;">
+                            <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                src="{{ asset('public/assets/admin') }}/svg/illustrations/copy.svg"
+                                alt="Image Description">
+                            {{ translate('messages.copy') }}
+                        </a>
+                        <a id="export-print" class="dropdown-item" href="javascript:;">
+                            <img class="avatar avatar-xss avatar-4by3 mr-2"
+                                src="{{ asset('public/assets/admin') }}/svg/illustrations/print.svg"
+                                alt="Image Description">
+                            {{ translate('messages.print') }}
+                        </a>
+                        <div class="dropdown-divider"></div> --}}
                             <span class="dropdown-header">{{ translate('messages.download_options') }}</span>
                             <a id="export-excel" class="dropdown-item"
                                 href="{{ route('admin.transactions.report.store-order-report-export', ['type' => 'excel', request()->getQueryString()]) }}">
@@ -460,11 +479,6 @@
 
 
 @push('script')
-    <!-- Apex Charts -->
-@endpush
-
-
-@push('script_2')
     <script src="{{ asset('public/assets/admin') }}/vendor/chart.js/dist/Chart.min.js"></script>
     <script src="{{ asset('public/assets/admin') }}/vendor/chart.js.extensions/chartjs-extensions.js"></script>
     <script
@@ -474,10 +488,14 @@
 
     <!-- Apex Charts -->
     <script src="{{ asset('/public/assets/admin/js/apex-charts/apexcharts.js') }}"></script>
+    <!-- Apex Charts -->
+@endpush
+
+
+@push('script_2')
     <!-- Dognut Pie Chart -->
     <script>
-        "use strict";
-        let options = {
+        var options = {
             series: [{{ $total_canceled_count}}, {{ $total_ongoing_count}}, {{ $total_delivered_count }}],
             chart: {
                 width: 320,
@@ -510,13 +528,14 @@
             },
         };
 
-        let chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
+        var chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
         chart.render();
-
+    </script>
     <!-- Dognut Pie Chart -->
 
 
 
+    <script>
         // Bar Charts
         Chart.plugins.unregister(ChartDataLabels);
 
@@ -524,7 +543,7 @@
             $.HSCore.components.HSChartJS.init($(this));
         });
 
-        let updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+        var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
 
         $('.js-data-example-ajax').select2({
             ajax: {
@@ -545,7 +564,7 @@
                     };
                 },
                 __port: function(params, success, failure) {
-                    let $request = $.ajax(params);
+                    var $request = $.ajax(params);
 
                     $request.then(success);
                     $request.fail(failure);
@@ -557,7 +576,7 @@
 
         $('#search-form').on('submit', function(e) {
             e.preventDefault();
-            let formData = new FormData(this);
+            var formData = new FormData(this);
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -574,6 +593,7 @@
                 },
                 success: function(data) {
                     $('#set-rows').html(data.view);
+                    // $('#countItems').html(data.count);
                     $('.page-area').hide();
                 },
                 complete: function() {

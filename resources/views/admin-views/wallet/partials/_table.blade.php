@@ -2,6 +2,7 @@
 <tr>
     <td scope="row">{{$k+1}}</td>
     <td>{{$wr['amount']}}</td>
+    {{-- <td>{{$wr->__action_note}}</td> --}}
     <td>
         @if($wr->vendor)
         <a class="deco-none"
@@ -28,6 +29,12 @@
         @else
         {{translate('messages.store_deleted') }}
         @endif
+        {{--<a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
+        onclick="form_alert('withdraw-{{$wr['id']}}','Want to delete this  ?')">{{translate('messages.Delete')}}</a>
+        <form action="{{route('vendor.withdraw.close',[$wr['id']])}}"
+                method="post" id="withdraw-{{$wr['id']}}">
+            @csrf @method('delete')
+        </form>--}}
 
     </td>
 </tr>

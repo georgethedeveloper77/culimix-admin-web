@@ -1,11 +1,12 @@
 @extends('layouts.admin.app')
-@section('title',translate('Account transaction information'))
+@section('title',translate('Accoutn transaction information'))
 @push('css_or_js')
 
 @endpush
 
 @section('content')
 <div class="content container-fluid">
+    <!-- Page Heading -->
     <div class="page-header">
         <h1 class="page-header-title">
             <span class="page-header-icon">
@@ -16,6 +17,7 @@
             </span>
         </h1>
     </div>
+    <!-- Page Heading -->
 
     <div class="row g-3">
         <div class="col-md-6">
@@ -34,6 +36,8 @@
         </div>
 
         <div class="col-md-6">
+            {{-- {{ $wr }} --}}
+
             <div class="card h-100">
                 <div class="card-header">
                     <h3 class="h3 mb-0  ">{{translate('messages.transaction_information')}} </h3>
@@ -45,8 +49,15 @@
                     <h6>{{translate('messages.reference')}} : {{$account_transaction->ref}}</h6>
                 </div>
             </div>
+
+
+
         </div>
+
+
+
     </div>
+
 </div>
 
 @endsection

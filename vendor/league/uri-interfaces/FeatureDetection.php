@@ -16,7 +16,6 @@ namespace League\Uri;
 use finfo;
 use League\Uri\Exceptions\MissingFeature;
 use League\Uri\IPv4\Calculator;
-
 use const PHP_INT_SIZE;
 
 /**

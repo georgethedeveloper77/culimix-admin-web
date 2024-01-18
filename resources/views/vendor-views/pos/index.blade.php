@@ -4,6 +4,15 @@
 
 @push('css_or_js')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <style type="text/css" media="print">
+        @page {
+            size: auto;
+            /* auto is the initial value */
+            margin: 0;
+            /* this affects the margin in the printer settings */
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -31,11 +40,11 @@
                                             <!-- Search -->
                                             <div class="input-group input--group">
                                                 <input id="datatableSearch" type="search"
-                                                    value="{{ $keyword ?? '' }}" name="search"
+                                                    value="{{ $keyword ? $keyword : '' }}" name="search"
                                                     class="form-control h--45px"
                                                     placeholder="{{ translate('messages.ex_:_search_here') }}"
                                                     aria-label="{{ translate('messages.search_here') }}">
-                                                <button class="btn btn--secondary h--45px" type="submit"><i
+                                                <button class="btn btn--secondary h--45px" type="button"><i
                                                         class="tio-search"></i></button>
                                             </div>
                                             <!-- End Search -->
@@ -43,10 +52,9 @@
                                     </div>
                                     <div class="col-sm-6">
                                         <div class="input-group">
-                                            <select name="category" id="category" class="form-control js-select2-custom set-filter"
+                                            <select name="category" id="category" class="form-control js-select2-custom"
                                                 title="{{ translate('messages.select_category') }}"
-                                                    data-url="{{url()->full()}}"
-                                                    data-filter="category_id">
+                                                onchange="set_category_filter('{{url()->full()}}',this.value)">
                                                 <option value="">{{ translate('messages.all_categories') }}</option>
                                                 @foreach ($categories as $item)
                                                     <option value="{{ $item->id }}"
@@ -148,17 +156,17 @@
                         <div class="row">
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="f_name" class="input-label">{{ translate('first_name') }} <span
+                                    <label class="input-label">{{ translate('first_name') }} <span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input type="text" id="f_name" name="f_name" class="form-control"
+                                    <input type="text" name="f_name" class="form-control"
                                         placeholder="{{ translate('first_name') }}" required>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="l_name" class="input-label">{{ translate('last_name') }} <span
+                                    <label class="input-label">{{ translate('last_name') }} <span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input type="text" id="l_name" name="l_name" class="form-control"
+                                    <input type="text" name="l_name" class="form-control"
                                         placeholder="{{ translate('last_name') }}" required>
                                 </div>
                             </div>
@@ -166,18 +174,18 @@
                         <div class="row">
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="email" class="input-label">{{ translate('email') }}<span
+                                    <label class="input-label">{{ translate('email') }}<span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input type="email" id="email" name="email" class="form-control"
+                                    <input type="email" name="email" class="form-control"
                                         placeholder="{{ translate('Ex_:_ex@example.com') }}" required>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label for="phone" class="input-label">{{ translate('phone') }}
+                                    <label class="input-label">{{ translate('phone') }}
                                         ({{ translate('with_country_code') }})<span
                                             class="input-label-secondary text-danger">*</span></label>
-                                    <input id="phone" type="text" name="phone" class="form-control"
+                                    <input type="text" name="phone" class="form-control"
                                         placeholder="{{ translate('phone') }}" required>
                                 </div>
                             </div>
@@ -216,15 +224,15 @@
                     </div>
                     <div class="modal-body row ff-emoji">
                         <div class="col-md-12">
-                            <div class="text-center"> 
-                                <input type="button" class="btn btn--primary non-printable text-white print-Div"
-                                    value="Proceed, If thermal printer is ready." />
+                            <center>
+                                <input type="button" class="btn btn--primary non-printable text-white"
+                                    onclick="printDiv('printableArea')" value="Proceed, If thermal printer is ready." />
                                 <a href="{{ url()->previous() }}" class="btn btn-danger non-printable">{{translate('messages.back')}}</a>
-                            </div>
+                            </center>
                             <hr class="non-printable">
                         </div>
                         <div class="row m-auto" id="print-modal-content">
-                            @include('vendor-views.pos.invoice')
+                            @include('vendor-views.pos.order.invoice')
                         </div>
 
                     </div>
@@ -240,24 +248,7 @@
     <script
         src="https://maps.googleapis.com/maps/api/js?key={{ \App\Models\BusinessSetting::where('key', 'map_api_key')->first()->value }}&libraries=places&callback=initMap&v=3.49">
     </script>
-
-    <script src="{{asset('public/assets/admin/js/view-pages/pos.js')}}"></script>
     <script>
-        "use strict";
-        $(document).on('click', '.place-order-submit', function (event) {
-            event.preventDefault();
-            let customer_id = document.getElementById('customer');
-            if(customer_id.value)
-            {
-                document.getElementById('customer_id').value = customer_id.value;
-            }
-                let form = document.getElementById('order_place');
-                form.submit();
-        });
-
-
-
-
         function initMap() {
             let map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
@@ -272,11 +263,10 @@
             //get current location block
             let infoWindow = new google.maps.InfoWindow();
             // Try HTML5 geolocation.
-
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                      let  myLatlng = {
+                        myLatlng = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                         };
@@ -302,7 +292,7 @@
             searchBox.addListener("places_changed", () => {
                 const places = searchBox.getPlaces();
 
-                if (places.length === 0) {
+                if (places.length == 0) {
                     return;
                 }
                 // Clear out the old markers.
@@ -313,9 +303,10 @@
                 // For each place, get the icon, name and location.
                 places.forEach((place) => {
                     if (!place.geometry || !place.geometry.location) {
-
+                        console.log("Returned place contains no geometry");
                         return;
                     }
+                    console.log(place.geometry.location);
                     if (!google.maps.geometry.poly.containsLocation(
                             place.geometry.location,
                             zonePolygon
@@ -385,23 +376,22 @@
                                 content: JSON.stringify(mapsMouseEvent.latLng.toJSON(), null,
                                     2),
                             });
-                            let coordinates;
-                             coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
-                             coordinates = JSON.parse(coordinates);
+                            var coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
+                            var coordinates = JSON.parse(coordinates);
 
                             document.getElementById('latitude').value = coordinates['lat'];
                             document.getElementById('longitude').value = coordinates['lng'];
                             infoWindow.open(map);
 
-                            let geocoder  = new google.maps.Geocoder();
-                            let latlng = new google.maps.LatLng(coordinates['lat'], coordinates['lng']);
+                            var geocoder = geocoder = new google.maps.Geocoder();
+                            var latlng = new google.maps.LatLng(coordinates['lat'], coordinates['lng']);
 
                             geocoder.geocode({
                                 'latLng': latlng
                             }, function(results, status) {
-                                if (status === google.maps.GeocoderStatus.OK) {
+                                if (status == google.maps.GeocoderStatus.OK) {
                                     if (results[1]) {
-                                        let address = results[1].formatted_address;
+                                        var address = results[1].formatted_address;
                                         // initialize services
                                         const geocoder = new google.maps.Geocoder();
                                         const service = new google.maps.DistanceMatrixService();
@@ -428,14 +418,14 @@
                                         // get distance matrix response
                                         service.getDistanceMatrix(request).then((response) => {
                                             // put response
-                                            let distancMeter = response.rows[0]
+                                            var distancMeter = response.rows[0]
                                                 .elements[0].distance['value'];
-
-                                            let distanceMile = distancMeter / 1000;
-                                            let distancMileResult = Math.round((
+                                            console.log(distancMeter);
+                                            var distanceMile = distancMeter / 1000;
+                                            var distancMileResult = Math.round((
                                                     distanceMile + Number.EPSILON) *
                                                 100) / 100;
-
+                                            console.log(distancMileResult);
                                             document.getElementById('distance').value = distancMileResult;
                                         <?php
                                         $module_wise_delivery_charge = $store_data->zone->modules()->where('modules.id', $store_data->module_id)->first();
@@ -449,6 +439,7 @@
                                             $maximum_shipping_charge = 0;
                                         }
 
+                                        // $original_delivery_charge = ($request->distance * $per_km_shipping_charge > $minimum_shipping_charge) ? $request->distance * $per_km_shipping_charge : $minimum_shipping_charge;
 
                                         ?>
 
@@ -459,18 +450,18 @@
                                                     distancMileResult: distancMileResult,
                                                 },
                                                 success: function(data) {
-                                                   let extra_charge = data;
-                                                    let original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
-                                                    let delivery_amount = ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge + extra_charge > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge + extra_charge);
-                                                    let delivery_charge =Math.round(( delivery_amount + Number.EPSILON) * 100) / 100;
+                                                    extra_charge = data;
+                                                    var original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
+                                                    var delivery_amount = ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge + extra_charge > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge + extra_charge);
+                                                    var delivery_charge =Math.round(( delivery_amount + Number.EPSILON) * 100) / 100;
                                                 document.getElementById('delivery_fee').value = delivery_charge;
                                                 $('#delivery_fee').siblings('strong').html(delivery_charge + '{{ \App\CentralLogics\Helpers::currency_symbol() }}');
 
                                                 },
                                                 error:function(){
-                                                    let original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
+                                                    var original_delivery_charge =  (distancMileResult * {{$per_km_shipping_charge}} > {{$minimum_shipping_charge}}) ? distancMileResult * {{$per_km_shipping_charge}} : {{$minimum_shipping_charge}};
 
-                                                    let delivery_charge =Math.round((
+                                                    var delivery_charge =Math.round((
                                                 ({{ $maximum_shipping_charge }} > {{ $minimum_shipping_charge }} && original_delivery_charge  > {{ $maximum_shipping_charge }} ? {{ $maximum_shipping_charge }} : original_delivery_charge)
                                                 + Number.EPSILON) * 100) / 100;
                                                 document.getElementById('delivery_fee').value = delivery_charge;
@@ -489,33 +480,104 @@
 
         }
 
+        function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+            infoWindow.setPosition(pos);
+            infoWindow.setContent(
+                browserHasGeolocation ?
+                "Error: {{ translate('The Geolocation service failed') }}." :
+                "Error: {{ translate("Your browser doesn't support geolocation") }}."
+            );
+            infoWindow.open(map);
+        }
+
+        $("#order_place").on('keydown', function(e) {
+            if (e.keyCode === 13) {
+                e.preventDefault();
+            }
+        })
+
+        $("#insertPayableAmount").on('keydown', function(e) {
+            if (e.keyCode === 13) {
+                e.preventDefault();
+            }
+        })
+    </script>
+
+    @if ($errors->any())
+        <script>
+            @foreach ($errors->all() as $error)
+                toastr.error('{{ translate($error) }}', Error, {
+                    CloseButton: true,
+                    ProgressBar: true
+                });
+            @endforeach
+        </script>
+    @endif
+
+
+    <script>
+        $('#payment_card').on('change', function() {
+            $("#paid_section").hide();
+        });
+        $('#payment_cash').on('change', function() {
+            $("#paid_section").show();
+        });
+
         $(document).on('ready', function() {
             @if ($order)
                 $('#print-invoice').modal('show');
             @endif
         });
 
+        function printDiv(divName) {
+            var printContents = document.getElementById(divName).innerHTML;
+            var originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            location.reload();
+        }
+
+        function set_category_filter(url, id) {
+            var nurl = new URL(url);
+            nurl.searchParams.set('category_id', id);
+            location.href = nurl;
+        }
+
 
         $('#search-form').on('submit', function(e) {
             e.preventDefault();
-            let keyword = $('#datatableSearch').val();
-            let nurl = new URL('{!! url()->full() !!}');
+            var keyword = $('#datatableSearch').val();
+            var nurl = new URL('{!! url()->full() !!}');
             nurl.searchParams.set('keyword', keyword);
             location.href = nurl;
         });
 
+        function addon_quantity_input_toggle(e) {
+            var cb = $(e.target);
+            if (cb.is(":checked")) {
+                cb.siblings('.addon-quantity-input').css({
+                    'visibility': 'visible'
+                });
+            } else {
+                cb.siblings('.addon-quantity-input').css({
+                    'visibility': 'hidden'
+                });
+            }
+        }
 
-        $(document).on('click', '.quick-View', function () {
+        function quickView(product_id) {
             $.get({
                 url: '{{ route('vendor.pos.quick-view') }}',
                 dataType: 'json',
                 data: {
-                    product_id: $(this).data('id')
+                    product_id: product_id
                 },
                 beforeSend: function() {
                     $('#loading').show();
                 },
                 success: function(data) {
+                    console.log("success...")
                     $('#quick-view').modal('show');
                     $('#quick-view-modal').empty().html(data.view);
                 },
@@ -523,20 +585,21 @@
                     $('#loading').hide();
                 },
             });
-        });
+        }
 
-        $(document).on('click', '.quick-View-Cart-Item', function () {
+        function quickViewCartItem(product_id, item_key) {
             $.get({
                 url: '{{ route('vendor.pos.quick-view-cart-item') }}',
                 dataType: 'json',
                 data: {
-                    product_id:  $(this).data('product-id'),
-                    item_key:  $(this).data('item-key'),
+                    product_id: product_id,
+                    item_key: item_key
                 },
                 beforeSend: function() {
                     $('#loading').show();
                 },
                 success: function(data) {
+                    console.log("success...")
                     $('#quick-view').modal('show');
                     $('#quick-view-modal').empty().html(data.view);
                 },
@@ -544,21 +607,105 @@
                     $('#loading').hide();
                 },
             });
-        });
+        }
 
         function checkAddToCartValidity() {
-            let names = {};
-            $('#add-to-cart-form input:radio').each(function() {
+            var names = {};
+            $('#add-to-cart-form input:radio').each(function() { // find unique names
                 names[$(this).attr('name')] = true;
             });
-            let count = 0;
-            $.each(names, function() {
+            var count = 0;
+            $.each(names, function() { // then count them
                 count++;
             });
-            if ($('input:radio:checked').length === count) {
+            console.log(count);
+            if ($('input:radio:checked').length == count) {
                 return true;
             }
             return true;
+        }
+
+        function cartQuantityInitialize() {
+            $('.btn-number').click(function(e) {
+                e.preventDefault();
+
+                var fieldName = $(this).attr('data-field');
+                var type = $(this).attr('data-type');
+                var input = $("input[name='" + fieldName + "']");
+                var currentVal = parseInt(input.val());
+
+                if (!isNaN(currentVal)) {
+                    if (type == 'minus') {
+
+                        if (currentVal > input.attr('min')) {
+                            input.val(currentVal - 1).change();
+                        }
+                        if (parseInt(input.val()) == input.attr('min')) {
+                            $(this).attr('disabled', true);
+                        }
+
+                    } else if (type == 'plus') {
+
+                        if (currentVal < input.attr('max')) {
+                            input.val(currentVal + 1).change();
+                        }
+                        if (parseInt(input.val()) == input.attr('max')) {
+                            $(this).attr('disabled', true);
+                        }
+
+                    }
+                } else {
+                    input.val(0);
+                }
+            });
+
+            $('.input-number').focusin(function() {
+                $(this).data('oldValue', $(this).val());
+            });
+
+            $('.input-number').change(function() {
+
+                minValue = parseInt($(this).attr('min'));
+                maxValue = parseInt($(this).attr('max'));
+                valueCurrent = parseInt($(this).val());
+
+                var name = $(this).attr('name');
+                if (valueCurrent >= minValue) {
+                    $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cart',
+                        text: '{{ translate('Sorry, the minimum value was reached') }}'
+                    });
+                    $(this).val($(this).data('oldValue'));
+                }
+                if (valueCurrent <= maxValue) {
+                    $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cart',
+                        text: '{{ translate('Sorry, stock limit exceeded.') }}'
+                    });
+                    $(this).val($(this).data('oldValue'));
+                }
+            });
+            $(".input-number").keydown(function(e) {
+                // Allow: backspace, delete, tab, escape, enter and .
+                if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
+                    // Allow: Ctrl+A
+                    (e.keyCode == 65 && e.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    // let it happen, don't do anything
+                    return;
+                }
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
         }
 
         function getVariantPrice() {
@@ -580,14 +727,13 @@
             }
         }
 
-        $(document).on('click', '.add-To-Cart', function () {
+        function addToCart(form_id = 'add-to-cart-form') {
             if (checkAddToCartValidity()) {
                 $.ajaxSetup({
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
                     }
                 });
-                let form_id = 'add-to-cart-form'
                 $.post({
                     url: '{{ route('vendor.pos.add-to-cart') }}',
                     data: $('#' + form_id).serializeArray(),
@@ -595,15 +741,15 @@
                         $('#loading').show();
                     },
                     success: function(data) {
-
-                        if (data.data === 1) {
+                        console.log(data.data);
+                        if (data.data == 1) {
                             Swal.fire({
                                 icon: 'info',
                                 title: 'Cart',
                                 text: "{{ translate('messages.product_already_added_in_cart') }}"
                             });
                             return false;
-                        } else if (data.data === 2) {
+                        } else if (data.data == 2) {
                             updateCart();
                             Swal.fire({
                                 icon: 'info',
@@ -612,14 +758,14 @@
                             });
 
                             return false;
-                        } else if (data.data === 0) {
+                        } else if (data.data == 0) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Cart',
                                 text: '{{ translate('messages.Sorry, product out of stock') }}'
                             });
                             return false;
-                        } else if (data.data === 'letiation_error') {
+                        } else if (data.data == 'variation_error') {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Cart',
@@ -643,21 +789,19 @@
             } else {
                 Swal.fire({
                     type: 'info',
-                    title: '{{translate('Cart')}}',
+                    title: 'Cart',
                     text: '{{ translate('Please choose all the options') }}'
                 });
             }
+        }
 
-        });
-
-        $(document).on('click', '.remove-From-Cart', function () {
-            let key=  $(this).data('product-id');
+        function removeFromCart(key) {
             $.post('{{ route('vendor.pos.remove-from-cart') }}', {
                 _token: '{{ csrf_token() }}',
                 key: key
             }, function(data) {
                 if (data.errors) {
-                    for (let i = 0; i < data.errors.length; i++) {
+                    for (var i = 0; i < data.errors.length; i++) {
                         toastr.error(data.errors[i].message, {
                             CloseButton: true,
                             ProgressBar: true
@@ -672,12 +816,12 @@
                 }
 
             });
-        });
+        }
 
-        $(document).on('click', '.empty-Cart', function () {
+        function emptyCart() {
             $.post('{{ route('vendor.pos.emptyCart') }}', {
                 _token: '{{ csrf_token() }}'
-            }, function() {
+            }, function(data) {
                 $('#del-add').empty();
                 updateCart();
                 toastr.info('{{ translate('messages.item_has_been_removed_from_cart') }}', {
@@ -685,7 +829,7 @@
                     ProgressBar: true
                 });
             });
-        });
+        }
 
         function updateCart() {
             $.post('<?php echo e(route('vendor.pos.cart_items')); ?>', {
@@ -695,13 +839,12 @@
             });
         }
 
-        $(document).on('click', '.delivery-Address-Store', function () {
+        function deliveryAdressStore(form_id = 'delivery_address_store') {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
                 }
             });
-            let form_id = 'delivery_address_store';
             $.post({
                 url: '{{ route('vendor.pos.add-delivery-info') }}',
                 data: $('#' + form_id).serializeArray(),
@@ -710,7 +853,7 @@
                 },
                 success: function(data) {
                     if (data.errors) {
-                        for (let i = 0; i < data.errors.length; i++) {
+                        for (var i = 0; i < data.errors.length; i++) {
                             toastr.error(data.errors[i].message, {
                                 CloseButton: true,
                                 ProgressBar: true
@@ -727,10 +870,9 @@
                     $('#paymentModal').modal('hide');
                 }
             });
-        });
+        }
 
-        $(document).on('click', '.payable-amount', function () {
-           let form_id = 'payable_store_amount';
+        function payableAmount(form_id = 'payable_store_amount') {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
@@ -742,8 +884,10 @@
                 beforeSend: function() {
                     $('#loading').show();
                 },
-                success: function() {
-
+                success: function(data) {
+                    // if (data.data) {
+                    //     $('#del-add').empty().html(data.view);
+                    // }
                     updateCart();
                     $('.call-when-done').click();
                 },
@@ -752,8 +896,8 @@
                     $('#insertPayableAmount').modal('hide');
                 }
             });
+        }
 
-        });
 
         $(function() {
             $(document).on('click', 'input[type=number]', function() {
@@ -761,20 +905,30 @@
             });
         });
 
-        $(document).on('change', '.update-Quantity', function (e) {
-            let element = $(e.target);
-            let minValue = parseInt(element.attr('min'));
-            let maxValue = parseInt(element.attr('max'));
-            let valueCurrent = parseInt(element.val());
-            let key = element.data('key');
 
+        function updateQuantity(e) {
+            var element = $(e.target);
+            var minValue = parseInt(element.attr('min'));
+            var maxValue = parseInt(element.attr('max'));
+            var valueCurrent = parseInt(element.val());
+            var key = element.data('key');
+            // if (valueCurrent <= maxValue) {
+            //     $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
+            // } else {
+            //     Swal.fire({
+            //         icon: 'error',
+            //         title: 'Cart',
+            //         text: 'Sorry, cart limit exceeded.'
+            //     });
+            //     $(this).val($(this).data('oldValue'));
+            // }
 
             if (valueCurrent >= minValue && valueCurrent <= maxValue) {
                 $.post('{{ route('vendor.pos.updateQuantity') }}', {
                     _token: '{{ csrf_token() }}',
                     key: key,
                     quantity: valueCurrent
-                }, function() {
+                }, function(data) {
                     updateCart();
                 });
             } else if(valueCurrent > maxValue){
@@ -795,10 +949,10 @@
             }
 
             // Allow: backspace, delete, tab, escape, enter and .
-            if (e.type === 'keydown') {
+            if (e.type == 'keydown') {
                 if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
                     // Allow: Ctrl+A
-                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode == 65 && e.ctrlKey === true) ||
                     // Allow: home, end, left, right
                     (e.keyCode >= 35 && e.keyCode <= 39)) {
                     // let it happen, don't do anything
@@ -810,6 +964,12 @@
                 }
             }
 
+        };
+
+        // INITIALIZATION OF SELECT2
+        // =======================================================
+        $('.js-select2-custom').each(function() {
+            var select2 = $.HSCore.components.HSSelect2.init($(this));
         });
 
         $('.js-data-example-ajax').select2({
@@ -817,7 +977,7 @@
                 url: '{{ route('vendor.pos.customers') }}',
                 data: function(params) {
                     return {
-                        q: params.term,
+                        q: params.term, // search term
                         page: params.page
                     };
                 },
@@ -827,7 +987,7 @@
                     };
                 },
                 __port: function(params, success, failure) {
-                    let $request = $.ajax(params);
+                    var $request = $.ajax(params);
 
                     $request.then(success);
                     $request.fail(failure);
@@ -837,6 +997,11 @@
             }
         });
 
-    </script>
 
+        $('#delivery_address').on('click', function() {
+            console.log('delivery_address clicked');
+            initMap();
+        });
+    </script>
+    <!-- IE Support -->
 @endpush

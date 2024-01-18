@@ -2,93 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use App\Scopes\StoreScope;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Carbon;
 
-/**
- * Class Coupon
- *
- * @property int $id
- * @property string $title
- * @property string $code
- * @property Carbon|null $start_date
- * @property Carbon|null $expire_date
- * @property float $min_purchase
- * @property float $max_discount
- * @property float $discount
- * @property string $discount_type
- * @property string $coupon_type
- * @property int|null $limit
- * @property bool $status
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property string|null $data
- * @property int $total_uses
- * @property int $module_id
- * @property string $created_by
- * @property string $customer_id
- * @property string|null $slug
- * @property int|null $store_id
- */
 class Coupon extends Model
 {
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'title',
-        'code',
-        'start_date',
-        'expire_date',
-        'min_purchase',
-        'max_discount',
-        'discount',
-        'discount_type',
-        'coupon_type',
-        'limit',
-        'status',
-        'data',
-        'total_uses',
-        'module_id',
-        'created_by',
-        'customer_id',
-        'slug',
-        'store_id',
-    ];
-
-    /**
-     * @var string[]
-     */
     protected $casts = [
         'min_purchase' => 'float',
         'max_discount' => 'float',
         'discount' => 'float',
         'limit'=>'integer',
         'store_id'=>'integer',
+        // 'customer_id'=>'integer',
         'status'=>'integer',
         'id'=>'integer',
         'total_uses'=>'integer',
     ];
 
-    /**
-     * @return MorphMany
-     */
-    public function translations(): MorphMany
+    public function translations()
     {
         return $this->morphMany(Translation::class, 'translationable');
     }
 
-    /**
-     * @param $value
-     * @return mixed
-     */
-    public function getTitleAttribute($value): mixed
-    {
+    public function getTitleAttribute($value){
         if (count($this->translations) > 0) {
             foreach ($this->translations as $translation) {
                 // dd($translation['key']);
@@ -101,47 +37,33 @@ class Coupon extends Model
         return $value;
     }
 
-    /**
-     * @return BelongsTo
-     */
-    public function module(): BelongsTo
+    public function module()
     {
         return $this->belongsTo(Module::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
-    public function store(): BelongsTo
+    public function store()
     {
         return $this->belongsTo(Store::class, 'store_id');
     }
 
-    /**
-     * @param $query
-     * @return mixed
-     */
-    public function scopeActive($query): mixed
+    public function scopeActive($query)
     {
         return $query->where('status', '=', 1);
     }
-
-    /**
-     * @param $query
-     * @param $module_id
-     * @return mixed
-     */
-    public function scopeModule($query, $module_id): mixed
+    
+    public function scopeModule($query, $module_id)
     {
         return $query->where('module_id', $module_id);
     }
-
-    /**
-     * @return void
-     */
-    protected static function booted(): void
+    
+    protected static function booted()
     {
-        static::addGlobalScope('translate', function (Builder $builder) {
+        // if(auth('vendor')->check())
+        // {
+        //     static::addGlobalScope(new StoreScope);
+        // } 
+        static::addGlobalScope('translate', function (\Illuminate\Database\Eloquent\Builder $builder) {
             $builder->with(['translations' => function ($query) {
                 return $query->where('locale', app()->getLocale());
             }]);

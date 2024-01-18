@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <?php
+    // $site_direction = session()->get('site_direction');
+    // if (env('APP_MODE') == 'demo') {
+    //     $site_direction = session()->get('site_direction');
+    // }else{
+    //     $site_direction = \App\Models\BusinessSetting::where('key', 'site_direction')->first();
+    //     $site_direction = $site_direction->value ?? 'ltr';
+    // }
+
     $log_email_succ = session()->get('log_email_succ');
 ?>
 
@@ -33,15 +41,14 @@
         <div class="auth-wrapper-left">
             <div class="auth-left-cont">
                 @php($store_logo = \App\Models\BusinessSetting::where(['key' => 'logo'])->first()->value)
-                <img class="onerror-image"  data-onerror-image="{{asset('/public/assets/admin/img/favicon.png')}}"
-                src="{{\App\CentralLogics\Helpers::onerror_image_helper($store_logo, asset('storage/app/public/business/').'/' . $store_logo, asset('/public/assets/admin/img/favicon.png'),'business/')}}"  alt="public/img">
+                <img onerror="this.src='{{asset('/public/assets/admin/img/favicon.png')}}'" src="{{ asset('storage/app/public/business/' . $store_logo) }}" alt="public/img">
                 <h2 class="title">{{translate('Your')}} <span class="d-block">{{translate('All Service')}}</span> <strong class="text--039D55">{{translate('in one field')}}....</strong></h2>
             </div>
         </div>
         <div class="auth-wrapper-right">
             <label class="badge badge-soft-success __login-badge">
                 {{translate('messages.software_version')}} : {{env('SOFTWARE_VERSION')}}
-            </label>
+            </label>          
             <!-- OTP Card -->
             <div class="otp-card">
                 <div class="text-center">
@@ -70,12 +77,13 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <span>{{ translate('Didn`t receive the code?') }}</span>
-                        <button class="text--primary resend otp_resend" disabled id="otp-button">{{ translate('Resend_it') }}
+                        <button class="text--primary resend" onclick="otp_resent()" disabled id="otp-button">{{ translate('Resend_it') }}
+                            {{-- (<span class="verifyCounter"></span>s) --}}
                         </button>
                     </div>
                 </div>
             </div>
-            <!-- End Card -->
+            <!-- End Card -->               
         </div>
     </div>
 </main>
@@ -91,7 +99,6 @@
 
 @if ($errors->any())
     <script>
-        "use strict";
         @foreach($errors->all() as $error)
         toastr.error('{{$error}}', Error, {
             CloseButton: true,
@@ -102,9 +109,9 @@
 @endif
 
 <script>
-    "use strict";
 
-    $('.otp_resend').on('click', function () {
+    function otp_resent(token) {
+
         $.ajax({
             url: "{{ route('otp_resent') }}",
             type: "GET",
@@ -135,15 +142,7 @@
                 }
             }
         });
-    })
-
-    $(document).ready(function() {
-            $('.onerror-image').on('error', function() {
-                let img = $(this).data('onerror-image')
-                $(this).attr('src', img);
-            });
-        });
-
+    }
 </script>
 
 <!-- IE Support -->
@@ -153,7 +152,6 @@
 
 
 <script>
-    "use strict";
   $(document).ready(function () {
     $(".otp-form *:input[type!=hidden]:first").focus();
     let otp_fields = $(".otp-form .otp-field"),
@@ -192,13 +190,13 @@
   });
 
   $(document).ready(function() {
-  let otpButton = $("#otp-button");
-  let countdownTimer;
+  var otpButton = $("#otp-button");
+  var countdownTimer;
 
   function startCountdown() {
     otpButton.prop("disabled", true);
     otpButton.addClass("resend");
-    let countdown = 30;
+    var countdown = 30;
     countdownTimer = setInterval(function() {
       otpButton.text("Resend it (" + countdown + ")");
       countdown--;
@@ -211,6 +209,10 @@
     }, 1000);
   }
 
+//   otpButton.click(function() {
+//     // TODO: Send OTP code here
+//     startCountdown();
+//   });
   startCountdown();
 });
 

@@ -21,14 +21,14 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div
-                    class="maintenance-mode-toggle-bar d-flex flex-wrap justify-content-between border border-primary rounded align-items-center p-2">
+                    class="maintainance-mode-toggle-bar d-flex flex-wrap justify-content-between border border-primary rounded align-items-center p-2">
                     @php($config = $refund_active_status->value ?? null)
                     <h5 class="text-capitalize m-0 text--info text--primary">
                         <i class="tio-settings-outlined"></i>
                         {{ translate('messages.Refund Request_Mode') }}
                     </h5>
                     <label class="toggle-switch toggle-switch-sm">
-                        <input type="checkbox" class="status toggle-switch-input refund-mode"
+                        <input type="checkbox" class="status toggle-switch-input" onclick="refund_mode()"
                             {{ isset($config) && $config ? 'checked' : '' }}>
                         <span class="toggle-switch-label text mb-0">
                             <span class="toggle-switch-indicator"></span>
@@ -56,7 +56,7 @@
                     </div>
                     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
                     @php($language = $language->value ?? null)
-                    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
+                    @php($default_lang = str_replace('_', '-', app()->getLocale()))
                     @if($language)
                     <ul class="nav nav-tabs nav--tabs mt-3 mb-3 ">
                         <li class="nav-item">
@@ -78,8 +78,8 @@
 
 
                         <div class="col-md-10 lang_form1 default-form1">
-                            <label for="reason" class="form-label">{{translate('Reason')}} ({{ translate('Default') }})</label>
-                            <input id="reason" type="text" class="form-control h--45px" name="reason[]"
+                            <label class="form-label">{{translate('Reason')}} ({{ translate('Default') }})</label>
+                            <input type="text" class="form-control h--45px" name="reason[]"
                                         placeholder="{{ translate('Ex:_Item_is_Broken') }}">
                                         <input type="hidden" name="lang[]" value="default">
                         </div>
@@ -87,8 +87,8 @@
                         @if ($language)
                         @foreach(json_decode($language) as $lang)
                             <div class="col-md-10 d-none lang_form1" id="{{$lang}}-form1">
-                                <label for="reason{{$lang}}" class="form-label">{{translate('Reason')}} ({{strtoupper($lang)}})</label>
-                                <input id="reason{{$lang}}" type="text" class="form-control h--45px" name="reason[]"
+                                <label class="form-label">{{translate('Reason')}} ({{strtoupper($lang)}})</label>
+                                <input type="text" class="form-control h--45px" name="reason[]"
                                         placeholder="{{ translate('Ex:_Item_is_Broken') }}">
                                 <input type="hidden" name="lang[]" value="{{$lang}}">
                             </div>
@@ -147,7 +147,7 @@
                             </td>
                             <td>
                                 <label class="toggle-switch toggle-switch-sm" for="stocksCheckbox{{$reason->id}}">
-                                <input type="checkbox" data-url="{{route('admin.refund.reason_status',[$reason['id'],$reason->status?0:1])}}" class="toggle-switch-input redirect-url" id="stocksCheckbox{{$reason->id}}" {{$reason->status?'checked':''}}>
+                                <input type="checkbox" onclick="location.href='{{route('admin.refund.reason_status',[$reason['id'],$reason->status?0:1])}}'"class="toggle-switch-input" id="stocksCheckbox{{$reason->id}}" {{$reason->status?'checked':''}}>
                                     <span class="toggle-switch-label">
                                         <span class="toggle-switch-indicator"></span>
                                     </span>
@@ -156,16 +156,15 @@
 
                             <td>
                                 <div class="btn--container justify-content-center">
-                                    <a class="btn btn-sm btn--primary btn-outline-primary action-btn edit-reason"
-                                        title="{{ translate('messages.edit') }}" 
+                                    <a class="btn btn-sm btn--primary btn-outline-primary action-btn"
+                                        title="{{ translate('messages.edit') }}" onclick="edit_reason('{{$reason['id']}}')"
                                             data-toggle="modal"   data-target="#add_update_reason_{{$reason->id}}"
                                         ><i class="tio-edit"></i>
                                     </a>
 
-                                    <a class="btn btn-sm btn--danger btn-outline-danger action-btn form-alert" href="javascript:"
-                                       data-id="refund_reason-{{$reason['id']}}"
-                                       data-message="{{ translate('Want to delete this refund reason ?') }}"
 
+                                    <a class="btn btn-sm btn--danger btn-outline-danger action-btn" href="javascript:"
+                                onclick="form_alert('refund_reason-{{$reason['id']}}','{{ translate('Want to delete this refund reason ?') }}')"
                                 title="{{translate('messages.delete')}}">
                                 <i class="tio-delete-outlined"></i>
                             </a>
@@ -187,28 +186,26 @@
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
-                                        <form action="{{ route('admin.refund.reason_edit') }}" method="post">
                                     <div class="modal-body">
+                                        <form action="{{ route('admin.refund.reason_edit') }}" method="post">
                                             @csrf
                                             @method('put')
 
                                             @php($reason=  \App\Models\RefundReason::withoutGlobalScope('translate')->with('translations')->find($reason->id))
                                             @php($language=\App\Models\BusinessSetting::where('key','language')->first())
                                         @php($language = $language->value ?? null)
-                                        @php($defaultLang = str_replace('_', '-', app()->getLocale()))
+                                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
                                         <ul class="nav nav-tabs nav--tabs mb-3 border-0">
                                             <li class="nav-item">
-                                                <a class="nav-link update-lang_link add_active active"
+                                                <a class="nav-link lang_link add_active active"
                                                 href="#"
-
                                                 id="default-link">{{ translate('Default') }}</a>
                                             </li>
                                             @if($language)
                                             @foreach (json_decode($language) as $lang)
                                                 <li class="nav-item">
-                                                    <a class="nav-link update-lang_link"
+                                                    <a class="nav-link lang_link"
                                                         href="#"
-                                                        data-reason-id="{{$reason->id}}"
                                                         id="{{ $lang }}-link">{{ \App\CentralLogics\Helpers::get_language_name($lang) . '(' . strtoupper($lang) . ')' }}</a>
                                                 </li>
                                             @endforeach
@@ -216,9 +213,9 @@
                                         </ul>
                                             <input type="hidden" name="reason_id"  value="{{$reason->id}}" />
 
-                                            <div class="form-group mb-3 add_active_2  update-lang_form" id="default-form_{{$reason->id}}">
-                                                <label for="reason" class="form-label">{{translate('Reason')}} ({{translate('messages.default')}}) </label>
-                                                <input id="reason" class="form-control" name='reason[]' value="{{$reason?->getRawOriginal('reason')}}" type="text">
+                                            <div class="form-group mb-3 add_active_2  lang_form" id="default-form_{{$reason->id}}">
+                                                <label class="form-label">{{translate('Reason')}} ({{translate('messages.default')}}) </label>
+                                                <input class="form-control" name='reason[]' value="{{$reason?->getRawOriginal('reason')}}" type="text">
                                                 <input type="hidden" name="lang1[]" value="default">
                                             </div>
                                                             @if($language)
@@ -234,21 +231,21 @@
                                                                         }
                                                                     }
                                                                     ?>
-                                                                    <div class="form-group mb-3 d-none update-lang_form" id="{{$lang}}-langform_{{$reason->id}}">
-                                                                        <label for="reason{{$lang}}" class="form-label">{{translate('Reason')}} ({{strtoupper($lang)}})</label>
-                                                                        <input id="reason{{$lang}}" class="form-control" name='reason[]' value="{{ $translate[$lang]['reason'] ?? null }}"  type="text">
+                                                                    <div class="form-group mb-3 d-none lang_form" id="{{$lang}}-form_{{$reason->id}}">
+                                                                        <label class="form-label">{{translate('Reason')}} ({{strtoupper($lang)}})</label>
+                                                                        <input class="form-control" name='reason[]' value="{{ $translate[$lang]['reason'] ?? null }}"  type="text">
                                                                         <input type="hidden" name="lang1[]" value="{{$lang}}">
                                                                     </div>
                                                                     @empty
                                                                     @endforelse
                                                                 @endif
 
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Close') }}</button>
-                                                    <button type="submit" class="btn btn-primary">{{ translate('Save_changes') }}</button>
-                                                </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Close') }}</button>
+                                        <button type="submit" class="btn btn-primary">{{ translate('Save_changes') }}</button>
                                         </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -257,7 +254,7 @@
                 </table>
                 @if(count($reasons) === 0)
                 <div class="empty--data">
-                    <img src="{{asset('/public/assets/admin/svg/illustrations/sorry.svg')}}" alt="public">
+                    <img src="{{asset('/public/assets/admin/img/empty.png')}}" alt="public">
                     <h5>
                         {{translate('no_data_found')}}
                     </h5>
@@ -279,15 +276,13 @@
 
             </div>
         </div>
-
+    </div>
 
 @endsection
 @push('script_2')
-    <script src="{{asset('public/assets/admin/js/view-pages/business-settings-refund-reasons-page.js')}}"></script>
 <script>
+    function refund_mode() {
 
-    $('.refund-mode').on('click', function(event){
-        event.preventDefault();
         Swal.fire({
             title: '{{ translate('Are you sure?') }}' ,
             text: 'Be careful before you turn on/off Refund Request mode',
@@ -311,15 +306,67 @@
                         toastr.success(data.message);
                     },
                     complete: function() {
-                        location.reload();
                         $('#loading').hide();
                     },
                 });
+            } else {
+                location.reload();
             }
         })
 
-    });
-
+    };
 </script>
 
+    <script>
+        function edit_reason(){
+            $(".add_active").addClass('active');
+            $(".lang_form").addClass('d-none');
+            $(".add_active_2").removeClass('d-none');
+        }
+
+    $(".lang_link").click(function(e){
+        e.preventDefault();
+        $(".lang_link").removeClass('active');
+        $(".lang_form").addClass('d-none');
+        $(".add_active").removeClass('active');
+        $(this).addClass('active');
+
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 5);
+
+        console.log(lang);
+
+        // $("#"+lang+"-form").removeClass('d-none');
+
+        @foreach ( $reasons as $reason )
+        $("#"+lang+"-form_{{ $reason->id }}").removeClass('d-none');
+        @endforeach
+        if(lang == '{{$default_lang}}')
+        {
+            $(".from_part_2").removeClass('d-none');
+        }
+        if(lang == 'default')
+        {
+            $(".default-form").removeClass('d-none');
+        }
+        else
+        {
+            $(".from_part_2").addClass('d-none');
+        }
+    });
+
+    $(".lang_link1").click(function(e){
+        e.preventDefault();
+        $(".lang_link1").removeClass('active');
+        $(".lang_form1").addClass('d-none');
+        $(this).addClass('active');
+        let form_id = this.id;
+        let lang = form_id.substring(0, form_id.length - 6);
+        $("#"+lang+"-form1").removeClass('d-none');
+            if(lang == 'default')
+        {
+            $(".default-form1").removeClass('d-none');
+        }
+    })
+    </script>
 @endpush

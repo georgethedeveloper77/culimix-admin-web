@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace League\Uri\UriTemplate;
 
 use League\Uri\Exceptions\SyntaxError;
-
 use function preg_match;
 
 /**
@@ -29,8 +28,6 @@ final class VarSpecifier
      * @link https://tools.ietf.org/html/rfc6570#section-2.3
      */
     private const REGEXP_VARSPEC = '/^(?<name>(?:[A-z0-9_\.]|%[0-9a-fA-F]{2})+)(?<modifier>\:(?<position>\d+)|\*)?$/';
-
-    private const MODIFIER_POSITION_MAX_POSITION = 10_000;
 
     private function __construct(
         public readonly string $name,
@@ -56,7 +53,7 @@ final class VarSpecifier
             $properties['position'] = 0;
         }
 
-        if (self::MODIFIER_POSITION_MAX_POSITION <= $properties['position']) {
+        if (10000 <= $properties['position']) {
             throw new SyntaxError('The variable specification "'.$specification.'" is invalid the position modifier must be lower than 10000.');
         }
 
@@ -65,9 +62,10 @@ final class VarSpecifier
 
     public function toString(): string
     {
-        return $this->name.$this->modifier.match (true) {
-            0 < $this->position => $this->position,
-            default => '',
-        };
+        if (0 < $this->position) {
+            return $this->name.$this->modifier.$this->position;
+        }
+
+        return $this->name.$this->modifier;
     }
 }

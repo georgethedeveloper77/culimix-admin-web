@@ -16,7 +16,6 @@ namespace League\Uri\IPv4;
 use League\Uri\Exceptions\MissingFeature;
 use League\Uri\FeatureDetection;
 use Stringable;
-
 use function array_pop;
 use function count;
 use function explode;
@@ -93,17 +92,12 @@ final class Converter
         };
     }
 
-    public function isIpv4(Stringable|string|null $host): bool
-    {
-        return null !== $this->toDecimal($host);
-    }
-
     public function toOctal(Stringable|string|null $host): ?string
     {
         $host = $this->toDecimal($host);
 
-        return match (null) {
-            $host => null,
+        return match (true) {
+            null === $host => null,
             default => implode('.', array_map(
                 fn ($value) => str_pad(decoct((int) $value), 4, '0', STR_PAD_LEFT),
                 explode('.', $host)
@@ -115,8 +109,8 @@ final class Converter
     {
         $host = $this->toDecimal($host);
 
-        return match (null) {
-            $host => null,
+        return match (true) {
+            null === $host => null,
             default => '0x'.implode('', array_map(
                 fn ($value) => dechex((int) $value),
                 explode('.', $host)
@@ -176,7 +170,7 @@ final class Converter
      *
      * @see https://url.spec.whatwg.org/#ipv4-number-parser
      *
-     * @return mixed returns null if it cannot correctly convert the label
+     * @return mixed returns null if it can not correctly convert the label
      */
     private function labelToNumber(string $label): mixed
     {

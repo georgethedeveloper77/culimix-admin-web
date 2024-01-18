@@ -15,8 +15,7 @@
             <div class="row align-items-center py-2">
                 <div class="col-sm mb-2 mb-sm-0">
                     <div class="d-flex align-items-center">
-                        <img class="onerror-image" data-onerror-image="{{asset('/public/assets/admin/img/parcel.svg')}}" src="{{\App\CentralLogics\Helpers::onerror_image_helper($mod->icon, asset('storage/app/public/module/').'/'.$mod->icon, asset('public/assets/admin/img/parcel.svg'), 'module/') }}"
-                        width="38" alt="img">
+                        <img onerror="this.src='{{asset('/public/assets/admin/img/parcel.svg')}}'" src="{{asset('storage/app/public/module')}}/{{$mod->icon}}" width="38" alt="img">
                         <div class="w-0 flex-grow pl-2">
                             <h1 class="page-header-title mb-0">{{translate($mod->module_name)}} {{translate('messages.Dashboard')}}.</h1>
                             <p class="page-header-text m-0">{{translate('Hello, Here You Can Manage Your')}} {{translate($mod->module_name)}} {{translate('orders by Zone.')}}</p>
@@ -25,7 +24,8 @@
                 </div>
 
                 <div class="col-sm-auto min--280">
-                    <select name="zone_id" class="form-control js-select2-custom fetch_data_zone_wise">
+                    <select name="zone_id" class="form-control js-select2-custom"
+                            onchange="fetch_data_zone_wise(this.value)">
                         <option value="all">{{ translate('messages.All_Zones') }}</option>
                         @foreach(\App\Models\Zone::orderBy('name')->get() as $zone)
                             <option
@@ -38,6 +38,7 @@
             </div>
         </div>
         <!-- End Page Header -->
+{{-- {{ dd($data) }} --}}
         <!-- Stats -->
         <div class="card mb-3">
             <div class="card-body pt-0">
@@ -46,7 +47,7 @@
                         @include('admin-views.partials._zone-change',['data'=>$data])
                     </div>
                     <div class="statistics--select">
-                        <select class="custom-select border-0 order_stats_update" name="statistics_type">
+                        <select class="custom-select border-0" name="statistics_type" onchange="order_stats_update(this.value)">
                             <option
                                 value="overall" {{$params['statistics_type'] == 'overall'?'selected':''}}>
                                 {{translate('messages.Overall Statistics')}}
@@ -130,7 +131,8 @@
                                     {{ translate('sale') }} ({{ date("Y") }})
                                 </span>
                             </div>
-                            <select class="custom-select border-0 text-center w-auto ml-auto commission_overview_stats_update" name="commission_overview">
+                            <select class="custom-select border-0 text-center w-auto ml-auto" name="commission_overview"
+                                    onchange="commission_overview_stats_update(this.value)">
                                     <option
                                     value="this_year" {{$params['commission_overview'] == 'this_year'?'selected':''}}>
                                     {{translate('This year')}}
@@ -146,7 +148,7 @@
                             </select>
                         </div>
                         <div id="commission-overview-board">
-
+    
                             <div id="grow-sale-chart"></div>
                         </div>
                     </div>
@@ -163,10 +165,11 @@
                         <div id="stat_zone">
 
                             @include('admin-views.partials._zone-change',['data'=>$data])
-
-
+    
+    
                         </div>
-                        <select class="custom-select border-0 text-center w-auto user_overview_stats_update" name="user_overview">
+                        <select class="custom-select border-0 text-center w-auto" name="user_overview"
+                                onchange="user_overview_stats_update(this.value)">
                                 <option
                                 value="this_year" {{$params['user_overview'] == 'this_year'?'selected':''}}>
                                 {{translate('This year')}}
@@ -205,6 +208,12 @@
                                     {{translate('messages.customer')}} {{$data['customer']}}
                                 </span>
                             </div>
+                            {{-- <div class="chart--label">
+                                <span class="indicator chart-bg-2"></span>
+                                <span class="info">
+                                    {{translate('messages.store')}} {{$data['stores']}}
+                                </span>
+                            </div> --}}
                             <div class="chart--label">
                                 <span class="indicator chart-bg-3"></span>
                                 <span class="info">
@@ -217,6 +226,38 @@
                     <!-- End Body -->
                 </div>
             </div>
+
+            {{-- <div class="col-lg-4 col-md-6">
+                <!-- Card -->
+                <div class="card h-100" id="top-restaurants-view">
+                    @include('admin-views.partials._top-restaurants',['top_restaurants'=>$data['top_restaurants']])
+                </div>
+                <!-- End Card -->
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <!-- Card -->
+                <div class="card h-100" id="popular-restaurants-view">
+                    @include('admin-views.partials._popular-restaurants',['popular'=>$data['popular']])
+                </div>
+                <!-- End Card -->
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <!-- Card -->
+                <div class="card h-100" id="top-selling-foods-view">
+                    @include('admin-views.partials._top-selling-foods',['top_sell'=>$data['top_sell']])
+                </div>
+                <!-- End Card -->
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <!-- Card -->
+                <div class="card h-100" id="top-rated-foods-view">
+                    @include('admin-views.partials._top-rated-foods',['top_rated_foods'=>$data['top_rated_foods']])
+                </div>
+                <!-- End Card -->
+            </div> --}}
 
             <div class="col-lg-4 col-md-6">
                 <!-- Card -->
@@ -266,10 +307,7 @@
 
     <!-- Dognut Pie Chart -->
     <script>
-        "use strict";
-        let options;
-        let chart;
-        options = {
+        var options = {
             series: [{{ $data['customer']}}, {{$data['delivery_man']}}],
             chart: {
                 width: 320,
@@ -299,11 +337,13 @@
             },
         };
 
-        chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
+        var chart = new ApexCharts(document.querySelector("#dognut-pie"), options);
         chart.render();
 
+    </script>
 
-    options = {
+    <script>
+    var options = {
           series: [{
           name: '{{ translate('Gross Sale') }}',
           data: [{{$total_sell[1]}},{{$total_sell[2]}},{{$total_sell[3]}},{{$total_sell[4]}},{{$total_sell[5]}},{{$total_sell[6]}},{{$total_sell[7]}},{{$total_sell[8]}},{{$total_sell[9]}},{{$total_sell[10]}},{{$total_sell[11]}},{{$total_sell[12]}}]
@@ -347,10 +387,12 @@
         },
         };
 
-        chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
+        var chart = new ApexCharts(document.querySelector("#grow-sale-chart"), options);
         chart.render();
+    </script>
 
     <!-- Dognut Pie Chart -->
+    <script>
         // INITIALIZATION OF CHARTJS
         // =======================================================
         Chart.plugins.unregister(ChartDataLabels);
@@ -359,13 +401,10 @@
             $.HSCore.components.HSChartJS.init($(this));
         });
 
-        let updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+        var updatingChart = $.HSCore.components.HSChartJS.init($('#updatingData'));
+    </script>
 
-        $('.order_stats_update').on('change', function (){
-            let type = $(this).val();
-            order_stats_update(type);
-        })
-
+    <script>
         function order_stats_update(type) {
             $.ajaxSetup({
                 headers: {
@@ -389,11 +428,6 @@
                 }
             });
         }
-
-        $('.fetch_data_zone_wise').on('change', function (){
-            let zone_id = $(this).val();
-            fetch_data_zone_wise(zone_id);
-        })
 
         function fetch_data_zone_wise(zone_id) {
             $.ajaxSetup({
@@ -427,11 +461,6 @@
             });
         }
 
-        $('.user_overview_stats_update').on('change', function (){
-            let type = $(this).val();
-            user_overview_stats_update(type);
-        })
-
         function user_overview_stats_update(type) {
             $.ajaxSetup({
                 headers: {
@@ -455,12 +484,6 @@
                 }
             });
         }
-
-        $('.commission_overview_stats_update').on('change', function (){
-            let type = $(this).val();
-            commission_overview_stats_update(type);
-        })
-
         function commission_overview_stats_update(type) {
             $.ajaxSetup({
                 headers: {
@@ -485,12 +508,14 @@
                 }
             });
         }
+    </script>
 
+    <script>
         function insert_param(key, value) {
             key = encodeURIComponent(key);
             value = encodeURIComponent(value);
             // kvp looks like ['key1=value1', 'key2=value2', ...]
-            let kvp = document.location.search.substr(1).split('&');
+            var kvp = document.location.search.substr(1).split('&');
             let i = 0;
 
             for (; i < kvp.length; i++) {

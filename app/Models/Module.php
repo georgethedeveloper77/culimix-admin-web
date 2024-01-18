@@ -5,52 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Carbon;
 
-/**
- * Class Module
- *
- * @property int $id
- * @property string $module_name
- * @property string $module_type
- * @property string|null $thumbnail
- * @property bool $status
- * @property int $stores_count
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property string|null $icon
- * @property int $theme_id
- * @property string|null $description
- * @property bool $all_zone_service
- */
 class Module extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'module_name',
-        'module_type',
-        'thumbnail',
-        'status',
-        'stores_count',
-        'icon',
-        'theme_id',
-        'description',
-        'all_zone_service',
-    ];
-
-
-    /**
-     * @var string[]
-     */
     protected $casts = [
         'id'=>'integer',
         'stores_count'=>'integer',
@@ -59,36 +18,22 @@ class Module extends Model
         'all_zone_service'=>'integer'
     ];
 
-    /**
-     * @return HasMany
-     */
-    public function stores(): HasMany
+    public function stores()
     {
         return $this->hasMany(Store::class);
     }
 
-    /**
-     * @return HasMany
-     */
-    public function items(): HasMany
+    public function items()
     {
         return $this->hasMany(Item::class);
     }
 
-    /**
-     * @return MorphMany
-     */
-    public function translations(): MorphMany
+    public function translations()
     {
         return $this->morphMany(Translation::class, 'translationable');
     }
 
-    /**
-     * @param $value
-     * @return mixed
-     */
-    public function getModuleNameAttribute($value): mixed
-    {
+    public function getModuleNameAttribute($value){
         if (count($this->translations) > 0) {
             foreach ($this->translations as $translation) {
                 if ($translation['key'] == 'module_name') {
@@ -100,12 +45,7 @@ class Module extends Model
         return $value;
     }
 
-    /**
-     * @param $value
-     * @return mixed
-     */
-    public function getDescriptionAttribute($value): mixed
-    {
+    public function getDescriptionAttribute($value){
         if (count($this->translations) > 0) {
             foreach ($this->translations as $translation) {
                 if ($translation['key'] == 'description') {
@@ -118,37 +58,22 @@ class Module extends Model
     }
 
 
-    /**
-     * @param $query
-     * @return mixed
-     */
-    public function scopeParcel($query): mixed
+    public function scopeParcel($query)
     {
         return $query->where('module_type', 'parcel');
     }
 
-    /**
-     * @param $query
-     * @return mixed
-     */
-    public function scopeNotParcel($query): mixed
+    public function scopeNotParcel($query)
     {
         return $query->where('module_type', '!=' ,'parcel');
     }
 
-    /**
-     * @param $query
-     * @return mixed
-     */
-    public function scopeActive($query): mixed
+    public function scopeActive($query)
     {
         return $query->where('status', '=', 1);
     }
 
-    /**
-     * @return void
-     */
-    protected static function booted(): void
+    protected static function booted()
     {
         static::addGlobalScope('translate', function (Builder $builder) {
             $builder->with(['translations' => function ($query) {
@@ -157,10 +82,7 @@ class Module extends Model
         });
     }
 
-    /**
-     * @return BelongsToMany
-     */
-    public function zones(): BelongsToMany
+    public function zones()
     {
         return $this->belongsToMany(Zone::class);
     }

@@ -34,7 +34,7 @@
     },
     "require-dev": {
         "mockery/mockery": "^1.0",
-        "orchestra/testbench": "^7.31|^8.11",
+        "orchestra/testbench": "^7.0|^8.0",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^9.3"
     },
@@ -46,9 +46,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Laravel\\Passport\\Tests\\": "tests/",
-            "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/"
+            "Laravel\\Passport\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -63,10 +61,6 @@
     },
     "config": {
         "sort-packages": true
-    },
-    "scripts": {
-        "post-autoload-dump": "@prepare",
-        "prepare": "@php vendor/bin/testbench package:discover --ansi"
     },
     "minimum-stability": "dev",
     "prefer-stable": true

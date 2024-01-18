@@ -57,14 +57,14 @@
                                     <div class="row gx-3 gy-1">
                                         <div class="col-md-8 col-sm-7">
                                             <div>
-                                                <label for="test-email" class="sr-only">
+                                                <label for="inputPassword2" class="sr-only">
                                                     {{ translate('mail') }}</label>
                                                 <input type="email" id="test-email" class="form-control"
                                                     placeholder="{{ translate('messages.Ex:') }} jhon@email.com">
                                             </div>
                                         </div>
                                         <div class="col-md-4 col-sm-5">
-                                            <button type="button"  class="btn btn--primary h--45px btn-block send-mail" data-toggle="modal" data-target="#sent-mail-modal">
+                                            <button type="button" onclick="{{env('APP_MODE') == 'demo' ? 'call_demo()' : 'send_mail()'}}" class="btn btn--primary h--45px btn-block" data-toggle="modal" data-target="#sent-mail-modal">
                                                 <i class="tio-telegram"></i>
                                                 {{ translate('send_mail') }}
                                             </button>
@@ -179,20 +179,16 @@
 @endsection
 @push('script_2')
     <script>
-        "use strict";
         function ValidateEmail(inputText) {
-            let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-            return !!inputText.match(mailformat);
+            var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+            if (inputText.match(mailformat)) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
-        $(document).on('click', '.send-mail', function () {
-            @if(env('APP_MODE') =='demo')
-            toastr.info('{{ translate('Update option is disabled for demo!') }}', {
-                CloseButton: true,
-                ProgressBar: true
-            });
-            @else
-
+        function send_mail() {
             if (ValidateEmail($('#test-email').val())) {
                 Swal.fire({
                     title: '{{ translate('Are you sure?') }}?',
@@ -242,10 +238,6 @@
             } else {
                 toastr.error('{{ translate('invalid_email_address') }} !!');
             }
-
-            @endif
-
-        });
-
+        }
     </script>
 @endpush

@@ -25,7 +25,12 @@
                     <span class="status">
                         {{translate('Status')}}
                     </span>
-
+                    {{-- <div class="text--primary-2 d-flex flex-wrap align-items-center" type="button" data-toggle="modal" data-target="#works-modal">
+                        <strong class="mr-2">{{translate('How it Works')}}</strong>
+                        <div class="blinkings">
+                            <i class="tio-info-outined"></i>
+                        </div>
+                    </div> --}}
                 </div>
                 <div class="mt-2">
                     @php($config=\App\CentralLogics\Helpers::get_business_settings('recaptcha'))
@@ -43,17 +48,7 @@
                                     @endif
                                 </span>
                             </span>
-                            <input type="checkbox"
-                                   data-id="recaptcha_status"
-                                   data-type="toggle"
-                                   data-image-on="{{ asset('/public/assets/admin/img/modal/important-recapcha.png') }}"
-                                   data-image-off="{{ asset('/public/assets/admin/img/modal/warning-recapcha.png') }}"
-                                   data-title-on="{{ translate('Important!') }}"
-                                   data-title-off="{{ translate('Warning!') }}"
-                                   data-text-on="<p>{{ translate('reCAPTCHA is now enabled for added security. Users may be prompted to complete a reCAPTCHA challenge to verify their human identity and protect against spam and malicious activity.') }}</p>"
-                                   data-text-off="<p>{{ translate('Disabling reCAPTCHA may leave your website vulnerable to spam and malicious activity and suspects that a user may be a bot. It is highly recommended to keep reCAPTCHA enabled to ensure the security and integrity of your website.') }}</p>"
-                                   class="status toggle-switch-input dynamic-checkbox-toggle"
-                                   name="status" id="recaptcha_status" value="1" {{isset($config) && $config['status'] == 1 ? 'checked':''}}>
+                            <input class="toggle-switch-input" type="checkbox" onclick="toogleModal(event,'recaptcha_status','important-recapcha.png','warning-recapcha.png','{{translate('Important!')}}','{{translate('Warning!')}}',`<p>{{translate('reCAPTCHA is now enabled for added security. Users may be prompted to complete a reCAPTCHA challenge to verify their human identity and protect against spam and malicious activity.')}}</p>`,`<p>{{translate('Disabling reCAPTCHA may leave your website vulnerable to spam and malicious activity and suspects that a user may be a bot. It is highly recommended to keep reCAPTCHA enabled to ensure the security and integrity of your website.')}}</p>`)" name="status" id="recaptcha_status" value="1" {{isset($config) && $config['status'] == 1 ? 'checked':''}}>
                             <span class="toggle-switch-label text p-0">
                                 <span class="toggle-switch-indicator"></span>
                             </span>
@@ -61,15 +56,15 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label for="site_key" class="form-label">{{translate('messages.Site Key')}}</label><br>
-                                    <input id="site_key" type="text" class="form-control" name="site_key"
+                                    <label class="form-label">{{translate('messages.Site Key')}}</label><br>
+                                    <input type="text" class="form-control" name="site_key"
                                             value="{{env('APP_MODE')!='demo'?$config['site_key']??"":''}}">
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label for="site_key" class="form-label">{{translate('messages.Secret Key')}}</label><br>
-                                    <input id="site_key" type="text" class="form-control" name="secret_key"
+                                    <label class="form-label">{{translate('messages.Secret Key')}}</label><br>
+                                    <input type="text" class="form-control" name="secret_key"
                                             value="{{env('APP_MODE')!='demo'?$config['secret_key']??"":''}}">
                                 </div>
                             </div>
@@ -110,7 +105,7 @@
                         </ul>
                         <div class="btn--container justify-content-end">
                             <button type="reset" class="btn btn--reset">{{translate('messages.reset')}}</button>
-                            <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}" class="btn btn--primary call-demo">{{translate('messages.save')}}</button>
+                            <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}" onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}" class="btn btn--primary">{{translate('messages.save')}}</button>
                         </div>
                     </form>
                 </div>
@@ -118,6 +113,20 @@
         </div>
     </div>
 
-
+    <div class="modal fade" id="works-modal">
+        <div class="modal-dialog modal-lg warning-modal">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <h3 class="modal-title mb-3">{{translate('Please go to settings and select module for this zone')}}</h3>
+                        <p class="txt">
+                            {{translate("Otherwise this zone won't function properly & will work show anything against this zone")}}
+                        </p>
+                    </div>
+                    <img src="{{asset('/public/assets/admin/img/zone-instruction.png')}}" alt="admin/img" class="w-100">
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection

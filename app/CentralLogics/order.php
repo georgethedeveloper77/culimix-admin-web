@@ -2,20 +2,16 @@
 
 namespace App\CentralLogics;
 
-use App\Models\AccountTransaction;
 use App\Models\Admin;
-use App\Models\DeliveryMan;
 use App\Models\Order;
 use App\Models\OrderTransaction;
 use App\Models\AdminWallet;
 use App\Models\BusinessSetting;
-use App\Models\Store;
 use App\Models\StoreWallet;
 use App\Models\DeliveryManWallet;
 use App\CentralLogics\CustomerLogic;
 use App\Models\OrderPayment;
 use App\Models\User;
-use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -227,7 +223,6 @@ class OrderLogic
                 }
                 else if($received_by=='store' && $type != 'parcel' && ($order->payment_method == "cash_on_delivery" || $unpaid_pay_method == 'cash_on_delivery'))
                 {
-                    $store_over_flow =  true ;
                     $vendorWallet->collected_cash = $vendorWallet->collected_cash+($order->order_amount-$order->partially_paid_amount);
                 }
                 else if($received_by==false)
@@ -237,7 +232,6 @@ class OrderLogic
                 else if($received_by=='deliveryman' && $order->delivery_man && $order->delivery_man->type == 'zone_wise')
                 {
                     $dmWallet->collected_cash = $dmWallet->collected_cash+($order->order_amount-$order->partially_paid_amount);
-                    $dm_over_flow =  true ;
                 }
 
                 $adminWallet->save();
@@ -249,38 +243,27 @@ class OrderLogic
                     $dmWallet->save();
                 }
 
-
-                if(isset($store_over_flow) ){
-                    self::create_account_transaction_for_collect_cash(old_collected_cash:$vendorWallet->collected_cash , from_type:'store' , from_id: $order->store->vendor->id , amount: $order->order_amount - $order->partially_paid_amount ,order_id: $order->id);
-                }
-                if(isset($dm_over_flow)){
-                    self::create_account_transaction_for_collect_cash(old_collected_cash:$dmWallet->collected_cash , from_type:'deliveryman' , from_id: $order->delivery_man_id , amount: $order->order_amount - $order->partially_paid_amount ,order_id: $order->id);
-                }
-
                 self::update_unpaid_order_payment(order_id:$order->id, payment_method:$order->payment_method);
 
                 DB::commit();
 
-                if($order->is_guest  == 0){
-                    $ref_status = BusinessSetting::where('key','ref_earning_status')->first()->value;
-                    if(isset($order->customer->ref_by) && $order->customer->order_count == 0  && $ref_status == 1){
-                        $ref_code_exchange_amt = BusinessSetting::where('key','ref_earning_exchange_rate')->first()->value;
-                        $referar_user=User::where('id',$order->customer->ref_by)->first();
-                        $refer_wallet_transaction = CustomerLogic::create_wallet_transaction($referar_user->id, $ref_code_exchange_amt, 'referrer',$order->customer->phone);
-                        $mail_status = Helpers::get_mail_status('add_fund_mail_status_user');
+                $ref_status = BusinessSetting::where('key','ref_earning_status')->first()->value;
+                if(isset($order->customer->ref_by) && $order->customer->order_count == 0  && $ref_status == 1){
+                    $ref_code_exchange_amt = BusinessSetting::where('key','ref_earning_exchange_rate')->first()->value;
+                    $referar_user=User::where('id',$order->customer->ref_by)->first();
+                    $refer_wallet_transaction = CustomerLogic::create_wallet_transaction($referar_user->id, $ref_code_exchange_amt, 'referrer',$order->customer->phone);
+                    $mail_status = Helpers::get_mail_status('add_fund_mail_status_user');
 
-                        try{
-                            if(config('mail.status') && $mail_status == '1') {
-                                Mail::to($referar_user->email)->send(new \App\Mail\AddFundToWallet($refer_wallet_transaction));
+                    try{
+                        if(config('mail.status') && $mail_status == '1') {
+                            Mail::to($referar_user->email)->send(new \App\Mail\AddFundToWallet($refer_wallet_transaction));
                             }
                         } catch(\Exception $ex){
                             info($ex->getMessage());
                         }
-                    }
-
-                    if($order->user_id) CustomerLogic::create_loyalty_point_transaction($order->user_id, $order->id, $order->order_amount, 'order_place');
                 }
 
+                if($order->user_id) CustomerLogic::create_loyalty_point_transaction($order->user_id, $order->id, $order->order_amount, 'order_place');
 
             }
             catch(\Exception $e)
@@ -309,14 +292,14 @@ class OrderLogic
 
             $adminWallet->digital_received = $adminWallet->digital_received - $order->order_amount;
             $adminWallet->save();
-            if (BusinessSetting::where('key', 'wallet_add_refund')->first()->value == 1 && $order->is_guest  == 0) {
+            if (BusinessSetting::where('key', 'wallet_add_refund')->first()->value == 1) {
                 CustomerLogic::create_wallet_transaction($order->user_id, $order->order_amount, 'order_refund', $order->id);
             }
         }elseif(($order->payment_status == "partially_paid")){
 
             $adminWallet->digital_received = $adminWallet->digital_received - $order->partially_paid_amount;
             $adminWallet->save();
-            if (BusinessSetting::where('key', 'wallet_add_refund')->first()->value == 1  &&  $order->is_guest  == 0) {
+            if (BusinessSetting::where('key', 'wallet_add_refund')->first()->value == 1) {
                 CustomerLogic::create_wallet_transaction($order->user_id, $order->partially_paid_amount, 'order_refund', $order->id);
             }
         }
@@ -506,52 +489,5 @@ class OrderLogic
         }
         return true;
 
-    }
-
-
-
-    public static function create_account_transaction_for_collect_cash($old_collected_cash, $from_type ,$from_id ,$amount, $order_id){
-        $account_transaction = new AccountTransaction();
-        $account_transaction->from_type =$from_type;
-        $account_transaction->from_id = $from_id;
-        $account_transaction->created_by = $from_type;
-        $account_transaction->method = 'cash_collection';
-        $account_transaction->ref = $order_id;
-        $account_transaction->amount = $amount ?? 0;
-        $account_transaction->current_balance = $old_collected_cash ?? 0;
-        $account_transaction->type = 'cash_in';
-        $account_transaction->save();
-
-
-        if($from_type  ==  'store'){
-            $vendor= Vendor::find($from_id);
-            $Payable_Balance = $vendor?->wallet?->collected_cash   > 0 ? 1: 0;
-            $cash_in_hand_overflow= BusinessSetting::where('key' ,'cash_in_hand_overflow_store')->first()?->value;
-            $cash_in_hand_overflow_store_amount = BusinessSetting::where('key' ,'cash_in_hand_overflow_store_amount')->first()?->value;
-
-            if ($Payable_Balance == 1 &&  $cash_in_hand_overflow && $vendor?->wallet?->balance<0 &&  $cash_in_hand_overflow_store_amount <= abs($vendor?->wallet?->collected_cash)){
-                $rest= Store::where('vendor_id', $vendor->id)->first();
-                $rest->status = 0 ;
-                $rest->save();
-            }
-
-        } elseif($from_type  ==  'deliveryman' ){
-            $cash_in_hand_overflow= BusinessSetting::where('key' ,'cash_in_hand_overflow_delivery_man')->first()?->value;
-            $cash_in_hand_overflow_delivery_man = BusinessSetting::where('key' ,'dm_max_cash_in_hand')->first()?->value;
-            // $val=  $cash_in_hand_overflow_delivery_man - (($cash_in_hand_overflow_delivery_man * 10)/100);
-
-            $dm = DeliveryMan::find($from_id);
-            $wallet_balance = $dm?->wallet?->total_earning - ($dm?->wallet?->total_withdrawn +$dm?->wallet?->pending_withdraw + $dm?->wallet?->collected_cash);
-            $over_flow_balance =  $dm?->wallet?->collected_cash;
-            $Payable_Balance =  $over_flow_balance   > 0 ? 1: 0;
-            if ($Payable_Balance == 1 &&  $cash_in_hand_overflow  && $wallet_balance<0 &&  $cash_in_hand_overflow_delivery_man < abs($over_flow_balance)){
-                $dm->status = 0 ;
-                // $dm->auth_token = null;
-                $dm->save();
-            }
-
-        }
-
-        return true;
     }
 }

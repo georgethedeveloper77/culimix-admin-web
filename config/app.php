@@ -1,7 +1,5 @@
 <?php
 
-use App\Providers\InterfaceServiceProvider;
-
 return [
 
     /*
@@ -41,7 +39,7 @@ return [
     |
     */
 
-    'debug' => (bool)env('APP_DEBUG', true),
+    'debug' => (bool) env('APP_DEBUG', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -181,7 +179,6 @@ return [
         Laravelpkg\Laravelchk\LaravelchkServiceProvider::class,
         // FruitCake\Cors\CorsServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
-        InterfaceServiceProvider::class
     ],
 
     /*

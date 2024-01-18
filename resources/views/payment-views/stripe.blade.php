@@ -7,7 +7,7 @@
 @endpush
 
 @section('content')
-    <div class="text-center"> <h1>Please do not refresh this page...</h1></div>
+    <center><h1>Please do not refresh this page...</h1></center>
 
 {{-- @php($config = payment_config('stripe', 'payment_config')) --}}
 <script type="text/javascript">

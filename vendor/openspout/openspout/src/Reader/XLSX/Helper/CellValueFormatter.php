@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OpenSpout\Reader\XLSX\Helper;
 
-use DateInterval;
 use DateTimeImmutable;
 use DOMElement;
 use Exception;
@@ -49,19 +48,19 @@ final class CellValueFormatter
     public const NUM_SECONDS_IN_ONE_DAY = 86400;
 
     /** @var SharedStringsManager Manages shared strings */
-    private readonly SharedStringsManager $sharedStringsManager;
+    private SharedStringsManager $sharedStringsManager;
 
     /** @var StyleManagerInterface Manages styles */
-    private readonly StyleManagerInterface $styleManager;
+    private StyleManagerInterface $styleManager;
 
     /** @var bool Whether date/time values should be returned as PHP objects or be formatted as strings */
-    private readonly bool $shouldFormatDates;
+    private bool $shouldFormatDates;
 
     /** @var bool Whether date/time values should use a calendar starting in 1904 instead of 1900 */
-    private readonly bool $shouldUse1904Dates;
+    private bool $shouldUse1904Dates;
 
     /** @var XLSX Used to unescape XML data */
-    private readonly XLSX $escaper;
+    private XLSX $escaper;
 
     /**
      * @param SharedStringsManager  $sharedStringsManager Manages shared strings
@@ -99,9 +98,7 @@ final class CellValueFormatter
         if (self::CELL_TYPE_NUMERIC === $cellType) {
             $fNodeValue = $node->getElementsByTagName(self::XML_NODE_FORMULA)->item(0)?->nodeValue;
             if (null !== $fNodeValue) {
-                $computedValue = $this->formatNumericCellValue($vNodeValue, (int) $node->getAttribute(self::XML_ATTRIBUTE_STYLE_ID));
-
-                return new Cell\FormulaCell('='.$fNodeValue, null, $computedValue);
+                return new Cell\FormulaCell('='.$fNodeValue, null, $vNodeValue);
             }
         }
 
@@ -194,15 +191,13 @@ final class CellValueFormatter
      *
      * @param int $cellStyleId 0 being the default style
      */
-    private function formatNumericCellValue(float|int|string $nodeValue, int $cellStyleId): DateInterval|DateTimeImmutable|float|int|string
+    private function formatNumericCellValue(int|float|string $nodeValue, int $cellStyleId): DateTimeImmutable|float|int|string
     {
         // Numeric values can represent numbers as well as timestamps.
         // We need to look at the style of the cell to determine whether it is one or the other.
-        $formatCode = $this->styleManager->getNumberFormatCode($cellStyleId);
+        $shouldFormatAsDate = $this->styleManager->shouldFormatNumericValueAsDate($cellStyleId);
 
-        if (DateIntervalFormatHelper::isDurationFormat($formatCode)) {
-            $cellValue = $this->formatExcelDateIntervalValue((float) $nodeValue, $formatCode);
-        } elseif ($this->styleManager->shouldFormatNumericValueAsDate($cellStyleId)) {
+        if ($shouldFormatAsDate) {
             $cellValue = $this->formatExcelTimestampValue((float) $nodeValue, $cellStyleId);
         } else {
             $nodeIntValue = (int) $nodeValue;
@@ -211,16 +206,6 @@ final class CellValueFormatter
         }
 
         return $cellValue;
-    }
-
-    private function formatExcelDateIntervalValue(float $nodeValue, string $excelFormat): DateInterval|string
-    {
-        $dateInterval = DateIntervalFormatHelper::createDateIntervalFromHours($nodeValue);
-        if ($this->shouldFormatDates) {
-            return DateIntervalFormatHelper::formatDateInterval($dateInterval, $excelFormat);
-        }
-
-        return $dateInterval;
     }
 
     /**
@@ -235,7 +220,7 @@ final class CellValueFormatter
      *
      * @see ECMA-376 Part 1 - §18.17.4
      */
-    private function formatExcelTimestampValue(float $nodeValue, int $cellStyleId): DateTimeImmutable|string
+    private function formatExcelTimestampValue(float $nodeValue, int $cellStyleId): string|DateTimeImmutable
     {
         if (!$this->isValidTimestampValue($nodeValue)) {
             throw new InvalidValueException((string) $nodeValue);
@@ -264,7 +249,7 @@ final class CellValueFormatter
      *
      * @param int $cellStyleId 0 being the default style
      */
-    private function formatExcelTimestampValueAsDateTimeValue(float $nodeValue, int $cellStyleId): DateTimeImmutable|string
+    private function formatExcelTimestampValueAsDateTimeValue(float $nodeValue, int $cellStyleId): string|DateTimeImmutable
     {
         $baseDate = $this->shouldUse1904Dates ? '1904-01-01' : '1899-12-30';
 
@@ -317,7 +302,7 @@ final class CellValueFormatter
      *
      * @param string $nodeValue ISO 8601 Date string
      */
-    private function formatDateCellValue(string $nodeValue): Cell\ErrorCell|DateTimeImmutable|string
+    private function formatDateCellValue(string $nodeValue): string|DateTimeImmutable|Cell\ErrorCell
     {
         // Mitigate thrown Exception on invalid date-time format (http://php.net/manual/en/datetime.construct.php)
         try {

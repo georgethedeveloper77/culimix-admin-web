@@ -40,17 +40,17 @@ final class FileSystemHelper implements FileSystemWithRootFolderHelperInterface
         <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
         EOD;
 
-    private readonly string $baseFolderRealPath;
-    private readonly CommonFileSystemHelper $baseFileSystemHelper;
+    private string $baseFolderRealPath;
+    private CommonFileSystemHelper $baseFileSystemHelper;
 
     /** @var ZipHelper Helper to perform tasks with Zip archive */
-    private readonly ZipHelper $zipHelper;
+    private ZipHelper $zipHelper;
 
     /** @var string document creator */
-    private readonly string $creator;
+    private string $creator;
 
     /** @var XLSX Used to escape XML data */
-    private readonly XLSX $escaper;
+    private XLSX $escaper;
 
     /** @var string Path to the root folder inside the temp folder where the files to create the XLSX will be stored */
     private string $rootFolder;
@@ -366,10 +366,6 @@ final class FileSystemHelper implements FileSystemWithRootFolderHelperInterface
                 fwrite($worksheetFilePointer, $mergeCellString);
             }
 
-            $this->getXMLFragmentForPageMargin($worksheetFilePointer, $options);
-
-            $this->getXMLFragmentForPageSetup($worksheetFilePointer, $options);
-
             // Add the legacy drawing for comments
             fwrite($worksheetFilePointer, '<legacyDrawing r:id="rId_comments_vml1"/>');
 
@@ -413,44 +409,6 @@ final class FileSystemHelper implements FileSystemWithRootFolderHelperInterface
 
         // once the zip is copied, remove it
         $this->deleteFile($zipFilePath);
-    }
-
-    /**
-     * @param resource $targetResource
-     */
-    private function getXMLFragmentForPageMargin($targetResource, Options $options): void
-    {
-        $pageMargin = $options->getPageMargin();
-        if (null === $pageMargin) {
-            return;
-        }
-
-        fwrite($targetResource, "<pageMargins top=\"{$pageMargin->top}\" right=\"{$pageMargin->right}\" bottom=\"{$pageMargin->bottom}\" left=\"{$pageMargin->left}\" header=\"{$pageMargin->header}\" footer=\"{$pageMargin->footer}\"/>");
-    }
-
-    /**
-     * @param resource $targetResource
-     */
-    private function getXMLFragmentForPageSetup($targetResource, Options $options): void
-    {
-        $pageSetup = $options->getPageSetup();
-        if (null === $pageSetup) {
-            return;
-        }
-
-        $xml = '<pageSetup';
-
-        if (null !== $pageSetup->pageOrientation) {
-            $xml .= " orientation=\"{$pageSetup->pageOrientation->value}\"";
-        }
-
-        if (null !== $pageSetup->paperSize) {
-            $xml .= " paperSize=\"{$pageSetup->paperSize->value}\"";
-        }
-
-        $xml .= '/>';
-
-        fwrite($targetResource, $xml);
     }
 
     /**

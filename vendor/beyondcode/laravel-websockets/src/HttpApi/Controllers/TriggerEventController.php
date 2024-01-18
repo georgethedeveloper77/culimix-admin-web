@@ -16,7 +16,7 @@ class TriggerEventController extends Controller
         if ($payload->has('channel')) {
             $channels = [$payload->get('channel')];
         } else {
-            $channels = $payload->all()['channels'] ?? [];
+            $channels = $payload->get('channels', []);
 
             if (is_string($channels)) {
                 $channels = [$channels];

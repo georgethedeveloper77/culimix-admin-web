@@ -34,15 +34,15 @@ final class SharedStringsManager
     public const XML_ATTRIBUTE_VALUE_PRESERVE = 'preserve';
 
     /** @var string Path of the XLSX file being read */
-    private readonly string $filePath;
+    private string $filePath;
 
-    private readonly Options $options;
+    private Options $options;
 
     /** @var WorkbookRelationshipsManager Helps retrieving workbook relationships */
-    private readonly WorkbookRelationshipsManager $workbookRelationshipsManager;
+    private WorkbookRelationshipsManager $workbookRelationshipsManager;
 
     /** @var CachingStrategyFactoryInterface Factory to create shared strings caching strategies */
-    private readonly CachingStrategyFactoryInterface $cachingStrategyFactory;
+    private CachingStrategyFactoryInterface $cachingStrategyFactory;
 
     /** @var CachingStrategyInterface The best caching strategy for storing shared strings */
     private CachingStrategyInterface $cachingStrategy;

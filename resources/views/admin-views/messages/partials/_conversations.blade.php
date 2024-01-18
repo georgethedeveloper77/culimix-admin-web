@@ -3,9 +3,9 @@
     <div class="card-header justify-content-between">
         <div class="chat-user-info w-100 d-flex align-items-center">
             <div class="chat-user-info-img">
-                <img class="avatar-img onerror-image"
-                src="{{\App\CentralLogics\Helpers::onerror_image_helper($user['image'], asset('storage/app/public/profile/').'/'.$user['image'], asset('public/assets/admin/img/160x160/img1.jpg'), 'profile/') }}"
-                    data-onerror-image="{{asset('public/assets/admin')}}/img/160x160/img1.jpg"
+                <img class="avatar-img"
+                    src="{{asset('storage/app/public/profile/'.$user['image'])}}"
+                    onerror="this.src='{{asset('public/assets/admin')}}/img/160x160/img1.jpg'"
                     alt="Image Description">
             </div>
             <div class="chat-user-info-content">
@@ -91,6 +91,10 @@
                             <img src="{{asset('/public/assets/admin/img/gallery.png')}}" alt="">
                             <input type="file" name="images[]" class="d-none upload_input_images" data-max_length="2"  multiple="" >
                         </label>
+                        {{-- <label class="m-0">
+                            <img src="{{asset('/public/assets/admin/img/file.png')}}" alt="">
+                            <input type="file" class="d-none" id="file-upload">
+                        </label> --}}
                         <label class="m-0 emoji-icon-hidden">
                             <img src="{{asset('/public/assets/admin/img/emoji.png')}}" alt="">
                         </label>
@@ -105,40 +109,42 @@
     </div>
 </div>
 
-<script src="{{asset('public/assets/admin')}}/js/view-pages/common.js"></script>
+
 <!-- Emoji Conv -->
 <script>
-    "use strict";
     $(document).ready(function() {
         $("#conv-textarea").emojioneArea({
             pickerPosition: "top",
             tonesStyle: "bullet",
                 events: {
-                    keyup: function (editor, event) {
+                    keyup: function (editor, event) {d
                         console.log(editor.html());
                         console.log(this.getText());
                     }
                 }
             });
     });
+</script>
 
+
+<script>
     // Image Upload
     jQuery(document).ready(function () {
         ImgUpload();
     });
     function ImgUpload() {
-    let imgWrap = "";
-    let imgArray = [];
+    var imgWrap = "";
+    var imgArray = [];
 
     $('.upload_input_images').each(function () {
         $(this).on('change', function (e) {
         imgWrap = $(this).closest('.upload__box').find('.upload__img-wrap');
-        let maxLength = $(this).attr('data-max_length');
+        var maxLength = $(this).attr('data-max_length');
 
-        let files = e.target.files;
-        let filesArr = Array.prototype.slice.call(files);
+        var files = e.target.files;
+        var filesArr = Array.prototype.slice.call(files);
         console.log(filesArr);
-        let iterator = 0;
+        var iterator = 0;
         filesArr.forEach(function (f, index) {
 
             if (!f.type.match('image.*')) {
@@ -148,8 +154,8 @@
             if (imgArray.length > maxLength) {
             return false
             } else {
-            let len = 0;
-            for (let i = 0; i < imgArray.length; i++) {
+            var len = 0;
+            for (var i = 0; i < imgArray.length; i++) {
                 if (imgArray[i] !== undefined) {
                 len++;
                 }
@@ -159,9 +165,9 @@
             } else {
                 imgArray.push(f);
 
-                let reader = new FileReader();
+                var reader = new FileReader();
                 reader.onload = function (e) {
-                let html = "<div class='upload__img-box'><div style='background-image: url(" + e.target.result + ")' data-number='" + $(".upload__img-close").length + "' data-file='" + f.name + "' class='img-bg'><div class='upload__img-close'></div></div></div>";
+                var html = "<div class='upload__img-box'><div style='background-image: url(" + e.target.result + ")' data-number='" + $(".upload__img-close").length + "' data-file='" + f.name + "' class='img-bg'><div class='upload__img-close'></div></div></div>";
                 imgWrap.append(html);
                 iterator++;
                 }
@@ -173,8 +179,8 @@
     });
 
     $('body').on('click', ".upload__img-close", function (e) {
-        let file = $(this).parent().data("file");
-        for (let i = 0; i < imgArray.length; i++) {
+        var file = $(this).parent().data("file");
+        for (var i = 0; i < imgArray.length; i++) {
         if (imgArray[i].name === file) {
             imgArray.splice(i, 1);
             break;
@@ -186,7 +192,7 @@
 
     //File Upload
     $('#file-upload').change(function(e){
-        let fileName = e.target.files[0].name;
+        var fileName = e.target.files[0].name;
         $('#file-upload-filename').text(fileName)
     });
 
@@ -237,7 +243,7 @@
 
     $('#reply-form').on('submit', function() {
         $('button[type=submit], input[type=submit]').prop('disabled',true);
-            let formData = new FormData(this);
+            var formData = new FormData(this);
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -264,7 +270,7 @@
                             CloseButton: true,
                             ProgressBar: true
                         });
-                        $('#admin-view-conversation').html(data.view);
+                        $('#view-conversation').html(data.view);
                         conversationList();
                     }
                 },

@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <?php
+    // $site_direction = session()->get('site_direction');
+    // if (env('APP_MODE') == 'demo') {
+    //     $site_direction = session()->get('site_direction');
+    // }else{
+    //     $site_direction = \App\Models\BusinessSetting::where('key', 'site_direction')->first();
+    //     $site_direction = $site_direction->value ?? 'ltr';
+    // }
 
     $log_email_succ = session()->get('log_email_succ');
 ?>
@@ -34,8 +41,7 @@
         <div class="auth-wrapper-left">
             <div class="auth-left-cont">
                 @php($store_logo = \App\Models\BusinessSetting::where(['key' => 'logo'])->first()->value)
-                <img class="onerror-image"  data-onerror-image="{{asset('/public/assets/admin/img/favicon.png')}}"
-                src="{{\App\CentralLogics\Helpers::onerror_image_helper($store_logo, asset('storage/app/public/business/').'/' . $store_logo, asset('/public/assets/admin/img/favicon.png'),'business/')}}"  alt="public/img">
+                <img onerror="this.src='{{asset('/public/assets/admin/img/favicon.png')}}'" src="{{ asset('storage/app/public/business/' . $store_logo) }}" alt="public/img">
                 <h2 class="title">{{translate('Your')}} <span class="d-block">{{translate('All Service')}}</span> <strong class="text--039D55">{{translate('in one field')}}....</strong></h2>
             </div>
         </div>
@@ -54,8 +60,23 @@
                         <div class="mb-5">
                             <h2 class="title">{{ translate($role) }} {{translate('messages.signin')}}</h2>
                             <div>{{translate('messages.welcome_back_login_to_your_panel') }}.</div>
+                            {{-- <span class="badge badge-soft-info">( {{translate('messages.select_your_role_&_login')}} )</span> --}}
                         </div>
                     </div>
+
+                    <!-- Form Group -->
+                    {{-- <div class="js-form-message form-group py-0">
+                        <label class="input-label text-capitalize" for="signinSrEmail">{{translate('messages.your_role')}}</label>
+
+                        <select name="role" class="form-control form-control-lg py-0" id="role-select" required data-msg="Please select a role.">
+                            <option value="">{{ translate('select_role') }}</option>
+                            <option value="admin" {{ $role == 'admin' ? 'selected' : '' }}>{{ translate('messages.admin') }}</option>
+                            <option value="admin_employee" {{ $role == 'admin_employee' ? 'selected' : '' }}>{{ translate('admin_employee') }}</option>
+                            <option value="vendor" {{ $role == 'vendor' ? 'selected' : '' }}>{{ translate('messages.store') }}</option>
+                            <option value="vendor_employee" {{ $role == 'vendor_employee' ? 'selected' : '' }}>{{ translate('store_employee') }}</option>
+                        </select>
+                    </div> --}}
+                    <!-- End Form Group -->
 
                     <!-- Form Group -->
                     <div class="js-form-message form-group">
@@ -122,6 +143,7 @@
                         <!-- End forget password -->
                     </div>
 
+                    {{-- recaptcha --}}
                     @php($recaptcha = \App\CentralLogics\Helpers::get_business_settings('recaptcha'))
                     @if(isset($recaptcha) && $recaptcha['status'] == 1)
                         <div id="recaptcha_element" class="w-100" data-type="image"></div>
@@ -130,13 +152,16 @@
                         <div class="row p-2" id="reload-captcha">
                             <div class="col-6 pr-0">
                                 <input type="text" class="form-control form-control-lg border-0" name="custome_recaptcha"
-                                        id="custome_recaptcha" required placeholder="{{translate('Enter recaptcha value')}}" autocomplete="off" value="{{env('APP_MODE')=='dev'? session('six_captcha'):''}}">
+                                        id="custome_recaptcha" required placeholder="{{\translate('Enter recaptcha value')}}" autocomplete="off" value="{{env('APP_MODE')=='dev'? session('six_captcha'):''}}">
                             </div>
                             <div class="col-6 bg-white rounded d-flex">
                                 <img src="<?php echo $custome_recaptcha->inline(); ?>" class="rounded w-100" />
-                                <div class="p-3 pr-0 capcha-spin reloadCaptcha">
+                                <div class="p-3 pr-0 capcha-spin" onclick="reloadCaptcha()">
                                     <i class="tio-cached"></i>
                                 </div>
+                                {{-- <a class="" onclick="reloadCaptcha()">
+                                    <i class="tio-edit"></i>
+                                </a> --}}
                             </div>
                         </div>
                     @endif
@@ -153,7 +178,7 @@
                             <span class="d-block"><strong>Password</strong> : 12345678</span>
                         </div>
                         <div>
-                            <button class="btn action-btn btn--primary m-0 copy_cred"><i class="tio-copy"></i>
+                            <button class="btn action-btn btn--primary m-0" onclick="copy_cred()"><i class="tio-copy"></i>
                             </button>
                         </div>
                     </div>
@@ -167,7 +192,7 @@
                             <span class="d-block"><strong>Password</strong> : 12345678</span>
                         </div>
                         <div>
-                            <button class="btn action-btn btn--primary m-0 copy_cred2"><i class="tio-copy"></i>
+                            <button class="btn action-btn btn--primary m-0" onclick="copy_cred2()"><i class="tio-copy"></i>
                             </button>
                         </div>
                     </div>
@@ -203,6 +228,9 @@
             <a class="btn btn-lg btn-block btn--primary mt-3" href="{{route('reset-password')}}">
                 {{ translate('Send Mail') }}
             </a>
+            {{-- <button class="btn btn-lg btn-block btn--primary mt-3" type="button">
+                Send Mail
+            </button> --}}
         </div>
       </div>
     </div>
@@ -268,7 +296,6 @@
 
 @if ($errors->any())
     <script>
-        "use strict";
         @foreach($errors->all() as $error)
         toastr.error('{{translate($error)}}', Error, {
             CloseButton: true,
@@ -280,29 +307,30 @@
 @if ($log_email_succ)
 @php(session()->forget('log_email_succ'))
     <script>
-        "use strict";
         $('#successMailModal').modal('show');
     </script>
 @endif
 
 <script>
-    "use strict";
     // $("#forget-password").hide();
-        $("#role-select").change(function() {
-            var selectValue = $(this).val();
-            if (selectValue == "admin") {
-            $("#forget-password").show();
-            $("#forget-password1").hide();
-            } else if(selectValue == "vendor") {
-            $("#forget-password").hide();
-            $("#forget-password1").show();
-            }
-            else {
-            $("#forget-password").hide();
-            $("#forget-password1").hide();
-            }
-        });
+      $("#role-select").change(function() {
+        var selectValue = $(this).val();
+        if (selectValue == "admin") {
+          $("#forget-password").show();
+          $("#forget-password1").hide();
+        } else if(selectValue == "vendor") {
+          $("#forget-password").hide();
+          $("#forget-password1").show();
+        }
+        else {
+          $("#forget-password").hide();
+          $("#forget-password1").hide();
+        }
+      });
+</script>
 
+<!-- JS Plugins Init. -->
+<script>
     $(document).on('ready', function () {
         // INITIALIZATION OF SHOW PASSWORD
         // =======================================================
@@ -316,37 +344,11 @@
             $.HSCore.components.HSValidation.init($(this));
         });
     });
-
-
-    $('.reloadCaptcha').on('click', function () {
-        $.ajax({
-            url: "{{ route('reload-captcha') }}",
-            type: "GET",
-            dataType: 'json',
-            beforeSend: function () {
-                $('#loading').show()
-                $('.capcha-spin').addClass('active')
-            },
-            success: function(data) {
-                $('#reload-captcha').html(data.view);
-            },
-            complete: function () {
-                $('#loading').hide()
-                $('.capcha-spin').removeClass('active')
-            }
-        });
-    })
-
-    $(document).ready(function() {
-        $('.onerror-image').on('error', function() {
-            let img = $(this).data('onerror-image')
-            $(this).attr('src', img);
-        });
-    });
 </script>
+
+{{-- recaptcha scripts start --}}
 @if(isset($recaptcha) && $recaptcha['status'] == 1)
     <script type="text/javascript">
-    "use strict";
         var onloadCallback = function () {
             grecaptcha.render('recaptcha_element', {
                 'sitekey': '{{ \App\CentralLogics\Helpers::get_business_settings('recaptcha')['site_key'] }}'
@@ -355,7 +357,6 @@
     </script>
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
     <script>
-        "use strict";
         $("#form-id").on('submit',function(e) {
             var response = grecaptcha.getResponse();
 
@@ -368,27 +369,45 @@
 @endif
 {{-- recaptcha scripts end --}}
 
-
+<script>
+        function reloadCaptcha() {
+            $.ajax({
+                url: "{{ route('reload-captcha') }}",
+                type: "GET",
+                dataType: 'json',
+                beforeSend: function () {
+                    $('#loading').show()
+                    $('.capcha-spin').addClass('active')
+                },
+                success: function(data) {
+                    $('#reload-captcha').html(data.view);
+                },
+                complete: function () {
+                    $('#loading').hide()
+                    $('.capcha-spin').removeClass('active')
+                }
+            });
+        }
+</script>
 
 @if(env('APP_MODE')=='demo')
     <script>
-        "use strict";
-        $('.copy_cred').on('click', function () {
+        function copy_cred() {
             $('#signinSrEmail').val('admin@admin.com');
             $('#signupSrPassword').val('12345678');
             toastr.success('Copied successfully!', 'Success!', {
                 CloseButton: true,
                 ProgressBar: true
             });
-        })
-        $('.copy_cred2').on('click', function () {
+        }
+        function copy_cred2() {
             $('#signinSrEmail').val('test.restaurant@gmail.com');
             $('#signupSrPassword').val('12345678');
             toastr.success('Copied successfully!', 'Success!', {
                 CloseButton: true,
                 ProgressBar: true
             });
-        })
+        }
     </script>
 @endif
 

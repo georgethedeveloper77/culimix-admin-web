@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\OrderPayment;
-use App\Models\ParcelDeliveryInstruction;
 use Stripe\Product;
 use App\Models\Cart;
 use App\Models\Item;
@@ -102,16 +101,6 @@ class OrderController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-
-        if($request->is_guest && !Helpers::get_mail_status('guest_checkout_status')){
-            return response()->json([
-                'errors' => [
-                    ['code' => 'is_guest', 'message' => translate('messages.Guest_order_is_not_active')]
-                ]
-            ], 403);
-        }
-
-
         $coupon = null;
         $coupon_created_by = null;
         $delivery_charge = null;
@@ -156,18 +145,6 @@ class OrderController extends Controller
             ], 403);
         }
 
-
-
-
-    $digital_payment = Helpers::get_business_settings('digital_payment');
-            if($digital_payment['status'] == 0 && $request->payment_method == 'digital_payment'){
-                return response()->json([
-                    'errors' => [
-                        ['code' => 'digital_payment', 'message' => translate('messages.digital_payment_for_the_order_not_available_at_this_time')]
-                    ]
-                ], 403);
-            }
-
         $data =  DMVehicle::active()->where(function ($query) use ($distance_data) {
             $query->where('starting_coverage_area', '<=', $distance_data)->where('maximum_coverage_area', '>=', $distance_data)
             ->orWhere(function ($query) use ($distance_data) {
@@ -175,6 +152,10 @@ class OrderController extends Controller
             });
         })
             ->orderBy('starting_coverage_area')->first();
+        // if(!$data){
+
+        //     $data=DMVehicle::active()->latest()->first();
+        // }
 
         $extra_charges = (float) (isset($data) ? $data->extra_charges  : 0);
         $vehicle_id = (isset($data) ? $data->id  : null);
@@ -183,26 +164,7 @@ class OrderController extends Controller
         $zone = null;
         if ($request->latitude && $request->longitude) {
             $point = new Point($request->latitude, $request->longitude);
-
-            if(isset($request->sender_zone_id) ){
-                $zone_id = $request->sender_zone_id;
-            } else{
-
-                $store = Store::with('discount')->selectRaw('*, IF(((select count(*) from `store_schedule` where `stores`.`id` = `store_schedule`.`store_id` and `store_schedule`.`day` = ' . $schedule_at->format('w') . ' and `store_schedule`.`opening_time` < "' . $schedule_at->format('H:i:s') . '" and `store_schedule`.`closing_time` >"' . $schedule_at->format('H:i:s') . '") > 0), true, false) as open')->where('id', $request->store_id)->first();
-
-                if (!$store) {
-                    return response()->json([
-                        'errors' => [
-                            ['code' => 'order_time', 'message' => translate('messages.store_not_found')]
-                        ]
-                    ], 404);
-                }
-
-
-                $zone_id = isset($store) ? [$store->zone_id] : json_decode($request->header('zoneId'), true);
-            }
-
-
+            $zone_id = isset($store) ? [$store->zone_id] : json_decode($request->header('zoneId'), true);
             $zone = Zone::where('id', $zone_id)->whereContains('coordinates', new Point($request->latitude, $request->longitude, POINT_SRID))->first();
             if (!$zone) {
                 $errors = [];
@@ -225,7 +187,15 @@ class OrderController extends Controller
                     ]
                 ], 406);
             }
+            $store = Store::with('discount')->selectRaw('*, IF(((select count(*) from `store_schedule` where `stores`.`id` = `store_schedule`.`store_id` and `store_schedule`.`day` = ' . $schedule_at->format('w') . ' and `store_schedule`.`opening_time` < "' . $schedule_at->format('H:i:s') . '" and `store_schedule`.`closing_time` >"' . $schedule_at->format('H:i:s') . '") > 0), true, false) as open')->where('id', $request->store_id)->first();
 
+            if (!$store) {
+                return response()->json([
+                    'errors' => [
+                        ['code' => 'order_time', 'message' => translate('messages.store_not_found')]
+                    ]
+                ], 404);
+            }
 
             if ($request->schedule_at && !$store->schedule_order) {
                 return response()->json([
@@ -382,7 +352,7 @@ class OrderController extends Controller
 
         $address = [
             'contact_person_name' => $request->contact_person_name ? $request->contact_person_name : ($request->user?$request->user->f_name . ' ' . $request->user->f_name:''),
-            'contact_person_number' => $request->contact_person_number ? ($request->user ? $request->contact_person_number :str_replace('+', '', $request->contact_person_number)) : ($request->user?$request->user->phone:''),
+            'contact_person_number' => $request->contact_person_number ? str_replace('+', '', $request->contact_person_number) : ($request->user?$request->user->phone:''),
             'contact_person_email' => $request->contact_person_email ? $request->contact_person_email : ($request->user?$request->user->email:''),
             'address_type' => $request->address_type ? $request->address_type : 'Delivery',
             'address' => $request->address??'',
@@ -852,26 +822,25 @@ class OrderController extends Controller
 
 
             $payments = $order->payments()->where('payment_method','cash_on_delivery')->exists();
+                if(!in_array($order->payment_method, ['digital_payment', 'partial_payment', 'offline_payment'])  || $payments){
+                    Helpers::send_order_notification($order);
+                }
+
             $order_mail_status = Helpers::get_mail_status('place_order_mail_status_user');
             $order_verification_mail_status = Helpers::get_mail_status('order_verification_mail_status_user');
             //PlaceOrderMail
             try {
-
-                if(!in_array($order->payment_method, ['digital_payment', 'partial_payment', 'offline_payment'])  || $payments){
-                        Helpers::send_order_notification($order);
-
-                    if ($order->order_status == 'pending' && config('mail.status') && $order_mail_status == '1' && $request->user) {
-                        Mail::to($request->user->email)->send(new PlaceOrder($order->id));
-                    }
-                    if ($order->order_status == 'pending' && config('order_delivery_verification') == 1 && $order_verification_mail_status == '1' && $request->user) {
-                        Mail::to($request->user->email)->send(new OrderVerificationMail($order->otp,$request->user->f_name));
-                    }
-                    if ($order->is_guest == 1 && $order->order_status == 'pending' && config('mail.status') && $order_mail_status == '1' && isset($request->contact_person_email)) {
-                        Mail::to($request->contact_person_email)->send(new PlaceOrder($order->id));
-                    }
-                    if ($order->is_guest == 1 && $order->order_status == 'pending' && config('order_delivery_verification') == 1 && $order_verification_mail_status == '1' && isset($request->contact_person_email)) {
-                        Mail::to($request->contact_person_email)->send(new OrderVerificationMail($order->otp,$request->contact_person_name));
-                    }
+                if ($order->order_status == 'pending' && config('mail.status') && $order_mail_status == '1' && $request->user) {
+                    Mail::to($request->user->email)->send(new PlaceOrder($order->id));
+                }
+                if ($order->order_status == 'pending' && config('order_delivery_verification') == 1 && $order_verification_mail_status == '1' && $request->user) {
+                    Mail::to($request->user->email)->send(new OrderVerificationMail($order->otp,$request->user->f_name));
+                }
+                if ($order->is_guest == 1 && $order->order_status == 'pending' && config('mail.status') && $order_mail_status == '1' && isset($request->contact_person_email)) {
+                    Mail::to($request->contact_person_email)->send(new PlaceOrder($order->id));
+                }
+                if ($order->is_guest == 1 && $order->order_status == 'pending' && config('order_delivery_verification') == 1 && $order_verification_mail_status == '1' && isset($request->contact_person_email)) {
+                    Mail::to($request->contact_person_email)->send(new OrderVerificationMail($order->otp,$request->contact_person_name));
                 }
             } catch (\Exception $ex) {
                 info($ex->getMessage());
@@ -927,17 +896,6 @@ class OrderController extends Controller
                 ]
             ], 403);
         }
-
-        $store = Store::with('discount')->selectRaw('*, IF(((select count(*) from `store_schedule` where `stores`.`id` = `store_schedule`.`store_id` and `store_schedule`.`day` = ' . $schedule_at->format('w') . ' and `store_schedule`.`opening_time` < "' . $schedule_at->format('H:i:s') . '" and `store_schedule`.`closing_time` >"' . $schedule_at->format('H:i:s') . '") > 0), true, false) as open')->where('id', $request->store_id)->first();
-
-        if (!$store) {
-            return response()->json([
-                'errors' => [
-                    ['code' => 'order_time', 'message' => translate('messages.store_not_found')]
-                ]
-            ], 404);
-        }
-
         $zone = null;
         if ($request->latitude && $request->longitude) {
             $point = new Point($request->latitude, $request->longitude);
@@ -974,7 +932,15 @@ class OrderController extends Controller
                 ]
             ], 406);
         }
+        $store = Store::with('discount')->selectRaw('*, IF(((select count(*) from `store_schedule` where `stores`.`id` = `store_schedule`.`store_id` and `store_schedule`.`day` = ' . $schedule_at->format('w') . ' and `store_schedule`.`opening_time` < "' . $schedule_at->format('H:i:s') . '" and `store_schedule`.`closing_time` >"' . $schedule_at->format('H:i:s') . '") > 0), true, false) as open')->where('id', $request->store_id)->first();
 
+        if (!$store) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'order_time', 'message' => translate('messages.store_not_found')]
+                ]
+            ], 404);
+        }
 
         if ($request->schedule_at && !$store->schedule_order) {
             return response()->json([
@@ -1304,17 +1270,7 @@ class OrderController extends Controller
         }
         $user_id = $request->user ? $request->user->id : $request['guest_id'];
 
-        $paginator = Order::with(['store', 'delivery_man.rating', 'parcel_category', 'refund:order_id,admin_note,customer_note'])->withCount('details')->where(['user_id' => $user_id])->whereIn('order_status', ['delivered', 'canceled', 'refund_requested', 'refund_request_canceled', 'refunded', 'failed'])
-
-        ->when(!isset($request->user) , function($query){
-            $query->where('is_guest' , 1);
-        })
-
-        ->when(isset($request->user)  , function($query){
-            $query->where('is_guest' , 0);
-        })
-
-        ->Notpos()->latest()->paginate($request['limit'], ['*'], 'page', $request['offset']);
+        $paginator = Order::with(['store', 'delivery_man.rating', 'parcel_category', 'refund:order_id,admin_note,customer_note'])->withCount('details')->where(['user_id' => $user_id])->whereIn('order_status', ['delivered', 'canceled', 'refund_requested', 'refund_request_canceled', 'refunded', 'failed'])->Notpos()->latest()->paginate($request['limit'], ['*'], 'page', $request['offset']);
         $orders = array_map(function ($data) {
             $data['delivery_address'] = $data['delivery_address'] ? json_decode($data['delivery_address']) : $data['delivery_address'];
             $data['store'] = $data['store'] ? Helpers::store_data_formatting($data['store']) : $data['store'];
@@ -1345,16 +1301,7 @@ class OrderController extends Controller
         }
         $user_id = $request->user ? $request->user->id : $request['guest_id'];
 
-        $paginator = Order::with(['store', 'delivery_man.rating', 'parcel_category'])
-        ->when(!isset($request->user) , function($query){
-            $query->where('is_guest' , 1);
-        })
-
-        ->when(isset($request->user)  , function($query){
-            $query->where('is_guest' , 0);
-        })
-
-        ->withCount('details')->where(['user_id' => $user_id])->whereNotIn('order_status', ['delivered', 'canceled', 'refund_requested', 'refund_request_canceled', 'refunded', 'failed'])->Notpos()->latest()->paginate($request['limit'], ['*'], 'page', $request['offset']);
+        $paginator = Order::with(['store', 'delivery_man.rating', 'parcel_category'])->withCount('details')->where(['user_id' => $user_id])->whereNotIn('order_status', ['delivered', 'canceled', 'refund_requested', 'refund_request_canceled', 'refunded', 'failed'])->Notpos()->latest()->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
         $orders = array_map(function ($data) {
             $data['delivery_address'] = $data['delivery_address'] ? json_decode($data['delivery_address']) : $data['delivery_address'];
@@ -1383,16 +1330,7 @@ class OrderController extends Controller
         }
         $user_id = $request->user ? $request->user->id : $request['guest_id'];
 
-        $order = Order::with('details', 'offline_payments','parcel_category')
-        ->when(!isset($request->user) , function($query){
-            $query->where('is_guest' , 1);
-        })
-
-        ->when(isset($request->user)  , function($query){
-            $query->where('is_guest' , 0);
-        })
-
-        ->where('user_id', $user_id)->find($request->order_id);
+        $order = Order::with('details', 'offline_payments','parcel_category')->where('user_id', $user_id)->find($request->order_id);
 
         $details = isset($order->details) ? $order->details : null;
         if ($details != null && $details->count() > 0) {
@@ -1429,19 +1367,7 @@ class OrderController extends Controller
         }
         $user_id = $request->user ? $request->user->id : $request['guest_id'];
 
-        $order = Order::where(['user_id' => $user_id, 'id' => $request['order_id']])
-
-        ->when(!isset($request->user) , function($query){
-            $query->where('is_guest' , 1);
-        })
-
-        ->when(isset($request->user)  , function($query){
-            $query->where('is_guest' , 0);
-        })
-
-
-
-        ->Notpos()->first();
+        $order = Order::where(['user_id' => $user_id, 'id' => $request['order_id']])->Notpos()->first();
         if (!$order) {
             return response()->json([
                 'errors' => [
@@ -1492,18 +1418,7 @@ class OrderController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $order = Order::where(['user_id' => $request->user->id, 'id' => $request['order_id']])
-
-        ->when(!isset($request->user) , function($query){
-            $query->where('is_guest' , 1);
-        })
-
-        ->when(isset($request->user)  , function($query){
-            $query->where('is_guest' , 0);
-        })
-
-
-        ->Notpos()->first();
+        $order = Order::where(['user_id' => $request->user->id, 'id' => $request['order_id']])->Notpos()->first();
         if (!$order) {
             return response()->json([
                 'errors' => [
@@ -1575,8 +1490,6 @@ class OrderController extends Controller
                 ]
             ], 403);
         }
-
-
         $user_id = $request->user ? $request->user->id : $request['guest_id'];
         $order = Order::where(['user_id' => $user_id, 'id' => $request['order_id']])->Notpos()->first();
         if ($order) {
@@ -1597,21 +1510,8 @@ class OrderController extends Controller
 
             $order = Order::where(['user_id' => $user_id, 'id' => $request['order_id']])->Notpos()->first();
 
-            $order_mail_status = Helpers::get_mail_status('place_order_mail_status_user');
-            $order_verification_mail_status = Helpers::get_mail_status('order_verification_mail_status_user');
-            $address = json_decode($order->delivery_address, true);
-
             try {
                 Helpers::send_order_notification($order);
-
-                if ($order->is_guest == 0 && config('mail.status') && $order_mail_status == '1'&& $order->customer) {
-                    Mail::to($order->customer->email)->send(new PlaceOrder($order->id));
-                }
-                if ($order->is_guest == 1 && config('mail.status') && $order_mail_status == '1' && isset($address['contact_person_email'])) {
-                    Mail::to($address['contact_person_email'])->send(new PlaceOrder($order->id));
-                }
-
-
             } catch (\Exception $e) {
                 info($e->getMessage());
             }
@@ -1635,7 +1535,7 @@ class OrderController extends Controller
     public function cancellation_reason(Request $request)
     {
         $limit = $request->query('limit', 25);
-        $offset = $request->query('offset', 1);
+        $offset = $request->query('offset', 25);
 
         $reasons = OrderCancelReason::where('status', 1)->when($request->type, function ($query) use ($request) {
             $query->where('user_type', $request->type);
@@ -1646,22 +1546,6 @@ class OrderController extends Controller
             'limit' => $limit,
             'offset' => $offset,
             'data' => $reasons->items()
-        ];
-        return response()->json($data, 200);
-    }
-
-    public function parcel_instructions(Request $request)
-    {
-        $limit = $request->query('limit', 25);
-        $offset = $request->query('offset', 1);
-
-        $instructions = ParcelDeliveryInstruction::where('status', 1)->paginate($limit, ['*'], 'page', $offset);
-
-        $data = [
-            'total_size' => $instructions->total(),
-            'limit' => $limit,
-            'offset' => $offset,
-            'data' => $instructions->items()
         ];
         return response()->json($data, 200);
     }
@@ -1717,7 +1601,6 @@ class OrderController extends Controller
             // $order->payment_status= 'paid';
 
             $OfflinePayments= OfflinePayments::firstOrNew(['order_id' => $order->id]);
-
             $OfflinePayments->payment_info =json_encode($offline_payment_info);
             $OfflinePayments->customer_note = $request->customer_note;
             $OfflinePayments->method_fields = json_encode($method?->method_fields);
@@ -1746,7 +1629,6 @@ class OrderController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            info($e->getMessage());
             DB::rollBack();
             return response()->json([ 'payment' => $e->getMessage()], 403);
         }
@@ -1809,11 +1691,11 @@ class OrderController extends Controller
         $zone_id= json_decode($request->header('zoneId'), true);
         $data = Store::withOpen($longitude,$latitude)->
         wherehas('orders' ,function($q) use($request){
-            $q->where('user_id',$request->user()->id)->where('is_guest' , 0)->latest();
+            $q->where('user_id',$request->user()->id)->latest();
         })
         ->where('module_id' , $request->header('moduleId'))
         ->withcount('items')
-        ->with(['itemsForReorder'])
+        ->with(['items_for_reorder'])
         ->Active()
         ->whereIn('zone_id', $zone_id)
         ->take(20)
@@ -1821,8 +1703,8 @@ class OrderController extends Controller
         ->orderBy('open', 'desc')
         ->get()
 		->map(function ($data) {
-			$data->items = $data->itemsForReorder->take(5);
-            unset($data->itemsForReorder);
+			$data->items = $data->items_for_reorder->take(5);
+            unset($data->items_for_reorder);
 			return $data;
 		});
 

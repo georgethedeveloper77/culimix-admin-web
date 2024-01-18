@@ -40,8 +40,8 @@
                                                 <label class="input-label" for="exampleFormControlInput1">{{translate('messages.zone')}}</label>
                                                 <select name="zone" id="zone" class="form-control js-select2-custom" >
                                                     <option value="all">{{translate('messages.all')}}</option>
-                                                    @foreach(\App\Models\Zone::orderBy('name')->Active()->get() as $z)
-                                                        <option value="{{$z['id']}}">{{$z['name']}}</option>
+                                                    @foreach($zones as $zone)
+                                                        <option value="{{$zone['id']}}">{{$zone['name']}}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -71,10 +71,10 @@
                                             {{translate('messages.image')}}
                                             <small class="text-danger">* ( {{translate('messages.ratio')}} 900x300 )</small>
                                         </label>
-                                        <center class="py-3 my-auto">
+                                        <div class="text-center py-3 my-auto">
                                             <img class="img--vertical" id="viewer"
                                                 src="{{asset('public/assets/admin/img/900x400/img1.jpg')}}" alt="image"/>
-                                        </center>
+                                        </div>
                                         <div class="custom-file">
                                             <input type="file" name="image" id="customFileEg1" class="custom-file-input"
                                                 accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
@@ -181,8 +181,14 @@
                                     </td>
                                     <td>
                                         @if($notification['image']!=null)
-                                            <img class="h--50px"
-                                                 src="{{asset('storage/app/public/notification')}}/{{$notification['image']}}">
+                                            <img class="h--50px onerror-image"
+                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                $notification['image'] ?? '',
+                                                asset('storage/app/public/notification').'/'.$notification['image'],
+                                                asset('public/assets/admin/img/160x160/img2.jpg'),
+                                                'notification/'
+                                            ) }}"
+                                                data-onerror-image="{{asset('public/assets/admin/img/160x160/img2.jpg')}}">
                                         @else
                                             <label class="badge badge-soft-warning">{{translate('No Image')}}</label>
                                         @endif
@@ -195,7 +201,7 @@
                                     </td>
                                     <td>
                                         <label class="toggle-switch toggle-switch-sm" for="stocksCheckbox{{$notification->id}}">
-                                            <input type="checkbox" onclick="location.href='{{route('admin.notification.status',[$notification['id'],$notification->status?0:1])}}'"class="toggle-switch-input" id="stocksCheckbox{{$notification->id}}" {{$notification->status?'checked':''}} hidden>
+                                            <input type="checkbox" data-url="{{route('admin.notification.status',[$notification['id'],$notification->status?0:1])}}" class="toggle-switch-input redirect-url" id="stocksCheckbox{{$notification->id}}" {{$notification->status?'checked':''}} hidden>
                                             <span class="toggle-switch-label mx-auto">
                                                 <span class="toggle-switch-indicator"></span>
                                             </span>
@@ -206,8 +212,8 @@
                                             <a class="btn action-btn btn--primary btn-outline-primary"
                                             href="{{route('admin.notification.edit',[$notification['id']])}}" title="{{translate('messages.edit_notification')}}"><i class="tio-edit"></i>
                                             </a>
-                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
-                                                onclick="form_alert('notification-{{$notification['id']}}','{{ translate('Want to delete this notification ?') }}')" title="{{translate('messages.delete_notification')}}"><i class="tio-delete-outlined"></i>
+                                            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:"
+                                               data-id="notification-{{$notification['id']}}" data-message="{{ translate('Want to delete this notification ?') }}" title="{{translate('messages.delete_notification')}}"><i class="tio-delete-outlined"></i>
                                             </a>
                                             <form action="{{route('admin.notification.delete',[$notification['id']])}}" method="post" id="notification-{{$notification['id']}}">
                                                 @csrf @method('delete')
@@ -242,53 +248,9 @@
 @endsection
 
 @push('script_2')
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/notification.js"></script>
     <script>
-        $(document).on('ready', function () {
-            // INITIALIZATION OF DATATABLES
-            // =======================================================
-            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
-
-            $('#column1_search').on('keyup', function () {
-                datatable
-                    .columns(1)
-                    .search(this.value)
-                    .draw();
-            });
-
-
-            $('#column3_search').on('change', function () {
-                datatable
-                    .columns(2)
-                    .search(this.value)
-                    .draw();
-            });
-
-
-            // INITIALIZATION OF SELECT2
-            // =======================================================
-            $('.js-select2-custom').each(function () {
-                var select2 = $.HSCore.components.HSSelect2.init($(this));
-            });
-        });
-    </script>
-
-    <script>
-        function readURL(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $('#viewer').attr('src', e.target.result);
-                }
-
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        $("#customFileEg1").change(function () {
-            readURL(this);
-        });
-
+        "use strict";
         $('#notification').on('submit', function (e) {
 
             e.preventDefault();
@@ -339,8 +301,7 @@
                 }
             })
         })
-    </script>
-        <script>
+
             $('#reset_btn').click(function(){
                 $('#zone').val('all').trigger('change');
                 $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');

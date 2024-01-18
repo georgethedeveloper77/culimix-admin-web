@@ -16,6 +16,9 @@ class Cart extends Model
         'is_guest' => 'boolean',
         'price' => 'float',
         'quantity' => 'integer',
+        'add_on_ids' => 'array',
+        'add_on_qtys' => 'array',
+        'variation' => 'array',
     ];
 
     protected $fillable = [

@@ -29,9 +29,6 @@
                         >
                             @csrf
                             <div class="row g-3">
-                                @php($language=\App\Models\BusinessSetting::where('key','language')->first())
-                                @php($language = $language->value ?? null)
-                                @php($default_lang = str_replace('_', '-', app()->getLocale()))
                                 <div class="col-lg-6">
                                     @if ($language)
                                     <ul class="nav nav-tabs mb-3 border-0">
@@ -40,7 +37,7 @@
                                             href="#"
                                             id="default-link">{{translate('messages.default')}}</a>
                                         </li>
-                                        @foreach (json_decode($language) as $lang)
+                                        @foreach ($language as $lang)
                                             <li class="nav-item">
                                                 <a class="nav-link lang_link"
                                                     href="#"
@@ -56,12 +53,11 @@
                                             </label>
                                             <input type="text" name="title[]" id="default_title"
                                                 class="form-control" placeholder="{{ translate('messages.new_banner') }}"
-
-                                                oninvalid="document.getElementById('en-link').click()">
+                                            >
                                         </div>
                                         <input type="hidden" name="lang[]" value="default">
                                     </div>
-                                        @foreach (json_decode($language) as $lang)
+                                        @foreach ($language as $lang)
                                             <div class="d-none lang_form"
                                                 id="{{ $lang }}-form">
                                                 <div class="form-group">
@@ -70,8 +66,7 @@
                                                         ({{ strtoupper($lang) }})
                                                     </label>
                                                     <input type="text" name="title[]" id="{{ $lang }}_title"
-                                                        class="form-control" placeholder="{{ translate('messages.new_banner') }}"
-                                                        oninvalid="document.getElementById('en-link').click()">
+                                                        class="form-control" placeholder="{{ translate('messages.new_banner') }}">
                                                 </div>
                                                 <input type="hidden" name="lang[]" value="{{ $lang }}">
                                             </div>
@@ -91,7 +86,6 @@
                                         <label class="input-label" for="title">{{translate('messages.zone')}}</label>
                                         <select name="zone_id" id="zone" class="form-control js-select2-custom">
                                             <option disabled selected>---{{translate('messages.select')}}---</option>
-                                            @php($zones=\App\Models\Zone::active()->get())
                                             @foreach($zones as $zone)
                                                 @if(isset(auth('admin')->user()->zone_id))
                                                     @if(auth('admin')->user()->zone_id == $zone->id)
@@ -105,7 +99,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('messages.banner_type')}}</label>
-                                        <select name="banner_type" id="banner_type" class="form-control" onchange="banner_type_change(this.value)">
+                                        <select name="banner_type" id="banner_type" class="form-control">
                                             <option value="store_wise">{{translate('messages.store_wise')}}</option>
                                             <option value="item_wise">{{translate('messages.item_wise')}}</option>
                                             <option value="default">{{translate('messages.default')}}</option>
@@ -132,10 +126,10 @@
                                 <div class="col-lg-6">
                                     <div class="h-100 d-flex flex-column">
                                         <label class="mt-auto mb-0 d-block text-center">{{translate('messages.banner_image')}} <small class="text-danger">* ( {{translate('messages.ratio')}} 3:1 )</small></label>
-                                        <center class="py-3 my-auto">
+                                        <div class="text-center py-3 my-auto">
                                             <img class="img--vertical" id="viewer"
                                                 src="{{asset('public/assets/admin/img/900x400/img1.jpg')}}" alt="banner image"/>
-                                        </center>
+                                        </div>
                                         <div class="custom-file">
                                             <input type="file" name="image" id="customFileEg1" class="custom-file-input"
                                                 accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" required>
@@ -206,8 +200,8 @@
                                     <td>{{$key+$banners->firstItem()}}</td>
                                     <td>
                                         <span class="media align-items-center">
-                                            <img class="img--ratio-3 w-auto h--50px rounded mr-2" src="{{asset('storage/app/public/banner')}}/{{$banner['image']}}"
-                                                 onerror="this.src='{{asset('/public/assets/admin/img/900x400/img1.jpg')}}'" alt="{{$banner->name}} image">
+                                            <img class="img--ratio-3 w-auto h--50px rounded mr-2 onerror-image" src="{{\App\CentralLogics\Helpers::onerror_image_helper($banner['image'], asset('storage/app/public/banner/').'/'.$banner['image'], asset('public/assets/admin/img/900x400/img1.jpg'), 'banner/') }}"
+                                                data-onerror-image="{{asset('/public/assets/admin/img/900x400/img1.jpg')}}" alt="{{$banner->name}} image">
                                             <div class="media-body">
                                                 <h5 class="text-hover-primary mb-0">{{Str::limit($banner['title'], 25, '...')}}</h5>
                                             </div>
@@ -221,7 +215,7 @@
                                     <td>
                                         <div class="d-flex justify-content-center">
                                             <label class="toggle-switch toggle-switch-sm" for="featuredCheckbox{{$banner->id}}">
-                                                <input type="checkbox" onclick="location.href='{{route('admin.banner.featured',[$banner['id'],$banner->featured?0:1])}}'" class="toggle-switch-input" id="featuredCheckbox{{$banner->id}}" {{$banner->featured?'checked':''}}>
+                                                <input type="checkbox" data-url="{{route('admin.banner.featured',[$banner['id'],$banner->featured?0:1])}}" class="toggle-switch-input redirect-url" id="featuredCheckbox{{$banner->id}}" {{$banner->featured?'checked':''}}>
                                                 <span class="toggle-switch-label">
                                                     <span class="toggle-switch-indicator"></span>
                                                 </span>
@@ -231,7 +225,7 @@
                                     <td>
                                         <div class="d-flex justify-content-center">
                                             <label class="toggle-switch toggle-switch-sm" for="statusCheckbox{{$banner->id}}">
-                                            <input type="checkbox" onclick="location.href='{{route('admin.banner.status',[$banner['id'],$banner->status?0:1])}}'" class="toggle-switch-input" id="statusCheckbox{{$banner->id}}" {{$banner->status?'checked':''}}>
+                                            <input type="checkbox" data-url="{{route('admin.banner.status',[$banner['id'],$banner->status?0:1])}}" class="toggle-switch-input redirect-url" id="statusCheckbox{{$banner->id}}" {{$banner->status?'checked':''}}>
                                             <span class="toggle-switch-label">
                                                 <span class="toggle-switch-indicator"></span>
                                             </span>
@@ -240,9 +234,9 @@
                                     </td>
                                     <td>
                                         <div class="btn--container justify-content-center">
-                                            <a class="btn action-btn btn--primary btn-outline-primary" href="{{route('admin.banner.edit',[$banner['id']])}}"title="{{translate('messages.edit_banner')}}"><i class="tio-edit"></i>
+                                            <a class="btn action-btn btn--primary btn-outline-primary" href="{{route('admin.banner.edit',[$banner['id']])}}" title="{{translate('messages.edit_banner')}}"><i class="tio-edit"></i>
                                             </a>
-                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:" onclick="form_alert('banner-{{$banner['id']}}','{{ translate('Want to delete this banner ?') }}')" title="{{translate('messages.delete_banner')}}"><i class="tio-delete-outlined"></i>
+                                            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="banner-{{$banner['id']}}" data-message="{{ translate('Want to delete this banner ?') }}"><i class="tio-delete-outlined"></i>
                                             </a>
                                             <form action="{{route('admin.banner.delete',[$banner['id']])}}"
                                                         method="post" id="banner-{{$banner['id']}}">
@@ -279,155 +273,62 @@
 @endsection
 
 @push('script_2')
-<script>
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/banner-index.js"></script>
+    <script>
+        "use strict";
+        var module_id = {{Config::get('module.current_module_id')}};
 
-    function readURL(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-
-            reader.onload = function (e) {
-                $('#viewer').attr('src', e.target.result);
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    $("#customFileEg1").change(function () {
-        readURL(this);
-    });
-</script>
-<script>
-    var zone_id = [];
-    var module_id = {{Config::get('module.current_module_id')}};
-
-    function get_items()
-    {
-        var nurl = '{{url('/')}}/admin/item/get-items?module_id='+module_id;
-
-        if(!Array.isArray(zone_id))
+        function get_items()
         {
-            nurl += '&zone_id='+zone_id;
+            var nurl = '{{url('/')}}/admin/item/get-items?module_id='+module_id;
+
+            if(!Array.isArray(zone_id))
+            {
+                nurl += '&zone_id='+zone_id;
+            }
+
+            $.get({
+                url: nurl,
+                dataType: 'json',
+                success: function (data) {
+                    $('#choice_item').empty().append(data.options);
+                }
+            });
         }
 
-        $.get({
-            url: nurl,
-            dataType: 'json',
-            success: function (data) {
-                $('#choice_item').empty().append(data.options);
-            }
-        });
-    }
-    $(document).on('ready', function () {
+        $(document).on('ready', function () {
 
-        module_id = {{Config::get('module.current_module_id')}};
-        get_items();
+            module_id = {{Config::get('module.current_module_id')}};
+            get_items();
 
-        $('#zone').on('change', function(){
-            if($(this).val())
-            {
-                zone_id = $(this).val();
-                get_items();
-            }
-            else
-            {
-                zone_id = [];
-            }
-        });
+            $('.js-data-example-ajax').select2({
+                ajax: {
+                    url: '{{url('/')}}/admin/store/get-stores',
+                    data: function (params) {
+                        return {
+                            q: params.term, // search term
+                            zone_ids: [zone_id],
+                            page: params.page,
+                            module_id: module_id
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                        results: data
+                        };
+                    },
+                    __port: function (params, success, failure) {
+                        var $request = $.ajax(params);
 
-        $('.js-data-example-ajax').select2({
-            ajax: {
-                url: '{{url('/')}}/admin/store/get-stores',
-                data: function (params) {
-                    return {
-                        q: params.term, // search term
-                        zone_ids: [zone_id],
-                        page: params.page,
-                        module_id: module_id
-                    };
-                },
-                processResults: function (data) {
-                    return {
-                    results: data
-                    };
-                },
-                __port: function (params, success, failure) {
-                    var $request = $.ajax(params);
+                        $request.then(success);
+                        $request.fail(failure);
 
-                    $request.then(success);
-                    $request.fail(failure);
-
-                    return $request;
-                }
-            }
-        });
-            // INITIALIZATION OF DATATABLES
-            // =======================================================
-            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'), {
-                select: {
-                    style: 'multi',
-                    classMap: {
-                        checkAll: '#datatableCheckAll',
-                        counter: '#datatableCounter',
-                        counterInfo: '#datatableCounterInfo'
+                        return $request;
                     }
-                },
-                language: {
-                    zeroRecords: '<div class="text-center p-4">' +
-                    '<img class="w-7rem mb-3" src="{{asset('public/assets/admin/svg/illustrations/sorry.svg')}}" alt="Image Description">' +
-
-                    '</div>'
                 }
             });
 
-            $('#datatableSearch').on('mouseup', function (e) {
-                var $input = $(this),
-                    oldValue = $input.val();
-
-                if (oldValue == "") return;
-
-                setTimeout(function(){
-                    var newValue = $input.val();
-
-                    if (newValue == ""){
-                    // Gotcha
-                    datatable.search('').draw();
-                    }
-                }, 1);
-            });
-
-            // INITIALIZATION OF SELECT2
-            // =======================================================
-            $('.js-select2-custom').each(function () {
-                var select2 = $.HSCore.components.HSSelect2.init($(this));
-            });
         });
-        $('#item_wise').hide();
-        $('#default').hide();
-        function banner_type_change(order_type) {
-           if(order_type=='item_wise')
-            {
-                $('#store_wise').hide();
-                $('#item_wise').show();
-                $('#default').hide();
-            }
-            else if(order_type=='store_wise')
-            {
-                $('#store_wise').show();
-                $('#item_wise').hide();5
-                $('#default').hide();
-            }
-            else if(order_type=='default')
-            {
-                $('#default').show();
-                $('#store_wise').hide();
-                $('#item_wise').hide();
-            }
-            else{
-                $('#item_wise').hide();
-                $('#store_wise').hide();
-                $('#default').hide();
-            }
-        }
 
         $('#banner_form').on('submit', function (e) {
             e.preventDefault();
@@ -463,8 +364,7 @@
                 }
             });
         });
-    </script>
-    <script>
+
         $('#search-form').on('submit', function (e) {
             e.preventDefault();
             var formData = new FormData(this);
@@ -492,35 +392,13 @@
                 },
             });
         });
-    </script>
-        <script>
-            $('#reset_btn').click(function(){
-                $('#module_select').val(null).trigger('change');
-                $('#zone').val(null).trigger('change');
-                $('#store_id').val(null).trigger('change');
-                $('#choice_item').val(null).trigger('change');
-                $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');
-            })
-        </script>
-            <script>
-                $(".lang_link").click(function(e){
-                    e.preventDefault();
-                    $(".lang_link").removeClass('active');
-                    $(".lang_form").addClass('d-none');
-                    $(this).addClass('active');
 
-                    let form_id = this.id;
-                    let lang = form_id.substring(0, form_id.length - 5);
-                    console.log(lang);
-                    $("#"+lang+"-form").removeClass('d-none');
-                    if(lang == '{{$default_lang}}')
-                    {
-                        $("#from_part_2").removeClass('d-none');
-                    }
-                    else
-                    {
-                        $("#from_part_2").addClass('d-none');
-                    }
-                })
-            </script>
+        $('#reset_btn').click(function(){
+        $('#module_select').val(null).trigger('change');
+        $('#zone').val(null).trigger('change');
+        $('#store_id').val(null).trigger('change');
+        $('#choice_item').val(null).trigger('change');
+        $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');
+    })
+    </script>
 @endpush

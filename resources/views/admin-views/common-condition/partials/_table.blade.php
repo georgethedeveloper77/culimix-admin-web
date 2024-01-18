@@ -13,7 +13,7 @@
     </td>
     <td>
         <label class="toggle-switch toggle-switch-sm" for="stocksCheckbox{{$condition->id}}">
-            <input type="checkbox" onclick="location.href='{{route('admin.common-condition.status',[$condition['id'],$condition->status?0:1])}}'"class="toggle-switch-input" id="stocksCheckbox{{$condition->id}}" {{$condition->status?'checked':''}}>
+            <input type="checkbox" data-url="{{route('admin.common-condition.status',[$condition['id'],$condition->status?0:1])}}" class="toggle-switch-input redirect-url" id="stocksCheckbox{{$condition->id}}" {{$condition->status?'checked':''}}>
             <span class="toggle-switch-label mx-auto">
                 <span class="toggle-switch-indicator"></span>
             </span>
@@ -24,8 +24,7 @@
             <a class="btn action-btn btn--primary btn-outline-primary"
                 href="{{route('admin.common-condition.edit',[$condition['id']])}}" title="{{translate('messages.edit_condition')}}"><i class="tio-edit"></i>
             </a>
-            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
-            onclick="form_alert('condition-{{$condition['id']}}','Want to delete this condition')" title="{{translate('messages.delete_condition')}}"><i class="tio-delete-outlined"></i>
+            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="condition-{{$condition['id']}}" data-message="{{ translate('messages.Want to delete this condition') }}"  title="{{translate('messages.delete_condition')}}"><i class="tio-delete-outlined"></i>
             </a>
             <form action="{{route('admin.common-condition.delete',[$condition['id']])}}" method="post" id="condition-{{$condition['id']}}">
                 @csrf @method('delete')

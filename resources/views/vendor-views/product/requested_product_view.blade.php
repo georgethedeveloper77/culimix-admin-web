@@ -27,9 +27,9 @@
                 <div class="row flex-wrap">
                     <div>
                         <div class="d-flex flex-wrap align-items-center food--media position-relative mr-4">
-                            <img class="avatar avatar-xxl avatar-4by3"
-                                src="{{ asset('storage/app/public/product') }}/{{ $product['image'] }}"
-                                onerror="this.src='{{ asset('public/assets/admin/img/160x160/img2.jpg') }}'"
+                            <img class="avatar avatar-xxl avatar-4by3 onerror-image"
+                            src="{{\App\CentralLogics\Helpers::onerror_image_helper($product['image'], asset('storage/app/public/product/').'/'.$product['image'], asset('public/assets/admin/img/160x160/img2.jpg'), 'product/') }}"
+                                 data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                 alt="Image Description">
                                 @if ($product['is_rejected'] == 1 )
                                 <div class="reject-info"> {{ translate('Your_Item_Has_Been_Rejected') }}</div>
@@ -40,7 +40,7 @@
                     </div>
                     <div class="w-70 flex-grow">
                         @php($language = \App\Models\BusinessSetting::where('key', 'language')->first()?->value ?? null)
-                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
+                        @php($defaultLang = str_replace('_', '-', app()->getLocale()))
                         <div class="d-flex flex-wrap gap-2 justify-content-between">
                             @if ($language)
                             <ul class="nav nav-tabs border-0 mb-3">
@@ -57,8 +57,8 @@
                                 </ul>
                                 @endif
                                 <div class="d-flex flex-wrap gap-2 align-items-start">
-                                    <a class="btn btn--sm btn-outline-danger" href="javascript:"
-                                    onclick="form_alert('food-{{$product['id']}}','{{ translate('Want to delete this item ?') }}')" title="{{translate('messages.delete_item')}}">{{ translate('messages.Delete') }} <i class="tio-delete-outlined"></i>
+                                    <a class="btn btn--sm btn-outline-danger form-alert" href="javascript:"
+                                    data-id="food-{{$product['id']}}" data-message="{{ translate('Want to delete this item ?') }}" title="{{translate('messages.delete_item')}}">{{ translate('messages.Delete') }} <i class="tio-delete-outlined"></i>
                                     </a>
                                     <a href="{{ route('vendor.item.edit', [$product['id'],'temp_product' => true]) }}" class="btn btn--sm btn-outline-primary">
                                         <i class="tio-edit"></i>  {{ translate('messages.edit_&_Resubmit') }}
@@ -292,6 +292,7 @@
 
 @push('script_2')
 <script>
+    "use strict";
         function request_alert(url, message) {
             Swal.fire({
                 title: '{{translate('messages.are_you_sure')}}',
@@ -309,22 +310,7 @@
                 }
             })
         }
-    $(".lang_link").click(function(e) {
-        e.preventDefault();
-        $(".lang_link").removeClass('active');
-        $(".lang_form").addClass('d-none');
-        $(this).addClass('active');
 
-        let form_id = this.id;
-        let lang = form_id.substring(0, form_id.length - 5);
-        console.log(lang);
-        $("#" + lang + "-form").removeClass('d-none');
-        if (lang == 'en') {
-            $("#from_part_2").removeClass('d-none');
-        } else {
-            $("#from_part_2").addClass('d-none');
-        }
-    })
     function cancelled_status(route, message, processing = false) {
             Swal.fire({
                     //text: message,

@@ -19,9 +19,6 @@
                 </span>
             </h1>
         </div>
-        @php($language=\App\Models\BusinessSetting::where('key','language')->first())
-        @php($language = $language->value ?? null)
-        @php($default_lang = str_replace('_', '-', app()->getLocale()))
         <!-- End Page Header -->
         <div class="row g-3">
             <div class="col-12">
@@ -36,7 +33,7 @@
                                             href="#"
                                             id="default-link">{{translate('messages.default')}}</a>
                                         </li>
-                                        @foreach (json_decode($language) as $lang)
+                                        @foreach ($language as $lang)
                                             <li class="nav-item">
                                                 <a class="nav-link lang_link"
                                                     href="#"
@@ -52,12 +49,11 @@
                                             </label>
                                             <input type="text" name="name[]" id="default_title"
                                                 class="form-control" placeholder="{{ translate('messages.ex_:_new_attribute') }}"
-
-                                                oninvalid="document.getElementById('en-link').click()">
+                                            >
                                         </div>
                                         <input type="hidden" name="lang[]" value="default">
                                     </div>
-                                        @foreach (json_decode($language) as $lang)
+                                        @foreach ($language as $lang)
                                             <div class="d-none lang_form"
                                                 id="{{ $lang }}-form">
                                                 <div class="form-group">
@@ -66,8 +62,7 @@
                                                         ({{ strtoupper($lang) }})
                                                     </label>
                                                     <input type="text" name="name[]" id="{{ $lang }}_title"
-                                                        class="form-control" placeholder="{{ translate('messages.ex_:_new_attribute') }}"
-                                                        oninvalid="document.getElementById('en-link').click()">
+                                                        class="form-control" placeholder="{{ translate('messages.ex_:_new_attribute') }}">
                                                 </div>
                                                 <input type="hidden" name="lang[]" value="{{ $lang }}">
                                             </div>
@@ -83,10 +78,6 @@
                                             <input type="hidden" name="lang[]" value="default">
                                         </div>
                                     @endif
-                            {{-- <div class="form-group">
-                                <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}}</label>
-                                <input type="text" name="name" class="form-control" placeholder="{{translate('messages.ex_:_new_attribute')}}" maxlength="191" required>
-                            </div> --}}
                             <div class="btn--container justify-content-end">
                                 <button type="reset" class="btn btn--reset">{{translate('messages.reset')}}</button>
                                 <button type="submit" class="btn btn--primary">{{translate('messages.submit')}}</button>
@@ -180,8 +171,7 @@
                                         <div class="btn--container justify-content-center">
                                             <a class="btn action-btn btn--primary btn-outline-primary" href="{{route('admin.attribute.edit',[$attribute['id']])}}" title="{{translate('messages.edit')}}"><i class="tio-edit"></i>
                                             </a>
-                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:" onclick="form_alert('attribute-{{$attribute['id']}}','{{ translate('Want to delete this attribute ?') }}')" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i>
-                                            </a>
+                                            <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="attribute-{{$attribute['id']}}" data-message="{{ translate('Want to delete this attribute ?') }}" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i></a>
                                             <form action="{{route('admin.attribute.delete',[$attribute['id']])}}"
                                                     method="post" id="attribute-{{$attribute['id']}}">
                                                 @csrf @method('delete')
@@ -216,54 +206,20 @@
 @endsection
 
 @push('script_2')
-
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/attribute-index.js"></script>
     <script>
-        $(document).on('ready', function () {
-            // INITIALIZATION OF DATATABLES
-            // =======================================================
-            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+        "use strict";
 
-            $('#column1_search').on('keyup', function () {
-                datatable
-                    .columns(1)
-                    .search(this.value)
-                    .draw();
-            });
+        $(".lang_link").click(function(e){
+            e.preventDefault();
+            $(".lang_link").removeClass('active');
+            $(".lang_form").addClass('d-none');
+            $(this).addClass('active');
 
-
-            $('#column3_search').on('change', function () {
-                datatable
-                    .columns(2)
-                    .search(this.value)
-                    .draw();
-            });
-
-
-            // INITIALIZATION OF SELECT2
-            // =======================================================
-            $('.js-select2-custom').each(function () {
-                var select2 = $.HSCore.components.HSSelect2.init($(this));
-            });
-        });
-
-            $(".lang_link").click(function(e){
-                e.preventDefault();
-                $(".lang_link").removeClass('active');
-                $(".lang_form").addClass('d-none');
-                $(this).addClass('active');
-
-                let form_id = this.id;
-                let lang = form_id.substring(0, form_id.length - 5);
-                console.log(lang);
-                $("#"+lang+"-form").removeClass('d-none');
-                if(lang == '{{$default_lang}}')
-                {
-                    $("#from_part_2").removeClass('d-none');
-                }
-                else
-                {
-                    $("#from_part_2").addClass('d-none');
-                }
-            })
-        </script>
+            let form_id = this.id;
+            let lang = form_id.substring(0, form_id.length - 5);
+            console.log(lang);
+            $("#"+lang+"-form").removeClass('d-none');
+        })
+    </script>
 @endpush

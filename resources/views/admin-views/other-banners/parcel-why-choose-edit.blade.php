@@ -21,7 +21,7 @@
     </div>
     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
     @php($language = $language->value ?? null)
-    @php($default_lang = str_replace('_', '-', app()->getLocale()))
+    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
     <div class="tab-content">
         <div class="tab-pane fade show active">
             <div class="card mb-3">
@@ -82,7 +82,7 @@
                                     }
                                     ?>
                                     <div class="row d-none lang_form" id="{{$lang}}-form1">
-    
+
                                         <div class="col-12">
                                             <div class="form-group">
                                                 <label class="form-label">{{translate('Title')}} ({{strtoupper($lang)}})<span class="form-label-secondary" data-toggle="tooltip" data-placement="right" data-original-title="{{ translate('Write_the_title_within_100_characters') }}">
@@ -102,9 +102,9 @@
                                     </div>
                                     <input type="hidden" name="lang[]" value="{{$lang}}">
                                     @endforeach
-                                
+
                                 </div>
-                 
+
                                 @else
                                 <div class="col-sm-6">
                                     <label class="form-label">{{translate('Title')}}<span class="form-label-secondary" data-toggle="tooltip" data-placement="right" data-original-title="{{ translate('Write_the_title_within_100_characters') }}">
@@ -122,7 +122,13 @@
                                         </div>
                                         <label class="upload-img-3 m-0">
                                             <div class="img">
-                                                <img src="{{asset('storage/app/public/why_choose')}}/{{ $banner['image']??'' }}" onerror='this.src="{{asset('/public/assets/admin/img/aspect-1.png')}}"' alt="" class="img__aspect-1 min-w-187px max-w-187px">
+                                                <img
+                                                src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                    $banner['image'] ?? '',
+                                                    asset('storage/app/public/why_choose').'/'.$banner['image'] ?? '',
+                                                    asset('/public/assets/admin/img/aspect-1.png'),
+                                                    'why_choose/'
+                                                ) }}" data-onerror-image="{{asset('/public/assets/admin/img/aspect-1.png')}}" alt="" class="img__aspect-1 min-w-187px max-w-187px onerror-image">
                                             </div>
                                               <input type="file"  name="image" hidden>
                                         </label>
@@ -130,7 +136,7 @@
                                 </div>
                             </div>
                             <div class="btn--container justify-content-end mt-3">
-                                <button type="submit" onclick="" class="btn btn--primary mb-2">{{translate('Update')}}</button>
+                                <button type="submit" class="btn btn--primary mb-2">{{translate('Update')}}</button>
                             </div>
                         </form>
                     </div>
@@ -140,32 +146,5 @@
 </div>
 @endsection
 @push('script_2')
-<script>
-    $(".lang_link").click(function(e){
-        e.preventDefault();
-        $(".lang_link").removeClass('active');
-        $(".lang_form").addClass('d-none');
-        $(this).addClass('active');
-
-        let form_id = this.id;
-        let lang = form_id.substring(0, form_id.length - 5);
-
-        console.log(lang);
-
-        $("#"+lang+"-form").removeClass('d-none');
-        $("#"+lang+"-form1").removeClass('d-none');
-        if(lang == '{{$default_lang}}')
-        {
-            $(".from_part_2").removeClass('d-none');
-        }
-        if(lang == 'default')
-        {
-            $(".default-form").removeClass('d-none');
-        }
-        else
-        {
-            $(".from_part_2").addClass('d-none');
-        }
-    });
-</script>
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/other-banners.js"></script>
 @endpush

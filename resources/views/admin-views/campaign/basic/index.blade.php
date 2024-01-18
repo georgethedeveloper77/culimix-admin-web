@@ -29,7 +29,7 @@
                     @csrf
                     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
                     @php($language = $language->value ?? null)
-                    @php($default_lang = str_replace('_', '-', app()->getLocale()))
+                    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
                     @if($language)
                         <ul class="nav nav-tabs mb-4">
                             <li class="nav-item">
@@ -48,7 +48,7 @@
                         <div class="lang_form" id="default-form">
                             <div class="form-group">
                                 <label class="input-label" for="default_title">{{translate('messages.title')}} ({{ translate('messages.default') }})</label>
-                                <input type="text" name="title[]" id="default_title" class="form-control" placeholder="{{translate('messages.new_campaign')}}" oninvalid="document.getElementById('en-link').click()">
+                                <input type="text" name="title[]" id="default_title" class="form-control" placeholder="{{translate('messages.new_campaign')}}"  >
                             </div>
                             <input type="hidden" name="lang[]" value="default">
                             <div class="form-group">
@@ -60,7 +60,7 @@
                             <div class="d-none lang_form" id="{{$lang}}-form">
                                 <div class="form-group">
                                     <label class="input-label" for="{{$lang}}_title">{{translate('messages.title')}} ({{strtoupper($lang)}})</label>
-                                    <input type="text" name="title[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('messages.new_campaign')}}" oninvalid="document.getElementById('en-link').click()">
+                                    <input type="text" name="title[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('messages.new_campaign')}}"  >
                                 </div>
                                 <input type="hidden" name="lang[]" value="{{$lang}}">
                                 <div class="form-group">
@@ -129,10 +129,10 @@
                                     {{translate('messages.campaign_image')}}
                                     <small class="text-danger">* ( {{translate('messages.ratio')}} 900x300 )</small>
                                 </label>
-                                <center class="py-3 my-auto">
+                                <div class="text-center py-3 my-auto">
                                     <img class="initial--4" id="viewer"
                                          src="{{asset('public/assets/admin/img/900x400/img1.jpg')}}" alt="campaign image"/>
-                                </center>
+                                </div>
                                 <div class="custom-file">
                                     <input type="file" name="image" id="customFileEg1" class="custom-file-input"
                                            accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
@@ -153,46 +153,9 @@
 @endsection
 
 @push('script_2')
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/basic-campaign-index.js"></script>
     <script>
-        function readURL(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $('#viewer').attr('src', e.target.result);
-                }
-
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        $("#customFileEg1").change(function () {
-            readURL(this);
-        });
-
-
-        function show_item(type) {
-            if (type === 'product') {
-                $("#type-product").show();
-                $("#type-category").hide();
-            } else {
-                $("#type-product").hide();
-                $("#type-category").show();
-            }
-        }
-
-        $("#date_from").on("change", function () {
-            $('#date_to').attr('min',$(this).val());
-        });
-
-        $("#date_to").on("change", function () {
-            $('#date_from').attr('max',$(this).val());
-        });
-        $(document).ready(function(){
-            $('#date_from').attr('min',(new Date()).toISOString().split('T')[0]);
-            $('#date_to').attr('min',(new Date()).toISOString().split('T')[0]);
-        });
-
+    "use strict";
         $('#campaign-form').on('submit', function (e) {
             e.preventDefault();
             var formData = new FormData(this);
@@ -228,29 +191,6 @@
             });
         });
 
-    </script>
-    <script>
-        $(".lang_link").click(function(e){
-            e.preventDefault();
-            $(".lang_link").removeClass('active');
-            $(".lang_form").addClass('d-none');
-            $(this).addClass('active');
-
-            let form_id = this.id;
-            let lang = form_id.substring(0, form_id.length - 5);
-            console.log(lang);
-            $("#"+lang+"-form").removeClass('d-none');
-            if(lang == '{{$default_lang}}')
-            {
-                $("#from_part_2").removeClass('d-none');
-            }
-            else
-            {
-                $("#from_part_2").addClass('d-none');
-            }
-        })
-    </script>
-    <script>
         $('#reset_btn').click(function(){
             $('#module_id').val(null).trigger('change');
             $('#viewer').attr('src','{{asset('public/assets/admin/img/900x400/img1.jpg')}}');

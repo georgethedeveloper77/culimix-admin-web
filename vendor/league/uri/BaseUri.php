@@ -17,10 +17,12 @@ use JsonSerializable;
 use League\Uri\Contracts\UriAccess;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Exceptions\MissingFeature;
+use League\Uri\Idna\Converter;
 use League\Uri\IPv4\Converter as IPv4Converter;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
+
 use function array_pop;
 use function array_reduce;
 use function count;
@@ -28,7 +30,10 @@ use function end;
 use function explode;
 use function implode;
 use function in_array;
+use function preg_match;
+use function rawurldecode;
 use function str_repeat;
+use function str_replace;
 use function strpos;
 use function substr;
 
@@ -38,10 +43,10 @@ use function substr;
 class BaseUri implements Stringable, JsonSerializable, UriAccess
 {
     /** @var array<string,int> */
-    protected final const WHATWG_SPECIAL_SCHEMES = ['ftp' => 1, 'http' => 1, 'https' => 1, 'ws' => 1, 'wss' => 1];
+    final protected const WHATWG_SPECIAL_SCHEMES = ['ftp' => 1, 'http' => 1, 'https' => 1, 'ws' => 1, 'wss' => 1];
 
     /** @var array<string,int> */
-    protected final const DOT_SEGMENTS = ['.' => 1, '..' => 1];
+    final protected const DOT_SEGMENTS = ['.' => 1, '..' => 1];
 
     protected readonly Psr7UriInterface|UriInterface|null $origin;
     protected readonly ?string $nullValue;
@@ -91,9 +96,88 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
 
     public function origin(): ?self
     {
-        return match (true) {
-            null === $this->origin => null,
+        return match (null) {
+            $this->origin => null,
             default => new self($this->origin, $this->uriFactory),
+        };
+    }
+
+    /**
+     * Returns the Unix filesystem path.
+     *
+     * The method will return null if a scheme is present and is not the `file` scheme
+     */
+    public function unixPath(): ?string
+    {
+        return match ($this->uri->getScheme()) {
+            'file', $this->nullValue => rawurldecode($this->uri->getPath()),
+            default => null,
+        };
+    }
+
+    /**
+     * Returns the Windows filesystem path.
+     *
+     * The method will return null if a scheme is present and is not the `file` scheme
+     */
+    public function windowsPath(): ?string
+    {
+        static $regexpWindowsPath = ',^(?<root>[a-zA-Z]:),';
+
+        if (!in_array($this->uri->getScheme(), ['file', $this->nullValue], true)) {
+            return null;
+        }
+
+        $originalPath = $this->uri->getPath();
+        $path = $originalPath;
+        if ('/' === ($path[0] ?? '')) {
+            $path = substr($path, 1);
+        }
+
+        if (1 === preg_match($regexpWindowsPath, $path, $matches)) {
+            $root = $matches['root'];
+            $path = substr($path, strlen($root));
+
+            return $root.str_replace('/', '\\', rawurldecode($path));
+        }
+
+        $host = $this->uri->getHost();
+
+        return match ($this->nullValue) {
+            $host => str_replace('/', '\\', rawurldecode($originalPath)),
+            default => '\\\\'.$host.'\\'.str_replace('/', '\\', rawurldecode($path)),
+        };
+    }
+
+    /**
+     * Returns a string representation of a File URI according to RFC8089.
+     *
+     * The method will return null if the URI scheme is not the `file` scheme
+     */
+    public function toRfc8089(): ?string
+    {
+        $path = $this->uri->getPath();
+
+        return match (true) {
+            'file' !== $this->uri->getScheme() => null,
+            in_array($this->uri->getAuthority(), ['', null, 'localhost'], true) => 'file:'.match (true) {
+                '' === $path,
+                '/' === $path[0] => $path,
+                default => '/'.$path,
+            },
+            default => (string) $this->uri,
+        };
+    }
+
+    /**
+     * Tells whether the `file` scheme base URI represents a local file.
+     */
+    public function isLocalFile(): bool
+    {
+        return match (true) {
+            'file' !== $this->uri->getScheme() => false,
+            in_array($this->uri->getAuthority(), ['', null, 'localhost'], true) => true,
+            default => false,
         };
     }
 
@@ -109,8 +193,11 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
         $uri = static::filterUri($uri);
         $uriOrigin = $this->computeOrigin($uri, $uri instanceof Psr7UriInterface ? '' : null);
 
-        return null === $uriOrigin
-            || $uriOrigin->__toString() !== $this->origin->__toString();
+        return match(true) {
+            null === $uriOrigin,
+            $uriOrigin->__toString() !== $this->origin->__toString() => true,
+            default => false,
+        };
     }
 
     /**
@@ -156,6 +243,14 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
     public function isSameDocument(Stringable|string $uri): bool
     {
         return $this->normalize(static::filterUri($uri)) === $this->normalize($this->uri);
+    }
+
+    /**
+     * Tells whether the URI contains an Internationalized Domain Name (IDN).
+     */
+    public function hasIdn(): bool
+    {
+        return Converter::isIdn($this->uri->getHost());
     }
 
     /**
@@ -447,7 +542,8 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
 
         return match (true) {
             null !== $converted => $uri->withHost($converted),
-            $uri instanceof UriInterface, '' === $host => $uri,
+            '' === $host,
+            $uri instanceof UriInterface => $uri,
             default => $uri->withHost((string) Uri::fromComponents(['host' => $host])->getHost()),
         };
     }
@@ -504,20 +600,20 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
      */
     final protected static function formatPath(string $path, string $basePath): string
     {
-        if ('' === $path) {
-            return in_array($basePath, ['', '/'], true) ? $basePath : './';
-        }
-
-        if (false === ($colonPosition = strpos($path, ':'))) {
-            return $path;
-        }
-
+        $colonPosition = strpos($path, ':');
         $slashPosition = strpos($path, '/');
-        if (false === $slashPosition || $colonPosition < $slashPosition) {
-            return "./$path";
-        }
 
-        return $path;
+        return match (true) {
+            '' === $path => match (true) {
+                '' === $basePath,
+                '/' === $basePath => $basePath,
+                default => './',
+            },
+            false === $colonPosition => $path,
+            false === $slashPosition,
+            $colonPosition < $slashPosition  =>  "./$path",
+            default => $path,
+        };
     }
 
     /**

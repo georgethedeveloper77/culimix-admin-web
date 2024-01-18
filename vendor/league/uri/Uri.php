@@ -25,6 +25,7 @@ use League\Uri\UriTemplate\TemplateCanNotBeExpanded;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use SensitiveParameter;
 use Stringable;
+
 use function array_filter;
 use function array_key_first;
 use function array_map;
@@ -48,6 +49,7 @@ use function strpos;
 use function strspn;
 use function strtolower;
 use function substr;
+
 use const FILEINFO_MIME;
 use const FILTER_FLAG_IPV4;
 use const FILTER_FLAG_IPV6;
@@ -217,7 +219,8 @@ final class Uri implements UriInterface
     private function __construct(
         ?string $scheme,
         ?string $user,
-        #[SensitiveParameter] ?string $pass,
+        #[SensitiveParameter]
+        ?string $pass,
         ?string $host,
         ?int $port,
         string $path,
@@ -260,10 +263,11 @@ final class Uri implements UriInterface
      */
     private function formatUserInfo(
         ?string $user,
-        #[SensitiveParameter] ?string $password
+        #[SensitiveParameter]
+        ?string $password
     ): ?string {
-        return match (true) {
-            null === $password => Encoder::encodeUser($user),
+        return match (null) {
+            $password => Encoder::encodeUser($user),
             default => Encoder::encodeUser($user).':'.Encoder::encodePassword($password),
         };
     }
@@ -296,17 +300,17 @@ final class Uri implements UriInterface
      *
      * The host is converted to its ascii representation if needed
      *
-     * @throws MissingFeature   if the submitted host required missing or misconfigured IDN support
-     * @throws SyntaxError      if the submitted host is not a valid registered name
-     * @throws ConversionFailed if the submitted IDN host can not be converted to a valid ascii form
+     * @throws MissingFeature if the submitted host required missing or misconfigured IDN support
+     * @throws SyntaxError if the submitted host is not a valid registered name
+     * @throws ConversionFailed if the submitted IDN host cannot be converted to a valid ascii form
      */
     private function formatRegisteredName(string $host): string
     {
         $formattedHost = rawurldecode($host);
 
-        return match (true) {
-            1 === preg_match(self::REGEXP_HOST_REGNAME, $formattedHost) => $formattedHost,
-            1 === preg_match(self::REGEXP_HOST_GEN_DELIMS, $formattedHost) => throw new SyntaxError('The host `'.$host.'` is invalid : a registered name can not contain URI delimiters or spaces.'),
+        return match (1) {
+            preg_match(self::REGEXP_HOST_REGNAME, $formattedHost) => $formattedHost,
+            preg_match(self::REGEXP_HOST_GEN_DELIMS, $formattedHost) => throw new SyntaxError('The host `'.$host.'` is invalid : a registered name cannot contain URI delimiters or spaces.'),
             default => IdnConverter::toAsciiOrFail($host),
         };
     }
@@ -426,7 +430,7 @@ final class Uri implements UriInterface
      * Creates a new instance from a template.
      *
      * @throws TemplateCanNotBeExpanded if the variables are invalid or missing
-     * @throws UriException             if the resulting expansion can not be converted to a UriInterface instance
+     * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
      */
     public static function fromTemplate(UriTemplate|Stringable|string $template, iterable $variables = []): self
     {
@@ -472,7 +476,7 @@ final class Uri implements UriInterface
      * @param resource|null $context
      *
      * @throws MissingFeature If ext/fileinfo is not installed
-     * @throws SyntaxError    If the file does not exist or is not readable
+     * @throws SyntaxError If the file does not exist or is not readable
      */
     public static function fromFileContents(Stringable|string $path, $context = null): self
     {
@@ -500,6 +504,47 @@ final class Uri implements UriInterface
             'scheme' => 'data',
             'path' => str_replace(' ', '', $mimetype.';base64,'.base64_encode($raw)),
         ]);
+    }
+
+    /**
+     * Create a new instance from a data string.
+     *
+     * @throws SyntaxError If the parameter syntax is invalid
+     */
+    public static function fromData(string $data, string $mimetype = '', string $parameters = ''): self
+    {
+        static $regexpMimetype = ',^\w+/[-.\w]+(?:\+[-.\w]+)?$,';
+
+        $mimetype = match (true) {
+            '' === $mimetype => 'text/plain',
+            1 === preg_match($regexpMimetype, $mimetype) =>  $mimetype,
+            default => throw new SyntaxError('Invalid mimeType, `'.$mimetype.'`.'),
+        };
+
+        if ('' === $parameters) {
+            return self::fromComponents([
+                'scheme' => 'data',
+                'path' => self::formatDataPath($mimetype.','.rawurlencode($data)),
+            ]);
+        }
+
+        $isInvalidParameter = static function (string $parameter): bool {
+            $properties = explode('=', $parameter);
+
+            return 2 !== count($properties) || 'base64' === strtolower($properties[0]);
+        };
+
+        if (str_starts_with($parameters, ';')) {
+            $parameters = substr($parameters, 1);
+        }
+
+        return match ([]) {
+            array_filter(explode(';', $parameters), $isInvalidParameter) => self::fromComponents([
+               'scheme' => 'data',
+               'path' => self::formatDataPath($mimetype.';'.$parameters.','.rawurlencode($data)),
+            ]),
+            default => throw new SyntaxError(sprintf('Invalid mediatype parameters, `%s`.', $parameters))
+        };
     }
 
     /**
@@ -542,6 +587,23 @@ final class Uri implements UriInterface
         [$host, $path] = explode('/', substr($path, 2), 2) + [1 => ''];
 
         return Uri::fromComponents(['host' => $host, 'path' => '/'.$path, 'scheme' => 'file']);
+    }
+
+    /**
+     * Creates a new instance from a RFC8089 compatible URI.
+     *
+     * @see https://datatracker.ietf.org/doc/html/rfc8089
+     */
+    public static function fromRfc8089(Stringable|string $uri): UriInterface
+    {
+        $fileUri = self::new((string) preg_replace(',^(file:/)([^/].*)$,i', 'file:///$2', (string) $uri));
+        $scheme = $fileUri->getScheme();
+
+        return match (true) {
+            'file' !== $scheme => throw new SyntaxError('As per RFC8089, the URI scheme must be `file`.'),
+            'localhost' === $fileUri->getAuthority() => $fileUri->withHost(''),
+            default => $fileUri,
+        };
     }
 
     /**
@@ -602,7 +664,7 @@ final class Uri implements UriInterface
     /**
      * Returns the environment host.
      *
-     * @throws SyntaxError If the host can not be detected
+     * @throws SyntaxError If the host cannot be detected
      *
      * @return array{0:string|null, 1:int|null}
      */
@@ -686,7 +748,7 @@ final class Uri implements UriInterface
     private function formatPath(string $path): string
     {
         return match (true) {
-            'data' === $this->scheme => Encoder::encodePath($this->formatDataPath($path)),
+            'data' === $this->scheme => Encoder::encodePath(self::formatDataPath($path)),
             'file' === $this->scheme => $this->formatFilePath(Encoder::encodePath($path)),
             default => Encoder::encodePath($path),
         };
@@ -699,7 +761,7 @@ final class Uri implements UriInterface
      *
      * @throws SyntaxError If the path is not compliant with RFC2397
      */
-    private function formatDataPath(string $path): string
+    private static function formatDataPath(string $path): string
     {
         if ('' == $path) {
             return 'text/plain;charset=us-ascii,';
@@ -722,7 +784,7 @@ final class Uri implements UriInterface
             $parameters = 'charset=us-ascii';
         }
 
-        $this->assertValidPath($mimetype, $parameters, $data);
+        self::assertValidPath($mimetype, $parameters, $data);
 
         return $mimetype.';'.$parameters.','.$data;
     }
@@ -734,7 +796,7 @@ final class Uri implements UriInterface
      *
      * @throws SyntaxError If the mediatype or the data are not compliant with the RFC2397
      */
-    private function assertValidPath(string $mimetype, string $parameters, string $data): void
+    private static function assertValidPath(string $mimetype, string $parameters, string $data): void
     {
         if (1 !== preg_match(self::REGEXP_MIMETYPE, $mimetype)) {
             throw new SyntaxError('The path mimetype `'.$mimetype.'` is invalid.');
@@ -745,9 +807,9 @@ final class Uri implements UriInterface
             $parameters = substr($parameters, 0, - strlen($matches[0]));
         }
 
-        $res = array_filter(array_filter(explode(';', $parameters), $this->validateParameter(...)));
+        $res = array_filter(array_filter(explode(';', $parameters), self::validateParameter(...)));
         if ([] !== $res) {
-            throw new SyntaxError('The path paremeters `'.$parameters.'` is invalid.');
+            throw new SyntaxError('The path parameters `'.$parameters.'` is invalid.');
         }
 
         if (!$isBinary) {
@@ -763,7 +825,7 @@ final class Uri implements UriInterface
     /**
      * Validate mediatype parameter.
      */
-    private function validateParameter(string $parameter): bool
+    private static function validateParameter(string $parameter): bool
     {
         $properties = explode('=', $parameter);
 
@@ -798,7 +860,7 @@ final class Uri implements UriInterface
         }
 
         if (null === $this->authority && str_starts_with($this->path, '//')) {
-            throw new SyntaxError('If there is no authority the path `'.$this->path.'` can not start with a `//`.');
+            throw new SyntaxError('If there is no authority the path `'.$this->path.'` cannot start with a `//`.');
         }
 
         $pos = strpos($this->path, ':');
@@ -1039,7 +1101,7 @@ final class Uri implements UriInterface
     /**
      * Filter a string.
      *
-     * @throws SyntaxError if the submitted data can not be converted to string
+     * @throws SyntaxError if the submitted data cannot be converted to string
      */
     private function filterString(Stringable|string|null $str): ?string
     {
@@ -1058,7 +1120,8 @@ final class Uri implements UriInterface
 
     public function withUserInfo(
         Stringable|string|null $user,
-        #[SensitiveParameter] Stringable|string|null $password = null
+        #[SensitiveParameter]
+        Stringable|string|null $password = null
     ): UriInterface {
         $user_info = null;
         $user = $this->filterString($user);
@@ -1116,7 +1179,7 @@ final class Uri implements UriInterface
     {
         $path = $this->filterString($path);
         if (null === $path) {
-            throw new SyntaxError('The path component can not be null.');
+            throw new SyntaxError('The path component cannot be null.');
         }
         $path = $this->formatPath($path);
         if ($path === $this->path) {
@@ -1161,7 +1224,7 @@ final class Uri implements UriInterface
     /**
      * DEPRECATION WARNING! This method will be removed in the next major point release.
      *
-     * @deprecated Since version 9.9.0
+     * @deprecated Since version 7.0.0
      * @codeCoverageIgnore
      * @see Uri::new()
      */
@@ -1173,7 +1236,7 @@ final class Uri implements UriInterface
     /**
      * DEPRECATION WARNING! This method will be removed in the next major point release.
      *
-     * @deprecated Since version 9.9.0
+     * @deprecated Since version 7.0.0
      * @codeCoverageIgnore
      * @see Uri::fromComponents()
      *
@@ -1190,10 +1253,10 @@ final class Uri implements UriInterface
      * @param resource|null $context
      *
      * @throws MissingFeature If ext/fileinfo is not installed
-     * @throws SyntaxError    If the file does not exist or is not readable
+     * @throws SyntaxError If the file does not exist or is not readable
      * @see Uri::fromFileContents()
      *
-     * @deprecated Since version 9.9.0
+     * @deprecated Since version 7.0.0
      * @codeCoverageIgnore
      */
     public static function createFromDataPath(string $path, $context = null): self

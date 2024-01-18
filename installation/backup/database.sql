@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 22, 2023 at 02:19 PM
+-- Generation Time: Nov 27, 2023 at 12:04 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -36,7 +36,9 @@ CREATE TABLE `account_transactions` (
   `method` varchar(255) NOT NULL,
   `ref` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `type` varchar(20) NOT NULL DEFAULT 'collected',
+  `created_by` varchar(20) NOT NULL DEFAULT 'admin'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -101,7 +103,7 @@ INSERT INTO `addon_settings` (`id`, `key_name`, `live_values`, `test_values`, `s
 ('c9249d17-cd60-11ed-b879-0c7a158e4469', 'pvit', '{\"gateway\":\"pvit\",\"mode\":\"test\",\"status\":\"0\",\"mc_tel_merchant\": \"\",\"access_token\": \"\", \"mc_merchant_code\": \"\"}', '{\"gateway\":\"pvit\",\"mode\":\"test\",\"status\":\"0\",\"mc_tel_merchant\": \"\",\"access_token\": \"\", \"mc_merchant_code\": \"\"}', 'payment_config', 'test', 0, NULL, NULL, NULL),
 ('cb0081ce-d775-11ed-96f4-0c7a158e4469', 'releans', '{\"gateway\":\"releans\",\"mode\":\"live\",\"status\":0,\"api_key\":\"\",\"from\":\"\",\"otp_template\":\"\"}', '{\"gateway\":\"releans\",\"mode\":\"live\",\"status\":0,\"api_key\":\"\",\"from\":\"\",\"otp_template\":\"\"}', 'sms_config', 'live', 0, NULL, '2023-04-10 02:14:44', NULL),
 ('d4f3f5f1-d6a0-11ed-962c-0c7a158e4469', 'flutterwave', '{\"gateway\":\"flutterwave\",\"mode\":\"live\",\"status\":1,\"secret_key\":\"FLWSECK_TEST-ec27426eb062491500a9eb95723b5436-X\",\"public_key\":\"FLWPUBK_TEST-3f6a0b6c3d621c4ecbb9beeff516c92b-X\",\"hash\":\"FLWSECK_TEST951e36220f66\"}', '{\"gateway\":\"flutterwave\",\"mode\":\"live\",\"status\":1,\"secret_key\":\"FLWSECK_TEST-ec27426eb062491500a9eb95723b5436-X\",\"public_key\":\"FLWPUBK_TEST-3f6a0b6c3d621c4ecbb9beeff516c92b-X\",\"hash\":\"FLWSECK_TEST951e36220f66\"}', 'payment_config', 'live', 0, NULL, NULL, '{\"gateway_title\":\"Flutterwave\",\"gateway_image\":null}'),
-('d822f1a5-c864-11ed-ac7a-0c7a158e4469', 'paystack', '{\"gateway\":\"paystack\",\"mode\":\"live\",\"status\":\"0\",\"callback_url\":null,\"public_key\":null,\"secret_key\":null,\"merchant_email\":null}', '{\"gateway\":\"paystack\",\"mode\":\"live\",\"status\":\"0\",\"callback_url\":null,\"public_key\":null,\"secret_key\":null,\"merchant_email\":null}', 'payment_config', 'live', 0, NULL, NULL, '{\"gateway_title\":\"Paystack\",\"gateway_image\":null}'),
+('d822f1a5-c864-11ed-ac7a-0c7a158e4469', 'paystack', '{\"gateway\":\"paystack\",\"mode\":\"live\",\"status\":\"0\",\"public_key\":null,\"secret_key\":null,\"merchant_email\":null}', '{\"gateway\":\"paystack\",\"mode\":\"live\",\"status\":\"0\",\"public_key\":null,\"secret_key\":null,\"merchant_email\":null}', 'payment_config', 'live', 0, NULL, NULL, '{\"gateway_title\":\"Paystack\",\"gateway_image\":null}'),
 ('daec8d59-c893-11ed-ac7a-0c7a158e4469', 'xendit', '{\"gateway\":\"xendit\",\"mode\":\"test\",\"status\":\"0\",\"api_key\":\"\"}', '{\"gateway\":\"xendit\",\"mode\":\"test\",\"status\":\"0\",\"api_key\":\"\"}', 'payment_config', 'test', 0, NULL, NULL, NULL),
 ('dc0f5fc9-d6a5-11ed-962c-0c7a158e4469', 'worldpay', '{\"gateway\":\"worldpay\",\"mode\":\"live\",\"status\":\"0\",\"OrgUnitId\":\"\",\"jwt_issuer\":\"\",\"mac\":\"\",\"merchantCode\":\"\",\"xml_password\":\"\"}', '{\"gateway\":\"worldpay\",\"mode\":\"test\",\"status\":\"0\",\"OrgUnitId\":\"\",\"jwt_issuer\":\"\",\"mac\":\"\",\"merchantCode\":\"\",\"xml_password\":\"\"}', 'payment_config', 'test', 0, NULL, NULL, NULL),
 ('e0450278-d8eb-11ed-8249-0c7a158e4469', 'signal_wire', '{\"gateway\":\"signal_wire\",\"mode\":\"live\",\"status\":0,\"project_id\":\"\",\"token\":\"\",\"space_url\":\"\",\"from\":\"\",\"otp_template\":\"\"}', '{\"gateway\":\"signal_wire\",\"mode\":\"live\",\"status\":0,\"project_id\":\"\",\"token\":\"\",\"space_url\":\"\",\"from\":\"\",\"otp_template\":\"\"}', 'sms_config', 'live', 0, NULL, NULL, NULL),
@@ -309,7 +311,7 @@ CREATE TABLE `attributes` (
 
 CREATE TABLE `banners` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `title` varchar(255) NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
   `type` varchar(255) NOT NULL,
   `image` varchar(255) DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
@@ -319,7 +321,8 @@ CREATE TABLE `banners` (
   `zone_id` bigint(20) UNSIGNED NOT NULL,
   `module_id` bigint(20) UNSIGNED NOT NULL,
   `featured` tinyint(1) NOT NULL DEFAULT 0,
-  `default_link` varchar(255) DEFAULT NULL
+  `default_link` varchar(255) DEFAULT NULL,
+  `created_by` varchar(255) NOT NULL DEFAULT 'admin'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -368,7 +371,7 @@ INSERT INTO `business_settings` (`id`, `key`, `value`, `created_at`, `updated_at
 (26, 'privacy_policy', '<h2>This is a Demo Privacy Policy</h2>\r\n\r\n<p>This policy explains how StackFood&nbsp;website and related applications (the &ldquo;Site&rdquo;, &ldquo;we&rdquo; or &ldquo;us&rdquo;) collects, uses, shares and protects the personal information that we collect through this site or different channels. StackFood has established the site to link up the users who need foods or grocery items to be shipped or delivered by the riders from the affiliated restaurants or shops to the desired location. This policy also applies to any mobile applications that we develop for use with our services on the Site, and references to this &ldquo;Site&rdquo;, &ldquo;we&rdquo; or &ldquo;us&rdquo; is intended to also include these mobile applications. Please read below to learn more about our information policies. By using this Site, you agree to these policies.</p>\r\n\r\n<h2>How the Information is collected</h2>\r\n\r\n<h3>Information provided by web browser</h3>\r\n\r\n<p>You have to provide us with personal information like your name, contact no, mailing address and email id, our app will also fetch your location information in order to give you the best service. Like many other websites, we may record information that your web browser routinely shares, such as your browser type, browser language, software and hardware attributes, the date and time of your visit, the web page from which you came, your Internet Protocol address and the geographic location associated with that address, the pages on this Site that you visit and the time you spent on those pages. This will generally be anonymous data that we collect on an aggregate basis.</p>\r\n\r\n<h3>Personal Information that you provide</h3>\r\n\r\n<p>If you want to use our service, you must create an account on our Site. To establish your account, we will ask for personally identifiable information that can be used to contact or identify you, which may include your name, phone number, and e-mail address. We may also collect demographic information about you, such as your zip code, and allow you to submit additional information that will be part of your profile. Other than basic information that we need to establish your account, it will be up to you to decide how much information to share as part of your profile. We encourage you to think carefully about the information that you share and we recommend that you guard your identity and your sensitive information. Of course, you can review and revise your profile at any time.</p>\r\n\r\n<h3>Payment Information</h3>\r\n\r\n<p>To make the payment online for availing our services, you have to provide the bank account, mobile financial service (MFS), debit card, credit card information to the StackFood platform.</p>\r\n\r\n<h2>How the Information is collected</h2>\r\n\r\n<h3>Session and Persistent Cookies</h3>\r\n\r\n<p>Cookies are small text files that are placed on your computer by websites that you visit. They are widely used in order to make websites work, or work more efficiently, as well as to provide information to the owners of the site. As is commonly done on websites, we may use cookies and similar technology to keep track of our users and the services they have elected. We use both &ldquo;session&rdquo; and &ldquo;persistent&rdquo; cookies. Session cookies are deleted after you leave our website and when you close your browser. We use data collected with session cookies to enable certain features on our Site, to help us understand how users interact with our Site, and to monitor at an aggregate level Site usage and web traffic routing. We may allow business partners who provide services to our Site to place cookies on your computer that assist us in analyzing usage data. We do not allow these business partners to collect your personal information from our website except as may be necessary for the services that they provide.</p>\r\n\r\n<h3>Web Beacons</h3>\r\n\r\n<p>We may also use web beacons or similar technology to help us track the effectiveness of our communications.</p>\r\n\r\n<h3>Advertising Cookies</h3>\r\n\r\n<p>We may use third parties, such as Google, to serve ads about our website over the internet. These third parties may use cookies to identify ads that may be relevant to your interest (for example, based on your recent visit to our website), to limit the number of times that you see an ad, and to measure the effectiveness of the ads.</p>\r\n\r\n<h3>Google Analytics</h3>\r\n\r\n<p>We may also use Google Analytics or a similar service to gather statistical information about the visitors to this Site and how they use the Site. This, also, is done on an anonymous basis. We will not try to associate anonymous data with your personally identifiable data. If you would like to learn more about Google Analytics, please click here.</p>', NULL, '2021-08-22 01:49:58'),
 (27, 'minimum_shipping_charge', '10', NULL, NULL),
 (28, 'per_km_shipping_charge', '2', NULL, NULL),
-(29, 'digital_payment', '{\"status\":null}', '2021-07-01 14:27:38', '2023-08-22 01:18:53'),
+(29, 'digital_payment', '{\"status\":null}', '2021-07-01 14:27:38', '2023-10-16 19:12:15'),
 (30, 'ssl_commerz_payment', '{\"status\":\"0\",\"store_id\":null,\"store_password\":null}', '2021-07-04 15:41:24', '2022-03-23 04:21:28'),
 (31, 'razor_pay', '{\"status\":\"0\",\"razor_key\":null,\"razor_secret\":null}', '2021-07-04 15:41:28', '2022-03-23 04:21:38'),
 (32, 'paypal', '{\"status\":\"0\",\"paypal_client_id\":null,\"paypal_secret\":null}', '2021-07-04 15:41:34', '2022-03-23 04:21:49'),
@@ -473,7 +476,8 @@ INSERT INTO `business_settings` (`id`, `key`, `value`, `created_at`, `updated_at
 (133, 'Feature section description', '{\"app_url_android_status\":\"0\",\"app_url_android\":\"https:\\/\\/play.google.com\",\"app_url_ios_status\":\"0\",\"app_url_ios\":\"https:\\/\\/www.apple.com\\/app-store\",\"web_app_url_status\":\"0\",\"web_app_url\":\"https:\\/\\/6ammart-web.6amtech.com\\/\"}', '2023-08-17 00:26:56', '2023-08-17 00:26:56'),
 (134, 'home_delivery_status', '1', '2023-08-17 00:26:56', '2023-08-17 00:26:56'),
 (135, 'takeaway_status', '1', '2023-08-17 00:26:56', '2023-08-17 00:26:56'),
-(136, 'dm_picture_upload_status', '1', NULL, NULL);
+(136, 'dm_picture_upload_status', '1', NULL, NULL),
+(137, 'offline_payment_status', NULL, NULL, '2023-10-16 20:16:58');
 
 -- --------------------------------------------------------
 
@@ -512,6 +516,28 @@ CREATE TABLE `campaign_store` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `carts`
+--
+
+CREATE TABLE `carts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `module_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `is_guest` tinyint(1) NOT NULL DEFAULT 0,
+  `add_on_ids` text DEFAULT NULL,
+  `add_on_qtys` text DEFAULT NULL,
+  `item_type` varchar(255) NOT NULL,
+  `price` double(24,3) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `variation` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `categories`
 --
 
@@ -537,6 +563,21 @@ CREATE TABLE `categories` (
 INSERT INTO `categories` (`id`, `name`, `image`, `parent_id`, `position`, `status`, `created_at`, `updated_at`, `priority`, `module_id`, `slug`, `featured`) VALUES
 (1, 'Demo category', '2023-08-16-64dca78f6ba7b.png', 0, 0, 1, '2023-08-15 23:40:15', '2023-08-15 23:40:30', 0, 1, 'demo-category', 1),
 (2, 'Demo sub category', 'def.png', 1, 1, 1, '2023-08-15 23:40:51', '2023-08-15 23:40:51', 0, 1, 'demo-sub-category', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `common_conditions`
+--
+
+CREATE TABLE `common_conditions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -948,6 +989,59 @@ CREATE TABLE `delivery_men` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `disbursements`
+--
+
+CREATE TABLE `disbursements` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `total_amount` double(23,3) NOT NULL DEFAULT 0.000,
+  `status` varchar(255) NOT NULL DEFAULT 'pending',
+  `created_for` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `disbursement_details`
+--
+
+CREATE TABLE `disbursement_details` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `disbursement_id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `delivery_man_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `disbursement_amount` double(23,3) NOT NULL DEFAULT 0.000,
+  `payment_method` bigint(20) UNSIGNED NOT NULL,
+  `status` varchar(255) NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `disbursement_withdrawal_methods`
+--
+
+CREATE TABLE `disbursement_withdrawal_methods` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `delivery_man_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `withdrawal_method_id` bigint(20) UNSIGNED NOT NULL,
+  `method_name` varchar(255) NOT NULL,
+  `method_fields` text NOT NULL,
+  `is_default` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `discounts`
 --
 
@@ -1142,6 +1236,47 @@ CREATE TABLE `failed_jobs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `flash_sales`
+--
+
+CREATE TABLE `flash_sales` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `module_id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  `is_publish` tinyint(1) NOT NULL DEFAULT 1,
+  `admin_discount_percentage` double(24,3) NOT NULL,
+  `vendor_discount_percentage` double(24,3) NOT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flash_sale_items`
+--
+
+CREATE TABLE `flash_sale_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `flash_sale_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `stock` int(11) NOT NULL,
+  `sold` int(11) NOT NULL DEFAULT 0,
+  `available_stock` int(11) NOT NULL,
+  `discount_type` varchar(255) NOT NULL,
+  `discount` double(23,3) NOT NULL DEFAULT 0.000,
+  `discount_amount` double(23,3) NOT NULL DEFAULT 0.000,
+  `price` double(23,3) NOT NULL DEFAULT 0.000,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `flutter_special_criterias`
 --
 
@@ -1160,6 +1295,20 @@ CREATE TABLE `flutter_special_criterias` (
 
 INSERT INTO `flutter_special_criterias` (`id`, `title`, `image`, `status`, `created_at`, `updated_at`) VALUES
 (1, 'Demo Feature Title', '2023-08-16-64dcae4ca0594.png', 1, '2023-08-16 00:09:00', '2023-08-16 00:09:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `guests`
+--
+
+CREATE TABLE `guests` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `ip_address` varchar(255) DEFAULT NULL,
+  `fcm_token` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1202,15 +1351,16 @@ CREATE TABLE `items` (
   `slug` varchar(255) DEFAULT NULL,
   `recommended` tinyint(1) NOT NULL DEFAULT 0,
   `organic` tinyint(1) NOT NULL DEFAULT 0,
-  `maximum_cart_quantity` int(11) DEFAULT NULL
+  `maximum_cart_quantity` int(11) DEFAULT NULL,
+  `is_approved` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `items`
 --
 
-INSERT INTO `items` (`id`, `name`, `description`, `image`, `category_id`, `category_ids`, `variations`, `add_ons`, `attributes`, `choice_options`, `price`, `tax`, `tax_type`, `discount`, `discount_type`, `available_time_starts`, `available_time_ends`, `veg`, `status`, `store_id`, `created_at`, `updated_at`, `order_count`, `avg_rating`, `rating_count`, `rating`, `module_id`, `stock`, `unit_id`, `images`, `food_variations`, `slug`, `recommended`, `organic`, `maximum_cart_quantity`) VALUES
-(1, 'Demo Product', 'Demo Product Description', '2023-08-16-64dca91404b64.png', 2, '[{\"id\":\"1\",\"position\":1},{\"id\":\"2\",\"position\":2}]', '[]', '[]', '[]', '[]', 10.00, 0.00, 'percent', 0.00, 'percent', '00:00:00', '23:59:59', 0, 1, 1, '2023-08-15 23:46:44', '2023-08-16 00:00:05', 0, 0.00000000000000, 0, NULL, 1, 10, NULL, '[\"2023-08-16-64dca9140233e.png\",\"2023-08-16-64dcac358a7ea.png\"]', '[]', 'demo-product', 0, 1, 2);
+INSERT INTO `items` (`id`, `name`, `description`, `image`, `category_id`, `category_ids`, `variations`, `add_ons`, `attributes`, `choice_options`, `price`, `tax`, `tax_type`, `discount`, `discount_type`, `available_time_starts`, `available_time_ends`, `veg`, `status`, `store_id`, `created_at`, `updated_at`, `order_count`, `avg_rating`, `rating_count`, `rating`, `module_id`, `stock`, `unit_id`, `images`, `food_variations`, `slug`, `recommended`, `organic`, `maximum_cart_quantity`, `is_approved`) VALUES
+(1, 'Demo Product', 'Demo Product Description', '2023-08-16-64dca91404b64.png', 2, '[{\"id\":\"1\",\"position\":1},{\"id\":\"2\",\"position\":2}]', '[]', '[]', '[]', '[]', 10.00, 0.00, 'percent', 0.00, 'percent', '00:00:00', '23:59:59', 0, 1, 1, '2023-08-15 23:46:44', '2023-08-16 00:00:05', 0, 0.00000000000000, 0, NULL, 1, 10, NULL, '[\"2023-08-16-64dca9140233e.png\",\"2023-08-16-64dcac358a7ea.png\"]', '[]', 'demo-product', 0, 1, 2, 1);
 
 -- --------------------------------------------------------
 
@@ -1437,7 +1587,33 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (104, '2023_07_09_143746_create_wallet_payments_table', 43),
 (105, '2023_07_10_121938_create_wallet_bonuses_table', 43),
 (106, '2023_07_10_153950_add_user_id_col_to_expenses_table', 43),
-(107, '2023_07_19_124016_add_maximum_cart_quantity_col_to_item_campaigns_table', 43);
+(107, '2023_07_19_124016_add_maximum_cart_quantity_col_to_item_campaigns_table', 43),
+(108, '0000_00_00_000000_create_websockets_statistics_entries_table', 44),
+(109, '2023_08_10_131937_create_offline_payment_methods_table', 44),
+(110, '2023_08_10_132315_create_offline_payments_table', 44),
+(111, '2023_08_14_123526_create_temp_products_table', 44),
+(112, '2023_08_14_153229_add_is_approved_col_to_items_table', 44),
+(113, '2023_08_20_143852_add_created_by_col_to_banners_table', 44),
+(114, '2023_08_21_115610_add_announcement_cols_to_stores_table', 44),
+(115, '2023_08_21_173527_create_guests_table', 44),
+(116, '2023_08_22_102914_add_is_guest_col_to_orders_table', 44),
+(117, '2023_08_24_123045_create_common_conditions_table', 44),
+(118, '2023_08_24_151032_create_pharmacy_item_details_table', 44),
+(119, '2023_08_26_164947_create_module_wise_banners_table', 44),
+(120, '2023_08_27_123438_create_module_wise_why_chooses_table', 44),
+(121, '2023_08_28_114316_create_flash_sales_table', 44),
+(122, '2023_08_28_134428_create_flash_sale_items_table', 44),
+(123, '2023_09_07_131829_create_carts_table', 44),
+(124, '2023_09_20_122921_create_store_configs_table', 44),
+(125, '2023_09_23_184806_add_flash_sale_cols_to_orders_table', 44),
+(126, '2023_10_08_103818_add_increased_delivery_fee_in_zones_table', 44),
+(127, '2023_11_21_123038_create_withdrawal_methods_table', 45),
+(128, '2023_11_21_123229_create_disbursement_withdrawal_methods_table', 45),
+(129, '2023_11_21_123320_create_disbursements_table', 45),
+(130, '2023_11_21_123742_add_cols_to_withdraw_requests_table', 45),
+(131, '2023_11_21_124049_create_disbursement_details_table', 45),
+(132, '2023_11_21_160728_add_created_by_col_to_account_transactions_table', 45),
+(133, '2023_11_23_093859_create_parcel_delivery_instructions_table', 45);
 
 -- --------------------------------------------------------
 
@@ -1477,6 +1653,40 @@ CREATE TABLE `module_types` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `type` varchar(191) DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `module_wise_banners`
+--
+
+CREATE TABLE `module_wise_banners` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `module_id` bigint(20) UNSIGNED NOT NULL,
+  `key` varchar(255) DEFAULT NULL,
+  `value` text DEFAULT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `module_wise_why_chooses`
+--
+
+CREATE TABLE `module_wise_why_chooses` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `module_id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  `short_description` varchar(100) DEFAULT NULL,
+  `image` varchar(100) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1708,6 +1918,40 @@ CREATE TABLE `oauth_refresh_tokens` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `offline_payments`
+--
+
+CREATE TABLE `offline_payments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `order_id` bigint(20) UNSIGNED NOT NULL,
+  `payment_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`payment_info`)),
+  `status` varchar(10) NOT NULL DEFAULT 'pending',
+  `note` text DEFAULT NULL,
+  `customer_note` text DEFAULT NULL,
+  `method_fields` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `offline_payment_methods`
+--
+
+CREATE TABLE `offline_payment_methods` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `method_name` varchar(255) NOT NULL,
+  `method_fields` text NOT NULL,
+  `method_informations` text NOT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -1777,7 +2021,10 @@ CREATE TABLE `orders` (
   `tax_percentage` double(24,3) DEFAULT NULL,
   `additional_charge` double(23,3) NOT NULL DEFAULT 0.000,
   `order_proof` varchar(255) DEFAULT NULL,
-  `partially_paid_amount` double(23,3) NOT NULL DEFAULT 0.000
+  `partially_paid_amount` double(23,3) NOT NULL DEFAULT 0.000,
+  `is_guest` tinyint(1) NOT NULL DEFAULT 0,
+  `flash_admin_discount_amount` double(24,3) NOT NULL DEFAULT 0.000,
+  `flash_store_discount_amount` double(24,3) NOT NULL DEFAULT 0.000
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1910,6 +2157,20 @@ CREATE TABLE `parcel_categories` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `parcel_delivery_instructions`
+--
+
+CREATE TABLE `parcel_delivery_instructions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `instruction` varchar(255) NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `password_resets`
 --
 
@@ -1951,6 +2212,22 @@ CREATE TABLE `payment_requests` (
   `attribute_id` varchar(64) DEFAULT NULL,
   `attribute` varchar(255) DEFAULT NULL,
   `payment_platform` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pharmacy_item_details`
+--
+
+CREATE TABLE `pharmacy_item_details` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `common_condition_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `is_basic` tinyint(1) NOT NULL DEFAULT 0,
+  `temp_product_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2158,15 +2435,32 @@ CREATE TABLE `stores` (
   `cutlery` tinyint(1) NOT NULL DEFAULT 0,
   `meta_title` varchar(100) DEFAULT NULL,
   `meta_description` text DEFAULT NULL,
-  `meta_image` varchar(100) DEFAULT NULL
+  `meta_image` varchar(100) DEFAULT NULL,
+  `announcement` tinyint(1) NOT NULL DEFAULT 0,
+  `announcement_message` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `stores`
 --
 
-INSERT INTO `stores` (`id`, `name`, `phone`, `email`, `logo`, `latitude`, `longitude`, `address`, `footer_text`, `minimum_order`, `comission`, `schedule_order`, `status`, `vendor_id`, `created_at`, `updated_at`, `free_delivery`, `rating`, `cover_photo`, `delivery`, `take_away`, `item_section`, `tax`, `zone_id`, `reviews_section`, `active`, `off_day`, `gst`, `self_delivery_system`, `pos_system`, `minimum_shipping_charge`, `delivery_time`, `veg`, `non_veg`, `order_count`, `total_order`, `module_id`, `order_place_to_schedule_interval`, `featured`, `per_km_shipping_charge`, `prescription_order`, `slug`, `maximum_shipping_charge`, `cutlery`, `meta_title`, `meta_description`, `meta_image`) VALUES
-(1, 'Demo Store', '+101511111111', 'demo.store@gmail.com', '2023-08-16-64dca8ad238c4.png', '23.81695886557418', '90.36934144046135', 'House, road', NULL, 0.00, NULL, 0, 1, 1, '2023-08-15 23:45:01', '2023-08-15 23:45:19', 0, NULL, '2023-08-16-64dca8ad263f6.png', 1, 1, 1, 5.00, 1, 1, 1, ' ', NULL, 0, 0, 0.00, '30-40 min', 1, 1, 0, 0, 1, 0, 1, 0.000, 0, 'demo-store', NULL, 0, NULL, NULL, NULL);
+INSERT INTO `stores` (`id`, `name`, `phone`, `email`, `logo`, `latitude`, `longitude`, `address`, `footer_text`, `minimum_order`, `comission`, `schedule_order`, `status`, `vendor_id`, `created_at`, `updated_at`, `free_delivery`, `rating`, `cover_photo`, `delivery`, `take_away`, `item_section`, `tax`, `zone_id`, `reviews_section`, `active`, `off_day`, `gst`, `self_delivery_system`, `pos_system`, `minimum_shipping_charge`, `delivery_time`, `veg`, `non_veg`, `order_count`, `total_order`, `module_id`, `order_place_to_schedule_interval`, `featured`, `per_km_shipping_charge`, `prescription_order`, `slug`, `maximum_shipping_charge`, `cutlery`, `meta_title`, `meta_description`, `meta_image`, `announcement`, `announcement_message`) VALUES
+(1, 'Demo Store', '+101511111111', 'demo.store@gmail.com', '2023-08-16-64dca8ad238c4.png', '23.81695886557418', '90.36934144046135', 'House, road', NULL, 0.00, NULL, 0, 1, 1, '2023-08-15 23:45:01', '2023-08-15 23:45:19', 0, NULL, '2023-08-16-64dca8ad263f6.png', 1, 1, 1, 5.00, 1, 1, 1, ' ', NULL, 0, 0, 0.00, '30-40 min', 1, 1, 0, 0, 1, 0, 1, 0.000, 0, 'demo-store', NULL, 0, NULL, NULL, NULL, 0, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `store_configs`
+--
+
+CREATE TABLE `store_configs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint(20) UNSIGNED NOT NULL,
+  `is_recommended` tinyint(1) NOT NULL DEFAULT 0,
+  `is_recommended_deleted` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2210,6 +2504,52 @@ CREATE TABLE `store_wallets` (
 CREATE TABLE `tags` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `tag` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `temp_products`
+--
+
+CREATE TABLE `temp_products` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `image` varchar(30) DEFAULT NULL,
+  `images` longtext DEFAULT NULL,
+  `store_id` bigint(20) UNSIGNED NOT NULL,
+  `module_id` bigint(20) UNSIGNED NOT NULL,
+  `unit_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `category_ids` varchar(255) DEFAULT NULL,
+  `tag_ids` varchar(255) DEFAULT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `variations` text DEFAULT NULL,
+  `food_variations` text DEFAULT NULL,
+  `add_ons` varchar(255) DEFAULT NULL,
+  `attributes` varchar(255) DEFAULT NULL,
+  `choice_options` text DEFAULT NULL,
+  `price` decimal(24,2) NOT NULL DEFAULT 0.00,
+  `tax` decimal(24,2) NOT NULL DEFAULT 0.00,
+  `tax_type` varchar(20) NOT NULL DEFAULT 'percent',
+  `discount` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `discount_type` varchar(20) NOT NULL DEFAULT 'percent',
+  `veg` tinyint(1) NOT NULL DEFAULT 0,
+  `recommended` tinyint(1) NOT NULL DEFAULT 0,
+  `organic` tinyint(1) NOT NULL DEFAULT 0,
+  `common_condition_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `basic` tinyint(1) NOT NULL DEFAULT 0,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `stock` int(11) DEFAULT 0,
+  `maximum_cart_quantity` int(11) DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  `is_rejected` tinyint(1) NOT NULL DEFAULT 0,
+  `available_time_ends` time DEFAULT NULL,
+  `available_time_starts` time DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2488,6 +2828,22 @@ CREATE TABLE `wallet_transactions` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `websockets_statistics_entries`
+--
+
+CREATE TABLE `websockets_statistics_entries` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `app_id` varchar(255) NOT NULL,
+  `peak_connection_count` int(11) NOT NULL,
+  `websocket_message_count` int(11) NOT NULL,
+  `api_message_count` int(11) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `wishlists`
 --
 
@@ -2503,18 +2859,38 @@ CREATE TABLE `wishlists` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `withdrawal_methods`
+--
+
+CREATE TABLE `withdrawal_methods` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `method_name` varchar(255) NOT NULL,
+  `method_fields` text NOT NULL,
+  `is_default` tinyint(4) NOT NULL DEFAULT 0,
+  `is_active` tinyint(4) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `withdraw_requests`
 --
 
 CREATE TABLE `withdraw_requests` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `vendor_id` bigint(20) UNSIGNED NOT NULL,
+  `vendor_id` bigint(20) UNSIGNED DEFAULT NULL,
   `admin_id` bigint(20) UNSIGNED DEFAULT NULL,
   `transaction_note` varchar(255) DEFAULT NULL,
   `amount` decimal(23,3) NOT NULL DEFAULT 0.000,
   `approved` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `delivery_man_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `withdrawal_method_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `withdrawal_method_fields` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`withdrawal_method_fields`)),
+  `type` varchar(20) NOT NULL DEFAULT 'manual'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -2534,15 +2910,19 @@ CREATE TABLE `zones` (
   `customer_wise_topic` varchar(255) DEFAULT NULL,
   `deliveryman_wise_topic` varchar(255) DEFAULT NULL,
   `cash_on_delivery` tinyint(1) NOT NULL DEFAULT 0,
-  `digital_payment` tinyint(1) NOT NULL DEFAULT 0
+  `digital_payment` tinyint(1) NOT NULL DEFAULT 0,
+  `increased_delivery_fee` double(8,2) NOT NULL DEFAULT 0.00,
+  `increased_delivery_fee_status` tinyint(1) NOT NULL DEFAULT 0,
+  `increase_delivery_charge_message` varchar(255) DEFAULT NULL,
+  `offline_payment` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `zones`
 --
 
-INSERT INTO `zones` (`id`, `name`, `coordinates`, `status`, `created_at`, `updated_at`, `store_wise_topic`, `customer_wise_topic`, `deliveryman_wise_topic`, `cash_on_delivery`, `digital_payment`) VALUES
-(1, 'Demo Zone', 0x0000000001030000000100000006000000d8b95578f0965640804b97f820d6374014ba5508809556403a236f336ed2374017ba55d83696564031240701bacd3740d5b95598ce985640f47608c3f7cd374015ba55f87c995640ce86cbe863d23740d8b95578f0965640804b97f820d63740, 1, '2023-08-15 23:35:04', '2023-08-15 23:35:44', 'zone_1_store', 'zone_1_customer', 'zone_1_delivery_man', 1, 1);
+INSERT INTO `zones` (`id`, `name`, `coordinates`, `status`, `created_at`, `updated_at`, `store_wise_topic`, `customer_wise_topic`, `deliveryman_wise_topic`, `cash_on_delivery`, `digital_payment`, `increased_delivery_fee`, `increased_delivery_fee_status`, `increase_delivery_charge_message`, `offline_payment`) VALUES
+(1, 'Demo Zone', 0x0000000001030000000100000006000000d8b95578f0965640804b97f820d6374014ba5508809556403a236f336ed2374017ba55d83696564031240701bacd3740d5b95598ce985640f47608c3f7cd374015ba55f87c995640ce86cbe863d23740d8b95578f0965640804b97f820d63740, 1, '2023-08-15 23:35:04', '2023-08-15 23:35:44', 'zone_1_store', 'zone_1_customer', 'zone_1_delivery_man', 1, 1, 0.00, 0, NULL, 0);
 
 --
 -- Indexes for dumped tables
@@ -2637,11 +3017,23 @@ ALTER TABLE `campaigns`
   ADD KEY `campaigns_module_id_foreign` (`module_id`);
 
 --
+-- Indexes for table `carts`
+--
+ALTER TABLE `carts`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `categories`
 --
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`),
   ADD KEY `categories_module_id_foreign` (`module_id`);
+
+--
+-- Indexes for table `common_conditions`
+--
+ALTER TABLE `common_conditions`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `contacts`
@@ -2701,6 +3093,24 @@ ALTER TABLE `delivery_men`
   ADD UNIQUE KEY `delivery_men_phone_unique` (`phone`);
 
 --
+-- Indexes for table `disbursements`
+--
+ALTER TABLE `disbursements`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `disbursement_details`
+--
+ALTER TABLE `disbursement_details`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `disbursement_withdrawal_methods`
+--
+ALTER TABLE `disbursement_withdrawal_methods`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `discounts`
 --
 ALTER TABLE `discounts`
@@ -2750,9 +3160,27 @@ ALTER TABLE `failed_jobs`
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
 
 --
+-- Indexes for table `flash_sales`
+--
+ALTER TABLE `flash_sales`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `flash_sale_items`
+--
+ALTER TABLE `flash_sale_items`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `flutter_special_criterias`
 --
 ALTER TABLE `flutter_special_criterias`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `guests`
+--
+ALTER TABLE `guests`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -2810,6 +3238,18 @@ ALTER TABLE `modules`
 -- Indexes for table `module_types`
 --
 ALTER TABLE `module_types`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `module_wise_banners`
+--
+ALTER TABLE `module_wise_banners`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `module_wise_why_chooses`
+--
+ALTER TABLE `module_wise_why_chooses`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -2872,6 +3312,18 @@ ALTER TABLE `oauth_refresh_tokens`
   ADD KEY `oauth_refresh_tokens_access_token_id_index` (`access_token_id`);
 
 --
+-- Indexes for table `offline_payments`
+--
+ALTER TABLE `offline_payments`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `offline_payment_methods`
+--
+ALTER TABLE `offline_payment_methods`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
@@ -2920,10 +3372,22 @@ ALTER TABLE `parcel_categories`
   ADD KEY `parcel_categories_module_id_foreign` (`module_id`);
 
 --
+-- Indexes for table `parcel_delivery_instructions`
+--
+ALTER TABLE `parcel_delivery_instructions`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `password_resets`
 --
 ALTER TABLE `password_resets`
   ADD KEY `password_resets_email_index` (`email`);
+
+--
+-- Indexes for table `pharmacy_item_details`
+--
+ALTER TABLE `pharmacy_item_details`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `phone_verifications`
@@ -2984,6 +3448,12 @@ ALTER TABLE `stores`
   ADD KEY `stores_module_id_foreign` (`module_id`);
 
 --
+-- Indexes for table `store_configs`
+--
+ALTER TABLE `store_configs`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `store_schedule`
 --
 ALTER TABLE `store_schedule`
@@ -2999,6 +3469,12 @@ ALTER TABLE `store_wallets`
 -- Indexes for table `tags`
 --
 ALTER TABLE `tags`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `temp_products`
+--
+ALTER TABLE `temp_products`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -3076,9 +3552,21 @@ ALTER TABLE `wallet_transactions`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `websockets_statistics_entries`
+--
+ALTER TABLE `websockets_statistics_entries`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `wishlists`
 --
 ALTER TABLE `wishlists`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `withdrawal_methods`
+--
+ALTER TABLE `withdrawal_methods`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -3168,7 +3656,7 @@ ALTER TABLE `banners`
 -- AUTO_INCREMENT for table `business_settings`
 --
 ALTER TABLE `business_settings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=137;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=138;
 
 --
 -- AUTO_INCREMENT for table `campaigns`
@@ -3177,10 +3665,22 @@ ALTER TABLE `campaigns`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `carts`
+--
+ALTER TABLE `carts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `common_conditions`
+--
+ALTER TABLE `common_conditions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `contacts`
@@ -3237,6 +3737,24 @@ ALTER TABLE `delivery_men`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `disbursements`
+--
+ALTER TABLE `disbursements`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `disbursement_details`
+--
+ALTER TABLE `disbursement_details`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `disbursement_withdrawal_methods`
+--
+ALTER TABLE `disbursement_withdrawal_methods`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `discounts`
 --
 ALTER TABLE `discounts`
@@ -3285,10 +3803,28 @@ ALTER TABLE `failed_jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `flash_sales`
+--
+ALTER TABLE `flash_sales`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `flash_sale_items`
+--
+ALTER TABLE `flash_sale_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `flutter_special_criterias`
 --
 ALTER TABLE `flutter_special_criterias`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `guests`
+--
+ALTER TABLE `guests`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `items`
@@ -3330,7 +3866,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `modules`
@@ -3342,6 +3878,18 @@ ALTER TABLE `modules`
 -- AUTO_INCREMENT for table `module_types`
 --
 ALTER TABLE `module_types`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `module_wise_banners`
+--
+ALTER TABLE `module_wise_banners`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `module_wise_why_chooses`
+--
+ALTER TABLE `module_wise_why_chooses`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -3379,6 +3927,18 @@ ALTER TABLE `oauth_clients`
 --
 ALTER TABLE `oauth_personal_access_clients`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `offline_payments`
+--
+ALTER TABLE `offline_payments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `offline_payment_methods`
+--
+ALTER TABLE `offline_payment_methods`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `orders`
@@ -3420,6 +3980,18 @@ ALTER TABLE `order_transactions`
 -- AUTO_INCREMENT for table `parcel_categories`
 --
 ALTER TABLE `parcel_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `parcel_delivery_instructions`
+--
+ALTER TABLE `parcel_delivery_instructions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `pharmacy_item_details`
+--
+ALTER TABLE `pharmacy_item_details`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -3477,6 +4049,12 @@ ALTER TABLE `stores`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `store_configs`
+--
+ALTER TABLE `store_configs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `store_schedule`
 --
 ALTER TABLE `store_schedule`
@@ -3492,6 +4070,12 @@ ALTER TABLE `store_wallets`
 -- AUTO_INCREMENT for table `tags`
 --
 ALTER TABLE `tags`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `temp_products`
+--
+ALTER TABLE `temp_products`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -3561,9 +4145,21 @@ ALTER TABLE `wallet_transactions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `websockets_statistics_entries`
+--
+ALTER TABLE `websockets_statistics_entries`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `wishlists`
 --
 ALTER TABLE `wishlists`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `withdrawal_methods`
+--
+ALTER TABLE `withdrawal_methods`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --

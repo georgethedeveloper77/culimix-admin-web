@@ -24,18 +24,15 @@
             <div class="card-body">
                 <form action="{{route('admin.common-condition.store')}}" method="post">
                 @csrf
-                @php($language=\App\Models\BusinessSetting::where('key','language')->first())
-                @php($language = $language->value ?? null)
-                @php($default_lang = str_replace('_', '-', app()->getLocale()))
                 @if($language)
-                    @php($default_lang = json_decode($language)[0])
+                    @php($defaultLang = $language[0])
                     <ul class="nav nav-tabs mb-4">
                         <li class="nav-item">
                             <a class="nav-link lang_link active"
                             href="#"
                             id="default-link">{{translate('messages.default')}}</a>
                         </li>
-                        @foreach (json_decode($language) as $lang)
+                        @foreach ($language as $lang)
                             <li class="nav-item">
                                 <a class="nav-link lang_link"
                                     href="#"
@@ -45,13 +42,13 @@
                     </ul>
                     <div class="form-group lang_form" id="default-form">
                         <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{ translate('messages.default') }})</label>
-                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_condition')}}" maxlength="191" oninvalid="document.getElementById('en-link').click()">
+                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_condition')}}" maxlength="191">
                     </div>
                     <input type="hidden" name="lang[]" value="default">
-                    @foreach(json_decode($language) as $lang)
+                    @foreach($language as $lang)
                         <div class="form-group d-none lang_form" id="{{$lang}}-form">
                             <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{strtoupper($lang)}})</label>
-                            <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_condition')}}" maxlength="191" oninvalid="document.getElementById('en-link').click()">
+                            <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_condition')}}" maxlength="191">
                         </div>
                         <input type="hidden" name="lang[]" value="{{$lang}}">
                     @endforeach
@@ -121,7 +118,7 @@
                                 </td>
                                 <td>
                                     <label class="toggle-switch toggle-switch-sm" for="stocksCheckbox{{$condition->id}}">
-                                    <input type="checkbox" onclick="location.href='{{route('admin.common-condition.status',[$condition['id'],$condition->status?0:1])}}'"class="toggle-switch-input" id="stocksCheckbox{{$condition->id}}" {{$condition->status?'checked':''}}>
+                                    <input type="checkbox" data-url="{{route('admin.common-condition.status',[$condition['id'],$condition->status?0:1])}}" class="toggle-switch-input redirect-url" id="stocksCheckbox{{$condition->id}}" {{$condition->status?'checked':''}}>
                                         <span class="toggle-switch-label mx-auto">
                                             <span class="toggle-switch-indicator"></span>
                                         </span>
@@ -132,8 +129,7 @@
                                         <a class="btn action-btn btn--primary btn-outline-primary"
                                             href="{{route('admin.common-condition.edit',[$condition['id']])}}" title="{{translate('messages.edit_condition')}}"><i class="tio-edit"></i>
                                         </a>
-                                        <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
-                                        onclick="form_alert('condition-{{$condition['id']}}','{{ translate('messages.Want to delete this condition') }}')" title="{{translate('messages.delete_condition')}}"><i class="tio-delete-outlined"></i>
+                                        <a class="btn action-btn btn--danger btn-outline-danger form-alert" href="javascript:" data-id="condition-{{$condition['id']}}" data-message="{{ translate('messages.Want to delete this condition') }}"  title="{{translate('messages.delete_condition')}}"><i class="tio-delete-outlined"></i>
                                         </a>
                                         <form action="{{route('admin.common-condition.delete',[$condition['id']])}}" method="post" id="condition-{{$condition['id']}}">
                                             @csrf @method('delete')
@@ -165,44 +161,5 @@
 @endsection
 
 @push('script_2')
-    <script>
-        $(document).on('ready', function () {
-            // INITIALIZATION OF DATATABLES
-            // =======================================================
-
-
-
-            // INITIALIZATION OF SELECT2
-            // =======================================================
-            $('.js-select2-custom').each(function () {
-                var select2 = $.HSCore.components.HSSelect2.init($(this));
-            });
-        });
-    </script>
-    <script>
-        $(".lang_link").click(function(e){
-            e.preventDefault();
-            $(".lang_link").removeClass('active');
-            $(".lang_form").addClass('d-none');
-            $(this).addClass('active');
-
-            let form_id = this.id;
-            let lang = form_id.substring(0, form_id.length - 5);
-            console.log(lang);
-            $("#"+lang+"-form").removeClass('d-none');
-            if(lang == '{{$default_lang}}')
-            {
-                $(".from_part_2").removeClass('d-none');
-            }
-            else
-            {
-                $(".from_part_2").addClass('d-none');
-            }
-        });
-    </script>
-    <script>
-        $('#reset_btn').click(function(){
-            $('#exampleFormControlSelect1').val(null).trigger('change');
-        })
-    </script>
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/common-condition-index.js"></script>
 @endpush

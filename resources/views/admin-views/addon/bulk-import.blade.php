@@ -79,50 +79,61 @@
                     </div>
                     <div class="btn--container justify-content-end mt-3">
                         <button id="reset_btn" type="reset" class="btn btn--reset">{{translate('messages.reset')}}</button>
-                        <button type="submit" name="button" value="update" class="btn btn--warning submit_btn">{{translate('messages.update')}}</button>
+                        <button type="submit" name="button" value="update" class="btn btn--warning submit_btn change-Form-Action"
+                        data-value="update">{{translate('messages.update')}}</button>
                         <button type="submit" name="button" value="import" class="btn btn--primary submit_btn">{{translate('messages.Import')}}</button>
                     </div>
                 </div>
+            </div>
             </div>
         </form>
     </div>
 @endsection
 
 @push('script_2')
+<script src="{{asset('public/assets/admin')}}/js/view-pages/addon-import-export.js"></script>
 <script>
-    $('#reset_btn').click(function(){
-        $('#bulk__import').val(null);
-    })
-</script>
-    <script>
-
-$(document).on("click", ".submit_btn", function(e){
-    e.preventDefault();
+    "use strict";
+    $(document).on("click", ".submit_btn", function(e){
+        e.preventDefault();
         var data = $(this).val();
         myFunction(data)
-});
+    });
 
+    function myFunction(data) {
+        Swal.fire({
+        title: '{{ translate('Are you sure?') }}' ,
+        text: "{{ translate('You_want_to_') }}" +data,
+        type: 'warning',
+        showCancelButton: true,
+        cancelButtonColor: 'default',
+        confirmButtonColor: '#FC6A57',
+        cancelButtonText: '{{translate('messages.no')}}',
+        confirmButtonText: '{{translate('messages.yes')}}',
+        reverseButtons: true
+        }).then((result) => {
+            if (result.value) {
+                $('#btn_value').val(data);
+                $("#import_form").submit();
+            }
+        })
+    }
 
-function myFunction(data) {
-    Swal.fire({
-    title: '{{ translate('Are you sure?') }}' ,
-    text: "{{ translate('You_want_to_') }}" +data,
-    type: 'warning',
-    showCancelButton: true,
-    cancelButtonColor: 'default',
-    confirmButtonColor: '#FC6A57',
-    cancelButtonText: '{{translate('messages.no')}}',
-    confirmButtonText: '{{translate('messages.yes')}}',
-    reverseButtons: true
-    }).then((result) => {
-        if (result.value) {
-            $('#btn_value').val(data);
-            $("#import_form").submit();
+    $('.change-Form-Action').on('click',function (){
+        let buttonValue = $(this).data('value');
+        let form = document.getElementById('import_form');
+        if (buttonValue === 'update') {
+            form.action = '{{ route('admin.addon.bulk-update') }}';
+        } else {
+            form.action = '{{ route('admin.addon.bulk-import') }}';
         }
-        // else {
-        //     toastr.success("{{ translate('Cancelled') }}");
-        // }
-    })
-}
-    </script>
+
+    });
+
+
+
+    function changeFormAction(buttonValue) {
+
+    }
+</script>
 @endpush

@@ -25,9 +25,6 @@
                 <form action="{{route('admin.category.update',[$category['id']])}}" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="row">
-                        @php($language=\App\Models\BusinessSetting::where('key','language')->first())
-                        @php($language = $language->value ?? null)
-                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
                         <div class="col-md-12">
                             @if($language)
                                 <ul class="nav nav-tabs mb-4">
@@ -36,7 +33,7 @@
                                         href="#"
                                         id="default-link">{{translate('messages.default')}}</a>
                                     </li>
-                                    @foreach (json_decode($language) as $lang)
+                                    @foreach ($language as $lang)
                                         <li class="nav-item">
                                             <a class="nav-link lang_link"
                                                 href="#"
@@ -46,14 +43,14 @@
                                 </ul>
                             @endif
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             @if($language)
                                 <div class="form-group lang_form" id="default-form">
                                     <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{ translate('messages.default') }})</label>
-                                    <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_category')}}" maxlength="191" value="{{$category?->getRawOriginal('name')}}" oninvalid="document.getElementById('en-link').click()">
+                                    <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_category')}}" maxlength="191" value="{{$category?->getRawOriginal('name')}}"  >
                                 </div>
                                 <input type="hidden" name="lang[]" value="default">
-                                @foreach(json_decode($language) as $lang)
+                                @foreach($language as $lang)
                                     <?php
                                         if(count($category['translations'])){
                                             $translate = [];
@@ -67,7 +64,7 @@
                                     ?>
                                     <div class="form-group d-none lang_form" id="{{$lang}}-form">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('messages.name')}} ({{strtoupper($lang)}})</label>
-                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_category')}}" maxlength="191" value="{{$translate[$lang]['name']??''}}" oninvalid="document.getElementById('en-link').click()">
+                                        <input type="text" name="name[]" class="form-control" placeholder="{{translate('messages.new_category')}}" maxlength="191" value="{{$translate[$lang]['name']??''}}"  >
                                     </div>
                                     <input type="hidden" name="lang[]" value="{{$lang}}">
                                 @endforeach
@@ -79,17 +76,7 @@
                                 <input type="hidden" name="lang[]" value="{{$lang}}">
                             @endif
 
-                            @if($category->position == 0)
-                            <div class="form-group mb-0 pt-md-4">
-                                <label class="input-label">{{translate('messages.module')}}</label>
-                                <select name="module_id" id="module_id" required class="form-control js-select2-custom"  data-placeholder="{{translate('messages.select_module')}}" disabled>
-                                        <option value="" selected disabled>{{translate('messages.select_module')}}</option>
-                                    @foreach(\App\Models\Module::notParcel()->get() as $module)
-                                        <option value="{{$module->id}}" {{$category->module_id==$module->id?'selected':''}}>{{$module->module_name}}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @endif
+
                         </div>
                         <div class="col-md-6">
                             @if ($category->position == 0)
@@ -97,14 +84,14 @@
                                 <label class="mb-0">{{translate('messages.image')}}
                                     <small class="text-danger">* ( {{translate('messages.ratio')}} 1:1 )</small>
                                 </label>
-                                <center class="py-3 my-auto">
-                                    <img class="img--100" id="viewer"
-                                        src="{{asset('storage/app/public/category')}}/{{$category['image']}}"
-                                        onerror='this.src="{{asset('public/assets/admin/img/900x400/img1.jpg')}}"'
+                                <div class="text-center py-3 my-auto">
+                                    <img class="img--100 onerror-image" id="viewer"
+                                    src="{{\App\CentralLogics\Helpers::onerror_image_helper($category['image'], asset('storage/app/public/category/').'/'.$category['image'], asset('public/assets/admin/img/900x400/img1.jpg'), 'category/') }}"
+                                        data-onerror-image="{{asset('public/assets/admin/img/900x400/img1.jpg')}}"
                                         alt=""/>
-                                </center>
+                                </div>
                                 <div class="custom-file">
-                                    <input type="file" name="image" id="customFileEg1" class="custom-file-input"
+                                    <input type="file" name="image" id="customFileEg1" class="custom-file-input read-url"
                                             accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
                                     <label class="custom-file-label mb-0" for="customFileEg1">{{translate('messages.choose_file')}}</label>
                                 </div>
@@ -125,45 +112,9 @@
 @endsection
 
 @push('script_2')
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/category-index.js"></script>
     <script>
-        function readURL(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $('#viewer').attr('src', e.target.result);
-                }
-
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        $("#customFileEg1").change(function () {
-            readURL(this);
-        });
-    </script>
-    <script>
-        $(".lang_link").click(function(e){
-            e.preventDefault();
-            $(".lang_link").removeClass('active');
-            $(".lang_form").addClass('d-none');
-            $(this).addClass('active');
-
-            let form_id = this.id;
-            let lang = form_id.substring(0, form_id.length - 5);
-            console.log(lang);
-            $("#"+lang+"-form").removeClass('d-none');
-            if(lang == '{{$default_lang}}')
-            {
-                $(".from_part_2").removeClass('d-none');
-            }
-            else
-            {
-                $(".from_part_2").addClass('d-none');
-            }
-        });
-    </script>
-    <script>
+        "use strict";
         $('#reset_btn').click(function(){
             $('#module_id').val("{{ $category->module_id }}").trigger('change');
             $('#viewer').attr('src', "{{asset('storage/app/public/category')}}/{{$category['image']}}");

@@ -21,7 +21,7 @@
     </div>
     @php($language=\App\Models\BusinessSetting::where('key','language')->first())
     @php($language = $language->value ?? null)
-    @php($default_lang = str_replace('_', '-', app()->getLocale()))
+    @php($defaultLang = str_replace('_', '-', app()->getLocale()))
     <div class="tab-content">
         <div class="tab-pane fade show active">
             <div class="card mb-3">
@@ -117,7 +117,7 @@
                             </div>
                             <div class="btn--container justify-content-end mt-3">
                                 <button type="reset" class="btn btn--reset">{{translate('Reset')}}</button>
-                                <button type="submit" onclick="" class="btn btn--primary mb-2">{{translate('Submit')}}</button>
+                                <button type="submit" class="btn btn--primary mb-2">{{translate('Submit')}}</button>
                             </div>
                         </form>
                     </div>
@@ -157,12 +157,26 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <img src="{{asset('storage/app/public/why_choose')}}/{{$banner->image}}"
-                                            onerror="this.src='{{asset('/public/assets/admin/img/upload-3.png')}}'" class="__size-105" alt="">
+                                            <img  src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                $banner->image ?? '',
+                                                asset('storage/app/public/why_choose').'/'.$banner->image ?? '',
+                                                asset('/public/assets/admin/img/upload-3.png'),
+                                                'why_choose/'
+                                            ) }}"
+                                            data-onerror-image="{{asset('/public/assets/admin/img/upload-3.png')}}" class="__size-105 onerror-image" alt="">
                                         </td>
                                         <td>
                                             <label class="toggle-switch toggle-switch-sm">
-                                                <input type="checkbox" class="toggle-switch-input" onclick="toogleStatusModal(event,'status-{{$banner->id}}','this-criteria-on.png','this-criteria-off.png','{{translate('messages.Want_to_enable')}} <strong>{{translate('this_feature?')}}','{{translate('messages.Want_to_disable')}} <strong>{{translate('this_feature?')}}',`<p>{{translate('If_yes,_it_will_be_available_on_this_module.')}}</p>`,`<p>{{translate('If_yes,_it_will_be_hidden_from_this_module.')}}</p>`)" id="status-{{$banner->id}}" {{$banner->status?'checked':''}}>
+                                                <input type="checkbox" class="toggle-switch-input dynamic-checkbox"
+                                                       data-id="status-{{$banner->id}}"
+                                                       data-type="status"
+                                                       data-image-on="{{asset('/public/assets/admin/img/modal')}}/this-criteria-on.png"
+                                                       data-image-off="{{asset('/public/assets/admin/img/modal')}}/this-criteria-off.png"
+                                                       data-title-on="{{translate('messages.Want_to_enable')}} <strong>{{translate('this_feature?')}}"
+                                                       data-title-off="{{translate('messages.Want_to_disable')}} <strong>{{translate('this_feature?')}}"
+                                                       data-text-on="<p>{{translate('If_yes,_it_will_be_available_on_this_module.')}}</p>"
+                                                       data-text-off="<p>{{translate('If_yes,_it_will_be_hidden_from_this_module.')}}</p>"
+                                                       id="status-{{$banner->id}}" {{$banner->status?'checked':''}}>
                                                 <span class="toggle-switch-label">
                                                     <span class="toggle-switch-indicator"></span>
                                                 </span>
@@ -176,8 +190,8 @@
                                                 <a class="btn action-btn btn--primary btn-outline-primary" href="{{route('admin.promotional-banner.why-choose-edit',[$banner['id']])}}">
                                                     <i class="tio-edit"></i>
                                                 </a>
-                                                <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:"
-                                                onclick="form_alert_title('criteria-{{$banner['id']}}','{{ translate('Want_to_delete_this_feature_?') }}','{{translate('If_yes,_It_will_be_removed_from_this_list_and_this_module.')}}')" title="{{translate('messages.delete_criteria')}}"><i class="tio-delete-outlined"></i>
+                                                <a class="btn action-btn btn--danger btn-outline-danger form-alert-title" href="javascript:"
+                                                data-id="criteria-{{$banner['id']}}" data-title="{{ translate('Want_to_delete_this_feature_?') }}" data-message="{{translate('If_yes,_It_will_be_removed_from_this_list_and_this_module.')}}" title="{{translate('messages.delete_criteria')}}"><i class="tio-delete-outlined"></i>
                                                 </a>
                                                 <form action="{{route('admin.promotional-banner.why-choose-delete',[$banner['id']])}}" method="post" id="criteria-{{$banner['id']}}">
                                                     @csrf @method('delete')
@@ -206,32 +220,5 @@
 </div>
 @endsection
 @push('script_2')
-<script>
-    $(".lang_link").click(function(e){
-        e.preventDefault();
-        $(".lang_link").removeClass('active');
-        $(".lang_form").addClass('d-none');
-        $(this).addClass('active');
-
-        let form_id = this.id;
-        let lang = form_id.substring(0, form_id.length - 5);
-
-        console.log(lang);
-
-        $("#"+lang+"-form").removeClass('d-none');
-        $("#"+lang+"-form1").removeClass('d-none');
-        if(lang == '{{$default_lang}}')
-        {
-            $(".from_part_2").removeClass('d-none');
-        }
-        if(lang == 'default')
-        {
-            $(".default-form").removeClass('d-none');
-        }
-        else
-        {
-            $(".from_part_2").addClass('d-none');
-        }
-    });
-</script>
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/other-banners.js"></script>
 @endpush

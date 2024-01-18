@@ -133,8 +133,8 @@
                                     </td>
                                     <td class="text-center">
                                         <a class="media align-items-center" href="{{route('admin.item.view',[$item['item_id']])}}">
-                                            <img class="avatar avatar-lg mr-3" src="{{asset('storage/app/public/product')}}/{{$item->item['image']}}"
-                                                    onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'" alt="{{$item->item->name}} image">
+                                            <img class="avatar avatar-lg mr-3 onerror-image" src="{{\App\CentralLogics\Helpers::onerror_image_helper($item->item['image'], asset('storage/app/public/product/').'/'.$item->item['image'], asset('public/assets/admin/img/160x160/img2.jpg'), 'product/') }}"
+                                            data-onerror-image="{{asset('public/assets/admin/img/160x160/img2.jpg')}}" alt="{{$item->item->name}} image">
                                             <div class="media-body">
                                                 <h5 class="text-hover-primary mb-0">{{Str::limit($item->item['name'],20,'...')}}</h5>
                                             </div>
@@ -154,7 +154,7 @@
                                     </td>
                                     <td class="text-center">
                                         <label class="toggle-switch toggle-switch-sm" for="publishCheckbox{{$item->id}}">
-                                            <input type="checkbox" onclick="location.href='{{route('admin.flash-sale.status-product',[$item['id'],$item->status?0:1])}}'"class="toggle-switch-input" id="publishCheckbox{{$item->id}}" {{$item->status?'checked':''}}>
+                                            <input type="checkbox" data-url="{{route('admin.flash-sale.status-product',[$item['id'],$item->status?0:1])}}" class="toggle-switch-input redirect-url" id="publishCheckbox{{$item->id}}" {{$item->status?'checked':''}}>
                                             <span class="toggle-switch-label mx-auto">
                                                 <span class="toggle-switch-indicator"></span>
                                             </span>
@@ -162,7 +162,7 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn--container justify-content-center">
-                                            <a class="btn action-btn btn--danger btn-outline-danger" href="javascript:" onclick="form_alert('item-{{$item['id']}}','{{ translate('Want to delete this item ?') }}')" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i>
+                                            <a class="btn action-btn btn--danger btn-outline-danger form-control form-alert" href="javascript:" data-id="item-{{$item['id']}}" data-message="{{ translate('Want to delete this item ?') }}" title="{{translate('messages.delete')}}"><i class="tio-delete-outlined"></i>
                                             </a>
                                             <form action="{{route('admin.flash-sale.delete-product',[$item['id']])}}"
                                                     method="post" id="item-{{$item['id']}}">
@@ -199,12 +199,12 @@
 
 @push('script_2')
     <script>
-        var zone_id = [];
-        var module_id = {{Config::get('module.current_module_id')}};
+        let zone_id = [];
+        let module_id = {{Config::get('module.current_module_id')}};
 
         function get_items()
         {
-            var nurl = '{{url('/')}}/admin/item/get-items-flashsale?module_id='+module_id;
+            let nurl = '{{url('/')}}/admin/item/get-items-flashsale?module_id='+module_id;
 
             if(!Array.isArray(zone_id))
             {
@@ -230,7 +230,7 @@
                 // INITIALIZATION OF SELECT2
                 // =======================================================
                 $('.js-select2-custom').each(function () {
-                    var select2 = $.HSCore.components.HSSelect2.init($(this));
+                    let select2 = $.HSCore.components.HSSelect2.init($(this));
                 });
             });
 

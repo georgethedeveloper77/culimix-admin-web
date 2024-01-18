@@ -1,13 +1,5 @@
 <!DOCTYPE html>
 <?php
-    // $site_direction = session()->get('site_direction');
-    // if (env('APP_MODE') == 'demo') {
-    //     $site_direction = session()->get('site_direction');
-    // }else{
-    //     $site_direction = \App\Models\BusinessSetting::where('key', 'site_direction')->first();
-    //     $site_direction = $site_direction->value ?? 'ltr';
-    // }
-
     $log_email_succ = session()->get('log_email_succ');
 ?>
 
@@ -41,7 +33,8 @@
         <div class="auth-wrapper-left">
             <div class="auth-left-cont">
                 @php($store_logo = \App\Models\BusinessSetting::where(['key' => 'logo'])->first()->value)
-                <img onerror="this.src='{{asset('/public/assets/admin/img/favicon.png')}}'" src="{{ asset('storage/app/public/business/' . $store_logo) }}" alt="public/img">
+                <img class="onerror-image"  data-onerror-image="{{asset('/public/assets/admin/img/favicon.png')}}"
+                src="{{\App\CentralLogics\Helpers::onerror_image_helper($store_logo, asset('storage/app/public/business/').'/' . $store_logo, asset('/public/assets/admin/img/favicon.png'),'business/')}}"  alt="public/img">
                 <h2 class="title">{{translate('Your')}} <span class="d-block">{{translate('All Service')}}</span> <strong class="text--039D55">{{translate('in one field')}}....</strong></h2>
             </div>
         </div>
@@ -63,9 +56,6 @@
                         <div class="js-form-message form-group mb-4">
                             <label class="input-label">
                                 {{translate('New Password')}}
-                                {{-- <span class="d-flex justify-content-between align-items-center">
-                                    {{translate('New Password')}}
-                                </span> --}}
                                 <span class="form-label-secondary" data-toggle="tooltip" data-placement="right"
                                 data-original-title="{{ translate('messages.Must_contain_at_least_one_number_and_one_uppercase_and_lowercase_letter_and_symbol,_and_at_least_8_or_more_characters') }}"><img src="{{ asset('/public/assets/admin/img/info-circle.svg') }}" alt="{{ translate('messages.Must_contain_at_least_one_number_and_one_uppercase_and_lowercase_letter_and_symbol,_and_at_least_8_or_more_characters') }}"></span>
                             </label>
@@ -119,7 +109,7 @@
                 </div>
             </div>
             <!-- End Card -->
-                
+
         </div>
     </div>
 </main>
@@ -135,6 +125,7 @@
 
 @if ($errors->any())
     <script>
+        "use strict";
         @foreach($errors->all() as $error)
         toastr.error('{{$error}}', Error, {
             CloseButton: true,
@@ -146,6 +137,7 @@
 
 <!-- JS Plugins Init. -->
 <script>
+    "use strict";
     $(document).on('ready', function () {
         // INITIALIZATION OF SHOW PASSWORD
         // =======================================================
@@ -164,6 +156,7 @@
 {{-- recaptcha scripts start --}}
 @if(isset($recaptcha) && $recaptcha['status'] == 1)
     <script type="text/javascript">
+    "use strict";
         var onloadCallback = function () {
             grecaptcha.render('recaptcha_element', {
                 'sitekey': '{{ \App\CentralLogics\Helpers::get_business_settings('recaptcha')['site_key'] }}'
@@ -172,6 +165,7 @@
     </script>
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
     <script>
+        "use strict";
         $("#form-id").on('submit',function(e) {
             var response = grecaptcha.getResponse();
 
@@ -182,9 +176,9 @@
         });
     </script>
 @endif
-{{-- recaptcha scripts end --}}
 
 <script>
+    "use strict";
         function reloadCaptcha() {
             $.ajax({
                 url: "{{ route('reload-captcha') }}",
@@ -201,18 +195,25 @@
                 }
             });
         }
+        $(document).ready(function() {
+            $('.onerror-image').on('error', function() {
+                let img = $(this).data('onerror-image')
+                $(this).attr('src', img);
+            });
+        });
 </script>
 
 @if(env('APP_MODE')=='demo')
     <script>
-        function copy_cred() {
+        "use strict";
+        $('.copy_cred').on('click', function () {
             $('#signinSrEmail').val('admin@admin.com');
             $('#signupSrPassword').val('12345678');
             toastr.success('Copied successfully!', 'Success!', {
                 CloseButton: true,
                 ProgressBar: true
             });
-        }
+        })
     </script>
 @endif
 

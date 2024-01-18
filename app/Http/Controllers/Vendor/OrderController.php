@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Models\Order;
+use App\Models\OrderCancelReason;
 use App\Models\Store;
 use App\Models\Coupon;
 use App\Exports\OrderExport;
@@ -96,7 +97,7 @@ class OrderController extends Controller
                 }
             });
         })
-        ->StoreOrder()->NotDigitalOrder()->OfflinePrndingOrder()
+        ->StoreOrder()->NotDigitalOrder()
         ->where('store_id',\App\CentralLogics\Helpers::get_store_id())
         ->orderBy('schedule_at', 'desc')
         ->paginate(config('default_pagination'));
@@ -179,7 +180,7 @@ class OrderController extends Controller
                 }
             });
         })
-        ->StoreOrder()->NotDigitalOrder()->OfflinePrndingOrder()
+        ->StoreOrder()->NotDigitalOrder()
         ->where('store_id',\App\CentralLogics\Helpers::get_store_id())
         ->orderBy('schedule_at', 'desc')
         ->get();
@@ -188,12 +189,12 @@ class OrderController extends Controller
             'orders'=>$orders,
             'type'=>$type,
             'status'=>$status,
-            'order_status'=>$request->orderStatus?implode(', ', $request->orderStatus):null,
+            'order_status'=>isset($request->orderStatus)?implode(', ', $request->orderStatus):null,
             'search'=>$request->search??null,
             'from'=>$request->from_date??null,
             'to'=>$request->to_date??null,
-            'zones'=>$request->zone?Helpers::get_zones_name($request->zone):null,
-            'stores'=>$request->vendor?Helpers::get_stores_name(Helpers::get_store_id()):null,
+            'zones'=>isset($request->zone)?Helpers::get_zones_name($request->zone):null,
+            'stores'=>isset($request->vendor)?Helpers::get_stores_name(Helpers::get_store_id()):null,
         ];
 
     if ($file_type == 'excel') {
@@ -204,19 +205,19 @@ class OrderController extends Controller
 
     }
 
-    public function search(Request $request){
-        $key = explode(' ', $request['search']);
-        $orders=Order::where(['store_id'=>Helpers::get_store_id()])->where(function ($q) use ($key) {
-            foreach ($key as $value) {
-                $q->orWhere('id', 'like', "%{$value}%")
-                    ->orWhere('order_status', 'like', "%{$value}%")
-                    ->orWhere('transaction_reference', 'like', "%{$value}%");
-            }
-        })->StoreOrder()->NotDigitalOrder()->OfflinePrndingOrder()->limit(100)->get();
-        return response()->json([
-            'view'=>view('vendor-views.order.partials._table',compact('orders'))->render()
-        ]);
-    }
+//    public function search(Request $request){
+//        $key = explode(' ', $request['search']);
+//        $orders=Order::where(['store_id'=>Helpers::get_store_id()])->where(function ($q) use ($key) {
+//            foreach ($key as $value) {
+//                $q->orWhere('id', 'like', "%{$value}%")
+//                    ->orWhere('order_status', 'like', "%{$value}%")
+//                    ->orWhere('transaction_reference', 'like', "%{$value}%");
+//            }
+//        })->StoreOrder()->NotDigitalOrder()->limit(100)->get();
+//        return response()->json([
+//            'view'=>view('vendor-views.order.partials._table',compact('orders'))->render()
+//        ]);
+//    }
 
     public function details(Request $request,$id)
     {
@@ -226,7 +227,8 @@ class OrderController extends Controller
             return $query->withCount('orders');
         }])->where(['id' => $id, 'store_id' => Helpers::get_store_id()])->first();
         if (isset($order)) {
-            return view('vendor-views.order.order-view', compact('order'));
+            $reasons=OrderCancelReason::where('status', 1)->where('user_type' ,'store' )->get();
+            return view('vendor-views.order.order-view', compact('order' ,'reasons'));
         } else {
             Toastr::info('No more orders!');
             return back();
@@ -332,7 +334,9 @@ class OrderController extends Controller
                     $item->item->increment('order_count');
                 }
             });
-            $order->customer->increment('order_count');
+            if($order->is_guest == 0) {
+            $order?->customer?->increment('order_count');
+            }
         }
         if($request->order_status == 'canceled' || $request->order_status == 'delivered')
         {

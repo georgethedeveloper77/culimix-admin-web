@@ -34,7 +34,10 @@ class Item extends Model
         'is_approved'=>'integer',
         'stock'=>'integer',
         "min_price" => 'float',
-        "max_price" => 'float'
+        "max_price" => 'float',
+        'order_count'=>'integer',
+        'rating_count'=>'integer',
+        'unit_id'=>'integer'
     ];
 
     protected $appends = ['unit_type'];
@@ -118,7 +121,7 @@ class Item extends Model
     {
         return $this->hasMany(FlashSaleItem::class);
     }
-    
+
     public function getUnitTypeAttribute()
     {
         return $this->unit?$this->unit->unit:null;

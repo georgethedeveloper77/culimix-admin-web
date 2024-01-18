@@ -58,14 +58,29 @@
                                     </h3>
                                     <label class="__upload-img aspect-235-375 m-auto d-block position-relative">
                                         <div class="img">
-                                            <img src="{{asset('storage/app/public/promotional_banner')}}/{{$best_reviewed_section_banner?->value}}" onerror='this.src="{{asset('/public/assets/admin/img/upload-placeholder.png')}}"' alt="">
+                                            <img class="onerror-image"
+                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                $best_reviewed_section_banner->value,
+                                                asset('storage/app/public/promotional_banner') . '/' . $best_reviewed_section_banner->value,
+                                                asset('/public/assets/admin/img/upload-placeholder.png'),
+                                                'promotional_banner/'
+                                            ) }}"
+
+                                            data-onerror-image="{{asset('/public/assets/admin/img/upload-placeholder.png')}}" alt="">
                                         </div>
                                         <div>
                                         <input type="file" name="image"  hidden>
                                     </div>
                                     @if (isset($best_reviewed_section_banner?->value))
-                                    <span id="best_reviewed_section_banner" class="remove_image_button"
-                                    onclick="toogleStatusModal(event,'best_reviewed_section_banner','mail-success','mail-warning','{{translate('Important!')}}','{{translate('Warning!')}}',`<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>`,`<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>`)"
+                                    <span id="best_reviewed_section_banner" class="remove_image_button dynamic-checkbox"
+                                          data-id="best_reviewed_section_banner"
+                                          data-type="status"
+                                          data-image-on='{{asset('/public/assets/admin/img/modal')}}/mail-success'
+                                          data-image-off="{{asset('/public/assets/admin/img/modal')}}/mail-warning"
+                                          data-title-on="{{translate('Important!')}}"
+                                          data-title-off="{{translate('Warning!')}}"
+                                          data-text-on="<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>"
+                                          data-text-off="<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>"
                                     >
                                     <i class="tio-clear"></i></span>
                                     @endif
@@ -109,14 +124,28 @@
                                     </h3>
                                     <label class="__upload-img aspect-235-375 m-auto d-block position-relative">
                                         <div class="img">
-                                            <img src="{{asset('storage/app/public/promotional_banner')}}/{{$new_arrival_section_banner?->value}}" onerror='this.src="{{asset('/public/assets/admin/img/upload-placeholder.png')}}"' alt="">
+                                            <img class="onerror-image"
+
+                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                $new_arrival_section_banner->value,
+                                                asset('storage/app/public/promotional_banner') . '/' . $new_arrival_section_banner->value,
+                                                asset('/public/assets/admin/img/upload-placeholder.png'),
+                                               'promotional_banner/'
+                                            ) }}" data-onerror-image="{{asset('/public/assets/admin/img/upload-placeholder.png')}}" alt="">
                                         </div>
                                         <div class="">
                                         <input type="file" name="image"  hidden>
                                     </div>
                                     @if (isset($new_arrival_section_banner?->value))
-                                    <span id="new_arrival_section_banner" class="remove_image_button"
-                                    onclick="toogleStatusModal(event,'new_arrival_section_banner','mail-success','mail-warning','{{translate('Important!')}}','{{translate('Warning!')}}',`<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>`,`<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>`)"
+                                    <span id="new_arrival_section_banner" class="remove_image_button dynamic-checkbox"
+                                          data-id="new_arrival_section_banner"
+                                          data-type="status"
+                                          data-image-on='{{asset('/public/assets/admin/img/modal')}}/mail-success'
+                                          data-image-off="{{asset('/public/assets/admin/img/modal')}}/mail-warning"
+                                          data-title-on="{{translate('Important!')}}"
+                                          data-title-off="{{translate('Warning!')}}"
+                                          data-text-on="<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>"
+                                          data-text-off="<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>"
                                     >
                                     <i class="tio-clear"></i></span>
                                     @endif
@@ -160,13 +189,27 @@
                                     </h3>
                                     <label class="__upload-img aspect-5-1 m-auto d-block">
                                         <div class="img">
-                                            <img src="{{asset('storage/app/public/promotional_banner')}}/{{$bottom_section_banner?->value}}" onerror='this.src="{{asset('/public/assets/admin/img/upload-placeholder.png')}}"' alt="">
+                                            <img class="onerror-image"
+                                            src="{{ \App\CentralLogics\Helpers::onerror_image_helper(
+                                                $bottom_section_banner->value,
+                                                asset('storage/app/public/promotional_banner') . '/' . $bottom_section_banner->value,
+                                                asset('/public/assets/admin/img/upload-placeholder.png'),
+                                               'promotional_banner/'
+                                            ) }}"
+                                        data-onerror-image="{{asset('/public/assets/admin/img/upload-placeholder.png')}}" alt="">
                                         </div>
                                         <div class="position-relative">
                                             <input type="file" name="image"  hidden>
                                             @if (isset($bottom_section_banner?->value))
-                                            <span id="bottom_section_banner" class="remove_image_button"
-                                            onclick="toogleStatusModal(event,'bottom_section_banner','mail-success','mail-warning','{{translate('Important!')}}','{{translate('Warning!')}}',`<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>`,`<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>`)"
+                                            <span id="bottom_section_banner" class="remove_image_button dynamic-checkbox"
+                                                  data-id="bottom_section_banner"
+                                                  data-type="status"
+                                                  data-image-on="{{asset('/public/assets/admin/img/modal')}}/mail-success"
+                                                  data-image-off="{{asset('/public/assets/admin/img/modal')}}/mail-warning"
+                                                  data-title-on="{{translate('Important!')}}"
+                                                  data-title-off="{{translate('Warning!')}}"
+                                                  data-text-on="<p>{{translate('Are_you_sure_you_want_to_remove_this_image')}}</p>"
+                                                  data-text-off="<p>{{translate('Are_you_sure_you_want_to_remove_this_image.')}}</p>"
                                             >
                                             <i class="tio-clear"></i></span>
                                             @endif
@@ -219,33 +262,10 @@
 @endsection
 
 @push('script_2')
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/other-banners.js"></script>
         <script>
             $('#reset_btn').click(function(){
                 $('#viewer').attr('src','{{asset('/public/assets/admin/img/upload-placeholder.png')}}');
             })
-        </script>
-        <script>
-            $(document).ready(function() {
-                "use strict"
-                $(".__upload-img, .upload-img-4, .upload-img-2, .upload-img-5, .upload-img-1, .upload-img").each(function(){
-                    var targetedImage = $(this).find('.img');
-                    var targetedImageSrc = $(this).find('.img img');
-                    function proPicURL(input) {
-                        if (input.files && input.files[0]) {
-                            var uploadedFile = new FileReader();
-                            uploadedFile.onload = function (e) {
-                                targetedImageSrc.attr('src', e.target.result);
-                                targetedImage.addClass('image-loaded');
-                                targetedImage.hide();
-                                targetedImage.fadeIn(650);
-                            }
-                            uploadedFile.readAsDataURL(input.files[0]);
-                        }
-                    }
-                    $(this).find('input').on('change', function () {
-                        proPicURL(this);
-                    })
-                })
-            });
         </script>
 @endpush

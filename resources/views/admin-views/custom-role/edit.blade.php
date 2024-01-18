@@ -25,9 +25,6 @@
                 <div class="card-body">
                     <form action="{{route('admin.users.custom-role.update',[$role['id']])}}" method="post">
                         @csrf
-                        @php($language=\App\Models\BusinessSetting::where('key','language')->first())
-                        @php($language = $language->value ?? null)
-                        @php($default_lang = str_replace('_', '-', app()->getLocale()))
                         @if($language)
                             <ul class="nav nav-tabs mb-4">
                                 <li class="nav-item">
@@ -35,7 +32,7 @@
                                     href="#"
                                     id="default-link">{{translate('messages.default')}}</a>
                                 </li>
-                                @foreach (json_decode($language) as $lang)
+                                @foreach ($language as $lang)
                                     <li class="nav-item">
                                         <a class="nav-link lang_link"
                                             href="#"
@@ -46,11 +43,11 @@
                             <div class="lang_form" id="default-form">
                                 <div class="form-group">
                                     <label class="input-label" for="default_title">{{translate('messages.role_name')}} ({{translate('messages.default')}})</label>
-                                    <input type="text" name="name[]" id="default_title" class="form-control" placeholder="{{translate('role_name_example')}}" value="{{$role?->getRawOriginal('name')}}" oninvalid="document.getElementById('en-link').click()">
+                                    <input type="text" name="name[]" id="default_title" class="form-control" placeholder="{{translate('role_name_example')}}" value="{{$role?->getRawOriginal('name')}}"  >
                                 </div>
                                 <input type="hidden" name="lang[]" value="default">
                             </div>
-                            @foreach(json_decode($language) as $lang)
+                            @foreach($language as $lang)
                                 <?php
                                     if(count($role['translations'])){
                                         $translate = [];
@@ -65,7 +62,7 @@
                                 <div class="d-none lang_form" id="{{$lang}}-form">
                                     <div class="form-group">
                                         <label class="input-label" for="{{$lang}}_title">{{translate('messages.role_name')}} ({{strtoupper($lang)}})</label>
-                                        <input type="text" name="name[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('role_name_example')}}" value="{{$translate[$lang]['name']??''}}" oninvalid="document.getElementById('en-link').click()">
+                                        <input type="text" name="name[]" id="{{$lang}}_title" class="form-control" placeholder="{{translate('role_name_example')}}" value="{{$translate[$lang]['name']??''}}"  >
                                     </div>
                                     <input type="hidden" name="lang[]" value="{{$lang}}">
                                 </div>
@@ -79,11 +76,6 @@
                             <input type="hidden" name="lang[]" value="default">
                         </div>
                         @endif
-                        {{-- <div class="form-group">
-                            <label class="input-label qcont" for="name">{{translate('messages.role_name')}}</label>
-                            <input type="text" name="name" class="form-control" id="name" value="{{$role['name']}}"
-                                   placeholder="{{translate('role_name_example')}}" required>
-                        </div> --}}
 
                         <div class="d-flex flex-wrap select--all-checkes">
                             <h5 class="input-label m-0 text-capitalize">{{translate('messages.module_permission')}} : </h5>
@@ -145,13 +137,7 @@
                                     <label class="form-check-label qcont text-dark" for="coupon">{{translate('messages.coupon')}}</label>
                                 </div>
                             </div>
-                            {{-- <div class="check-item">
-                                <div class="form-group form-check form--check">
-                                    <input type="checkbox" name="modules[]" value="custom_role" class="form-check-input"
-                                           id="custom_role"  {{in_array('custom_role',(array)json_decode($role['modules']))?'checked':''}}>
-                                    <label class="form-check-label qcont text-dark" for="custom_role">{{translate('messages.custom_role')}}</label>
-                                </div>
-                            </div> --}}
+
                             <div class="check-item">
                                 <div class="form-group form-check form--check">
                                     <input type="checkbox" name="modules[]" value="customer_management" class="form-check-input"
@@ -279,41 +265,5 @@
 @endsection
 
 @push('script_2')
-<script>
-    $('#select-all').on('change', function(){
-        if(this.checked === true) {
-            $('.check--item-wrapper .check-item .form-check-input').attr('checked', true)
-        } else {
-            $('.check--item-wrapper .check-item .form-check-input').attr('checked', false)
-        }
-    })
-    $('.check--item-wrapper .check-item .form-check-input').on('change', function(){
-        if(this.checked === true) {
-            $(this).attr('checked', true)
-        } else {
-            $(this).attr('checked', false)
-        }
-    })
-</script>
-<script>
-    $(".lang_link").click(function(e){
-        e.preventDefault();
-        $(".lang_link").removeClass('active');
-        $(".lang_form").addClass('d-none');
-        $(this).addClass('active');
-
-        let form_id = this.id;
-        let lang = form_id.substring(0, form_id.length - 5);
-        console.log(lang);
-        $("#"+lang+"-form").removeClass('d-none');
-        if(lang == 'en')
-        {
-            $("#from_part_2").removeClass('d-none');
-        }
-        else
-        {
-            $("#from_part_2").addClass('d-none');
-        }
-    })
-</script>
+    <script src="{{asset('public/assets/admin')}}/js/view-pages/custom-role-index.js"></script>
 @endpush

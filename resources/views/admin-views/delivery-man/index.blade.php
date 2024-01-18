@@ -96,10 +96,10 @@
                         <div class="col-lg-4">
                             <div class="d-flex flex-column h-100">
                                 <label class="text-center">{{translate('messages.deliveryman_image')}} <small class="text-danger">* ( {{translate('messages.ratio')}} 1:1 )</small></label>
-                                <center class="py-3 my-auto">
+                                <div class="text-center py-3 my-auto">
                                     <img class="img--100" id="viewer"
                                             src="{{asset('public/assets/admin/img/admin.png')}}" alt="delivery-man image"/>
-                                </center>
+                                </div>
                                 <div class="custom-file">
                                     <input type="file" name="image" id="customFileEg1" class="custom-file-input"
                                             accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" required>
@@ -219,37 +219,14 @@
 @endsection
 
 @push('script_2')
+    <script src="{{asset('public/assets/admin/js/intlTelInputCdn.min.js')}}"></script>
+    <script src="{{asset('public/assets/admin/js/intlTelInputCdn-jquery.min.js')}}"></script>
+    <script src="{{asset('public/assets/admin/js/spartan-multi-image-picker.js')}}"></script>
 <script>
-    $(document).on('ready', function () {
-      // INITIALIZATION OF SHOW PASSWORD
-      // =======================================================
-      $('.js-toggle-password').each(function () {
-        new HSTogglePassword(this).init()
-      });
-
-
-      // INITIALIZATION OF FORM VALIDATION
-      // =======================================================
-      $('.js-validate').each(function() {
-        $.HSCore.components.HSValidation.init($(this), {
-          rules: {
-            confirmPassword: {
-              equalTo: '#signupSrPassword'
-            }
-          }
-        });
-      });
-    });
-  </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput-jquery.min.js" integrity="sha512-hkmipUFWbNGcKnR0nayU95TV/6YhJ7J9YUAkx4WLoIgrVr7w1NYz28YkdNFMtPyPeX1FrQzbfs3gl+y94uZpSw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.min.js" integrity="sha512-lv6g7RcY/5b9GMtFgw1qpTrznYu1U4Fm2z5PfDTG1puaaA+6F+aunX+GlMotukUFkxhDrvli/AgjAu128n2sXw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
-    <link rel="shortcut icon" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/img/flags.png" type="image/x-icon">
-    <link rel="shortcut icon" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/img/flags@2x.png" type="image/x-icon">
-   <script>
+    "use strict";
         function readURL(input) {
             if (input.files && input.files[0]) {
-                var reader = new FileReader();
+                let reader = new FileReader();
 
                 reader.onload = function (e) {
                     $('#viewer').attr('src', e.target.result);
@@ -263,8 +240,8 @@
             readURL(this);
         });
         @php($country=\App\Models\BusinessSetting::where('key','country')->first())
-        var phone = $("#phone").intlTelInput({
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/8.4.6/js/utils.js",
+        let phone = $("#phone").intlTelInput({
+            utilsScript: "{{asset('public/assets/admin/js/intlTelInputCdn-utils.min.js')}}",
             autoHideDialCode: true,
             autoPlaceholder: "ON",
             dropdownContainer: document.body,
@@ -274,15 +251,7 @@
             placeholderNumberType: "MOBILE",
             separateDialCode: true
         });
-        // $("#phone").on('change', function(){
-        //     $(this).val(phone.getNumber());
-        // })
 
-
-    </script>
-
-    <script src="{{asset('public/assets/admin/js/spartan-multi-image-picker.js')}}"></script>
-    <script type="text/javascript">
         $(function () {
             $("#coba").spartanMultiImagePicker({
                 fieldName: 'identity_image[]',
@@ -318,8 +287,7 @@
                 }
             });
         });
-    </script>
-        <script>
+
             $('#reset_btn').click(function(){
                 $('#viewer').attr('src','{{asset('public/assets/admin/img/400x400/img2.jpg')}}');
                 $("#coba").empty().spartanMultiImagePicker({

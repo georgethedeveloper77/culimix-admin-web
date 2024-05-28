@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Models\StoreConfig;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use App\Models\StoreSchedule;
@@ -27,10 +28,12 @@ class BusinessSettingsController extends Controller
     {
         $request->validate([
             'gst' => 'required_if:gst_status,1',
+            'extra_packaging_amount' => 'required_if:extra_packaging_status,1',
             'per_km_delivery_charge'=>'required_with:minimum_delivery_charge',
             'minimum_delivery_charge'=>'required_with:per_km_delivery_charge'
         ], [
             'gst.required_if' => translate('messages.gst_can_not_be_empty'),
+            'extra_packaging_amount.required_if' => translate('messages.extra_packaging_amount_can_not_be_empty'),
         ]);
 
         if(isset($request->maximum_shipping_charge) && ($request->minimum_delivery_charge > $request->maximum_shipping_charge)){
@@ -48,6 +51,14 @@ class BusinessSettingsController extends Controller
         $store->order_place_to_schedule_interval = $request->order_place_to_schedule_interval;
         $store->delivery_time = $request->minimum_delivery_time .'-'. $request->maximum_delivery_time.' '.$request->delivery_time_type;
         $store->save();
+        if($request->extra_packaging_amount){
+            $conf = StoreConfig::firstOrNew(
+                ['store_id' =>  $store->id]
+            );
+            $conf->extra_packaging_amount = $request->extra_packaging_amount;
+            $conf->extra_packaging_status = $request->extra_packaging_status ?? 0;
+            $conf->save();
+        }
         Toastr::success(translate('messages.store_settings_updated'));
         return back();
     }
@@ -57,8 +68,8 @@ class BusinessSettingsController extends Controller
             'meta_title.0' => 'required',
             'meta_description.0' => 'required',
         ],[
-            'meta_title.0.required'=>translate('default_meta_title_is_required'),           
-            'meta_description.0.required'=>translate('default_meta_description_is_required'),           
+            'meta_title.0.required'=>translate('default_meta_title_is_required'),
+            'meta_description.0.required'=>translate('default_meta_description_is_required'),
         ]);
 
         $store->meta_image = $request->has('meta_image') ? Helpers::update('store/', $store->meta_image, 'png', $request->file('meta_image')) : $store->meta_image;
@@ -66,7 +77,7 @@ class BusinessSettingsController extends Controller
         $store->meta_title = $request->meta_title[array_search('default', $request->lang)];
         $store->meta_description = $request->meta_description[array_search('default', $request->lang)];
 
-        $store->save();        
+        $store->save();
         $default_lang = str_replace('_', '-', app()->getLocale());
         foreach($request->lang as $index=>$key)
         {
@@ -141,6 +152,25 @@ class BusinessSettingsController extends Controller
             Toastr::warning(translate('messages.veg_non_veg_disable_warning'));
             return back();
         }
+
+        if($request->menu == "announcement" &&  $request->status == 1 &&  !isset($store->announcement_message) )
+        {
+            Toastr::warning(translate('messages.You_need_to_add_announcement_message_first'));
+            return back();
+        }
+
+        if($request->menu == 'halal_tag_status' || $request->menu == 'extra_packaging_status' || $request->menu == 'extra_packaging_amount' ){
+
+            $conf = StoreConfig::firstOrNew(
+                ['store_id' =>  $store->id]
+            );
+            $conf[$request->menu] = $request->status;
+            $conf->save();
+
+            Toastr::success(translate('messages.store settings updated!'));
+            return back();
+        }
+
 
         $store[$request->menu] = $request->status;
         $store->save();

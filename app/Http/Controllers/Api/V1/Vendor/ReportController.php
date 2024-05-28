@@ -32,7 +32,7 @@ class ReportController extends Controller
         $to = $request->to;
         $store_id = $request->vendor->stores[0]->id;
 
-        $expense = Expense::where('created_by','vendor')->where('store_id',$store_id)
+        $expense = Expense::where('created_by','vendor')->where('store_id',$store_id)->where('amount', '>' ,0)
             ->when(isset($from) &&  isset($to) ,function($query) use($from,$to){
                 $query->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:29']);
             })->when(isset($key), function($query) use($key) {
@@ -72,7 +72,7 @@ class ReportController extends Controller
         $paginator=DisbursementDetails::where('store_id',$store_id)->latest()->paginate($limit, ['*'], 'page', $offset);
 
         $paginator->each(function ($data) {
-            $data->withdraw_method->method_fields = json_decode($data->withdraw_method->method_fields,true);
+            $data->withdraw_method?->method_fields ?  $data->withdraw_method->method_fields = json_decode($data->withdraw_method?->method_fields, true) : '';
         });
 
         $data = [

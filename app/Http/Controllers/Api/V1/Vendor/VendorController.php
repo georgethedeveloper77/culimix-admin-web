@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Vendor;
 
 use App\Models\AccountTransaction;
+use App\Models\Admin;
 use App\Models\Item;
 use App\Models\Order;
 use App\Models\Store;
@@ -669,6 +670,22 @@ class VendorController extends Controller
         $store = $request['vendor']->stores[0];
         $campaign->stores()->attach($store);
         $campaign->save();
+        try
+        {
+            $admin= Admin::where('role_id', 1)->first();
+            $mail_status = Helpers::get_mail_status('campaign_request_mail_status_admin');
+            if(config('mail.status') && $mail_status == '1') {
+                Mail::to($admin->email)->send(new \App\Mail\CampaignRequestMail($store->name));
+            }
+            $mail_status = Helpers::get_mail_status('campaign_request_mail_status_store');
+            if(config('mail.status') && $mail_status == '1') {
+                Mail::to($store->vendor->email)->send(new \App\Mail\VendorCampaignRequestMail($store->name,'pending'));
+            }
+        }
+        catch(\Exception $e)
+        {
+            info($e->getMessage());
+        }
         return response()->json(['message'=>translate('messages.you_are_successfully_joined_to_the_campaign')], 200);
     }
 
@@ -808,12 +825,12 @@ class VendorController extends Controller
 
         if(Order::where('store_id', $vendor->stores[0]->id)->whereIn('order_status', ['pending','accepted','confirmed','processing','handover','picked_up'])->count())
         {
-            return response()->json(['errors'=>[['code'=>'on-going', 'message'=>translate('messages.user_account_delete_warning')]]],203);
+            return response()->json(['errors'=>[['code'=>'on-going', 'message'=>translate('messages.Please_complete_your_ongoing_and_accepted_orders')]]],203);
         }
 
         if($vendor->wallet && $vendor->wallet->collected_cash > 0)
         {
-            return response()->json(['errors'=>[['code'=>'on-going', 'message'=>translate('messages.user_account_wallet_delete_warning')]]],203);
+            return response()->json(['errors'=>[['code'=>'hand_in_cash', 'message'=>translate('messages.You_have_cash_in_hand,_you_have_to_pay_the_due_to_delete_your_account')]]],203);
         }
 
         if (Storage::disk('public')->exists('vendor/' . $vendor['image'])) {

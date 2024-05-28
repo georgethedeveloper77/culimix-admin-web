@@ -1,8 +1,5 @@
 <?php
 
-use App\Models\ItemTag;
-
-use App\Models\Translation;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PaytmController;
 use App\Http\Controllers\LiqPayController;
@@ -160,6 +157,8 @@ if (!$is_published) {
         Route::group(['prefix' => 'mercadopago', 'as' => 'mercadopago.'], function () {
             Route::get('pay', [MercadoPagoController::class, 'index'])->name('index');
             Route::post('make-payment', [MercadoPagoController::class, 'make_payment'])->name('make_payment');
+            Route::get('success', [MercadoPagoController::class, 'success'])->name('success');
+            Route::get('failed', [MercadoPagoController::class, 'failed'])->name('failed');
         });
 
         //PAYMOB
@@ -179,7 +178,6 @@ if (!$is_published) {
 
 
 Route::get('/test', function () {
-
     dd('Hello tester');
 });
 

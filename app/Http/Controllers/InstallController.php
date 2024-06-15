@@ -132,6 +132,9 @@ class InstallController extends Controller
         Helpers::insert_data_settings_key('store_login_url', 'login_store' ,'store');
         Helpers::insert_data_settings_key('store_employee_login_url', 'login_store_employee' ,'store-employee');
 
+        Helpers::insert_business_settings_key('check_daily_subscription_validity_check', date('Y-m-d'));
+
+
         $previousRouteServiceProvier = base_path('app/Providers/RouteServiceProvider.php');
         $newRouteServiceProvier = base_path('app/Providers/RouteServiceProvider.txt');
         copy($newRouteServiceProvier, $previousRouteServiceProvier);
@@ -189,7 +192,7 @@ class InstallController extends Controller
                     BUYER_USERNAME=' . session('username') . '
                     SOFTWARE_ID=MzY3NzIxMTI=
 
-                    SOFTWARE_VERSION=2.7.1
+                    SOFTWARE_VERSION=2.8.0
                     REACT_APP_KEY=45370351
                     ';
             $file = fopen(base_path('.env'), 'w');
@@ -236,10 +239,14 @@ class InstallController extends Controller
 
     function check_database_connection($db_host = "", $db_name = "", $db_user = "", $db_pass = ""): bool
     {
-        if (@mysqli_connect($db_host, $db_user, $db_pass, $db_name)) {
+        try {
+            if (@mysqli_connect($db_host, $db_user, $db_pass, $db_name)) {
                 return true;
             } else {
                 return false;
             }
+        }catch(\Exception $exception){
+            return false;
+        }
     }
 }

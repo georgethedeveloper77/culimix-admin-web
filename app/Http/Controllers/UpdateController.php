@@ -39,11 +39,10 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('BUYER_USERNAME', $request['username']);
         Helpers::setEnvironmentValue('PURCHASE_CODE', $request['purchase_key']);
         Helpers::setEnvironmentValue('APP_MODE', 'live');
-        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.7.1');
+        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.8.0');
         Helpers::setEnvironmentValue('REACT_APP_KEY', '45370351');
         Helpers::setEnvironmentValue('APP_NAME', '6amMart' . time());
 
-       
         Artisan::call('migrate', ['--force' => true]);
         $previousRouteServiceProvier = base_path('app/Providers/RouteServiceProvider.php');
         $newRouteServiceProvier = base_path('app/Providers/RouteServiceProvider.txt');
@@ -99,6 +98,16 @@ class UpdateController extends Controller
         Helpers::insert_data_settings_key('admin_employee_login_url', 'login_admin_employee' ,'admin-employee');
         Helpers::insert_data_settings_key('store_login_url', 'login_store' ,'store');
         Helpers::insert_data_settings_key('store_employee_login_url', 'login_store_employee' ,'store-employee');
+
+        Helpers::insert_business_settings_key('subscription_business_model', '0');
+        Helpers::insert_business_settings_key('commission_business_model', '1');
+        Helpers::insert_business_settings_key('subscription_deadline_warning_days', '7');
+        Helpers::insert_business_settings_key('subscription_free_trial_days', '7');
+        Helpers::insert_business_settings_key('subscription_free_trial_type', 'day');
+        Helpers::insert_business_settings_key('subscription_free_trial_status', '1');
+        Helpers::insert_business_settings_key('subscription_usage_max_time', '80');
+
+        Helpers::insert_business_settings_key('check_daily_subscription_validity_check', date('Y-m-d'));
 
         try {
             if (!Schema::hasTable('addon_settings')) {

@@ -1,346 +1,179 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin\System;
 
-use App\Models\AddOn;
-use App\Models\Store;
-use App\Scopes\StoreScope;
-use App\Models\Translation;
-use App\Exports\AddonExport;
 use Illuminate\Http\Request;
 use App\CentralLogics\Helpers;
+use App\CentralLogics\SMS_module;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\View\View;
 use App\Http\Controllers\Controller;
 use Brian2694\Toastr\Facades\Toastr;
-use Maatwebsite\Excel\Facades\Excel;
-use Rap2hpoutre\FastExcel\FastExcel;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Foundation\Application;
+use Modules\Gateways\Traits\SmsGateway;
 
-class AddOnController extends Controller
+class AddonController extends Controller
 {
-    public function index(Request $request)
-    {
-        $key = explode(' ', $request['search']);
-        $store_id = $request->query('store_id', 'all');
-        $addons = AddOn::withoutGlobalScope(StoreScope::class)
-        ->when(is_numeric($store_id), function($query)use($store_id){
-            return $query->where('store_id', $store_id);
-        })->whereHas('store', function ($q) use ($request) {
-            return $q->where('module_id', Config::get('module.current_module_id'));
-        })
-        ->when(isset($key), function ($q1) use($key){
-            $q1->where(function ($q) use ($key) {
-                foreach ($key as $value) {
-                    $q->orWhere('name', 'like', "%{$value}%");
-                }
-            });
-        })
-        ->orderBy('name')->paginate(config('default_pagination'));
-
-        $store =$store_id !='all'? Store::findOrFail($store_id):null;
-        return view('admin-views.addon.index', compact('addons', 'store'));
+    public function __construct(){
+        if (is_dir('Modules\Gateways\Traits') && trait_exists('Modules\Gateways\Traits\SmsGateway')) {
+            $this->extendWithSmsGatewayTrait();
+        }
     }
 
-    public function store(Request $request)
+    private function extendWithSmsGatewayTrait()
     {
-        $request->validate([
-            'name.*' => 'max:191',
-            'name'=>'array|required',
-            'store_id' => 'required',
-            'price' => 'required|numeric|between:0,999999999999.99',
-            'name.0'=>'required',
-        ], [
-            'name.required' => translate('messages.Name is required!'),
-            'store_id.required' => translate('messages.please_select_store'),
-            'name.0.required'=>translate('default_data_is_required'),
+        $extendedControllerClass = $this->generateExtendedControllerClass();
+        eval($extendedControllerClass);
+    }
+
+    private function generateExtendedControllerClass()
+    {
+        $baseControllerClass = get_class($this);
+        $traitClassName = 'Modules\Gateways\Traits\SmsGateway';
+
+        $extendedControllerClass = "
+            class ExtendedController extends $baseControllerClass {
+                use $traitClassName;
+            }
+        ";
+
+        return $extendedControllerClass;
+    }
+
+    public function index(): Factory|View|Application
+    {
+        $dir = 'Modules';
+        $directories = self::getDirectories($dir);
+        $addons = [];
+        foreach ($directories as $directory) {
+            $sub_dirs = self::getDirectories('Modules/' . $directory);
+            if (in_array('Addon', $sub_dirs)) {
+                $addons[] = 'Modules/' . $directory;
+            }
+        }
+        return view('admin-views.system.addon.index', compact('addons'));
+    }
+
+    public function publish(Request $request): JsonResponse|int
+    {
+        $full_data = include($request['path'] . '/Addon/info.php');
+        $path = $request['path'];
+        $addon_name = $full_data['name'];
+        if ($full_data['purchase_code'] == null || $full_data['username'] == null) {
+            return response()->json([
+                'flag' => 'inactive',
+                'view' => view('admin-views.system.addon.partials.activation-modal-data', compact('full_data', 'path', 'addon_name'))->render(),
+            ]);
+        }
+        $full_data['is_published'] = $full_data['is_published'] ? 0 : 1;
+        $str = "<?php return " . var_export($full_data, true) . ";";
+        file_put_contents(base_path($request['path'] . '/Addon/info.php'), $str);
+
+        return response()->json([
+            'status' => 'success',
+            'message'=> 'status_updated_successfully'
+        ]);
+    }
+
+    public function activation(Request $request): Redirector|RedirectResponse|Application
+    {
+        $remove = ["http://", "https://", "www."];
+        $url = str_replace($remove, "", url('/'));
+        $full_data = include($request['path'] . '/Addon/info.php');
+
+		$full_data['is_published'] = 1;
+		$full_data['username'] = $request['username'];
+		$full_data['purchase_code'] = $request['purchase_code'];
+		$str = "<?php return " . var_export($full_data, true) . ";";
+		file_put_contents(base_path($request['path'] . '/Addon/info.php'), $str);
+
+		Toastr::success(translate('activated_successfully'));
+		return back();
+    }
+
+    public function upload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file_upload' => 'required|mimes:zip'
         ]);
 
-        $addon = new AddOn();
-        $addon->name = $request->name[array_search('default', $request->lang)];
-        $addon->price = $request->price;
-        $addon->store_id = $request->store_id;
-        $addon->save();
-        $default_lang = str_replace('_', '-', app()->getLocale());
+        if ($validator->errors()->count() > 0) {
+            $error = Helpers::error_processor($validator);
+            return response()->json(['status' => 'error', 'message' => $error[0]['message']]);
+        }
 
-        $data = [];
-        foreach($request->lang as $index=>$key)
-        {
-            if($default_lang == $key && !($request->name[$index])){
-                if ($key != 'default') {
-                    array_push($data, array(
-                        'translationable_type' => 'App\Models\AddOn',
-                        'translationable_id' => $addon->id,
-                        'locale' => $key,
-                        'key' => 'name',
-                        'value' => $addon->name,
-                    ));
-                }
+        $file = $request->file('file_upload');
+        $filename = $file->getClientOriginalName();
+        $tempPath = $file->storeAs('temp', $filename);
+        $zip = new \ZipArchive();
+
+        if ($zip->open(storage_path('app/' . $tempPath)) === TRUE) {
+            // Extract the contents to a directory
+            $extractPath = base_path('Modules/');
+            $zip->extractTo($extractPath);
+            $zip->close();
+            if(File::exists($extractPath.'/'.explode('.', $filename)[0].'/Addon/info.php')){
+                File::chmod($extractPath.'/'.explode('.', $filename)[0].'/Addon', 0777);
+                Toastr::success(translate('file_upload_successfully!'));
+                $status = 'success';
+                $message = translate('file_upload_successfully!');
             }else{
-                if ($request->name[$index] && $key != 'default') {
-                    array_push($data, Array(
-                        'translationable_type'  => 'App\Models\AddOn',
-                        'translationable_id'    => $addon->id,
-                        'locale'                => $key,
-                        'key'                   => 'name',
-                        'value'                 => $request->name[$index],
-                    ));
-                }
+                File::deleteDirectory($extractPath.'/'.explode('.', $filename)[0]);
+                $status = 'error';
+                $message = translate('invalid_file!');
             }
+        }else{
+            $status = 'error';
+            $message = translate('file_upload_fail!');
         }
-        if(count($data))
-        {
-            Translation::insert($data);
-        }
-        Toastr::success(translate('messages.addon_added_successfully'));
-        return back();
-    }
 
-    public function edit($id)
-    {
-        $addon = AddOn::withoutGlobalScope(StoreScope::class)->withoutGlobalScope('translate')->findOrFail($id);
-        return view('admin-views.addon.edit', compact('addon'));
-    }
+        Storage::delete($tempPath);
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'name' => 'required|max:191',
-            'name.0' => 'required',
-            'store_id' => 'required',
-            'price' => 'required|numeric|between:0,999999999999.99',
-        ], [
-            'name.required' => translate('messages.Name is required!'),
-            'store_id.required' => translate('messages.please_select_store'),
-            'name.0.required'=>translate('default_data_is_required'),
+        return response()->json([
+            'status' => $status,
+            'message'=> $message
         ]);
-
-        $addon = AddOn::withoutGlobalScope(StoreScope::class)->find($id);
-        $addon->name = $request->name[array_search('default', $request->lang)];
-        $addon->price = $request->price;
-        $addon->store_id = $request->store_id;
-        $addon->save();
-        $default_lang = str_replace('_', '-', app()->getLocale());
-
-        foreach($request->lang as $index=>$key)
-        {
-            if($default_lang == $key && !($request->name[$index])){
-                if ($key != 'default') {
-                    Translation::updateOrInsert(
-                        [
-                            'translationable_type' => 'App\Models\AddOn',
-                            'translationable_id' => $addon->id,
-                            'locale' => $key,
-                            'key' => 'name'
-                        ],
-                        ['value' => $addon->name]
-                    );
-                }
-            }else{
-
-                if ($request->name[$index] && $key != 'default') {
-                    Translation::updateOrInsert(
-                        ['translationable_type'  => 'App\Models\AddOn',
-                            'translationable_id'    => $addon->id,
-                            'locale'                => $key,
-                            'key'                   => 'name'],
-                        ['value'                 => $request->name[$index]]
-                    );
-                }
-            }
-        }
-
-        Toastr::success(translate('messages.addon_updated_successfully'));
-        return redirect(route('admin.addon.add-new'));
     }
 
-    public function delete(Request $request)
-    {
-        $addon = AddOn::withoutGlobalScope(StoreScope::class)->find($request->id);
-        $addon->delete();
-        Toastr::success(translate('messages.addon_deleted_successfully'));
-        return back();
-    }
+    public function delete_theme(Request $request){
+        $path = $request->path;
 
-    public function status($addon, Request $request)
-    {
-        $addon_data = AddOn::withoutGlobalScope(StoreScope::class)->find($addon);
-        $addon_data->status = $request->status;
-        $addon_data->save();
-        Toastr::success(translate('messages.addon_status_updated'));
-        return back();
-    }
+        $full_path = base_path($path);
 
-    // public function search(Request $request){
-    //     $key = explode(' ', $request['search']);
-    //     $addons=AddOn::whereHas('store', function ($q) use ($request) {
-    //         return $q->where('module_id', Config::get('module.current_module_id'));
-    //     })->where(function ($q) use ($key) {
-    //         foreach ($key as $value) {
-    //             $q->orWhere('name', 'like', "%{$value}%");
-    //         }
-    //     })->limit(50)->get();
-    //     return response()->json([
-    //         'view'=>view('admin-views.addon.partials._table',compact('addons'))->render()
-    //     ]);
-    // }
-    public function bulk_import_index()
-    {
-        return view('admin-views.addon.bulk-import');
-    }
-
-    public function bulk_import_data(Request $request)
-    {
-        $request->validate([
-            'products_file'=>'required|max:2048'
-        ]);
-
-        try {
-            $collections = (new FastExcel)->import($request->file('products_file'));
-        } catch (\Exception $exception) {
-            Toastr::error(translate('messages.you_have_uploaded_a_wrong_format_file'));
-            return back();
-        }
-        if($request->button == 'import'){
-
-            $data = [];
-            foreach ($collections as $collection) {
-                    if ($collection['Name'] === "" || !is_numeric($collection['StoreId'])) {
-                        Toastr::error(translate('messages.please_fill_all_required_fields'));
-                        return back();
-                    }
-                    if(isset($collection['Price']) && ($collection['Price'] < 0  )  ) {
-                        Toastr::error(translate('messages.Price_must_be_greater_then_0'));
-                        return back();
-                    }
-
-                array_push($data, [
-                    'name' => $collection['Name'],
-                    'price' => $collection['Price'],
-                    'store_id' => $collection['StoreId'],
-                    'status' => $collection['Status'] == 'active' ? 1 : 0,
-                    'created_at'=>now(),
-                    'updated_at'=>now()
-                ]);
-            }
-
-            try{
-                DB::beginTransaction();
-
-                $chunkSize = 100;
-                $chunk_addons= array_chunk($data,$chunkSize);
-
-                foreach($chunk_addons as $key=> $chunk_addon){
-                    DB::table('add_ons')->insert($chunk_addon);
-                }
-                DB::commit();
-            }catch(\Exception $e)
-            {
-                DB::rollBack();
-                info(["line___{$e->getLine()}",$e->getMessage()]);
-                Toastr::error(translate('messages.failed_to_import_data'));
-                return back();
-            }
-            Toastr::success(translate('messages.addon_imported_successfully', ['count'=>count($data)]));
-            return back();
-        }
-
-        $data = [];
-        foreach ($collections as $collection) {
-                if ($collection['Name'] === "" || $collection['Price'] === "" || !is_numeric($collection['StoreId'])) {
-                    Toastr::error(translate('messages.please_fill_all_required_fields'));
-                    return back();
-                }
-                if(isset($collection['Price']) && ($collection['Price'] < 0  )  ) {
-                    Toastr::error(translate('messages.Price_must_be_greater_then_0'));
-                    return back();
-                }
-
-            array_push($data, [
-                'id' => $collection['Id'],
-                'name' => $collection['Name'],
-                'price' => $collection['Price'],
-                'store_id' => $collection['StoreId'],
-                'status' => $collection['Status'] == 'active' ? 1 : 0,
-                'updated_at'=>now()
+        if(File::deleteDirectory($full_path)){
+            return response()->json([
+                'status' => 'success',
+                'message'=> translate('file_delete_successfully')
+            ]);
+        }else{
+            return response()->json([
+                'status' => 'error',
+                'message'=> translate('file_delete_fail')
             ]);
         }
 
-        try{
-            DB::beginTransaction();
-
-            $chunkSize = 100;
-            $chunk_addons= array_chunk($data,$chunkSize);
-
-            foreach($chunk_addons as $key=> $chunk_addon){
-                DB::table('add_ons')->upsert($chunk_addon,['id'],['name','price','store_id','status']);
-            }
-            DB::commit();
-        }catch(\Exception $e)
-        {
-            DB::rollBack();
-            info(["line___{$e->getLine()}",$e->getMessage()]);
-            Toastr::error(translate('messages.failed_to_import_data'));
-            return back();
-        }
-        Toastr::success(translate('messages.addon_imported_successfully', ['count'=>count($data)]));
-        return back();
     }
 
-    public function bulk_export_index()
+    //helper functions
+    function getDirectories(string $path): array
     {
-        return view('admin-views.addon.bulk-export');
-    }
-
-    public function bulk_export_data(Request $request)
-    {
-        $request->validate([
-            'type'=>'required',
-            'start_id'=>'required_if:type,id_wise',
-            'end_id'=>'required_if:type,id_wise',
-            'from_date'=>'required_if:type,date_wise',
-            'to_date'=>'required_if:type,date_wise'
-        ]);
-        $addons = AddOn::when($request['type']=='date_wise', function($query)use($request){
-            $query->whereBetween('created_at', [$request['from_date'].' 00:00:00', $request['to_date'].' 23:59:59']);
-        })
-        ->when($request['type']=='id_wise', function($query)use($request){
-            $query->whereBetween('id', [$request['start_id'], $request['end_id']]);
-        })->whereHas('store', function ($q) use ($request) {
-            return $q->where('module_id', Config::get('module.current_module_id'));
-        })
-        ->withoutGlobalScope(StoreScope::class)->get();
-        return (new FastExcel(Helpers::export_addons(Helpers::Export_generator($addons))))->download('Addons.xlsx');
-    }
-
-
-    public function export(Request $request){
-        $key = explode(' ', $request['search']);
-        $store_id = $request->query('store_id', 'all');
-        $addons = AddOn::withoutGlobalScope(StoreScope::class)
-        ->when(is_numeric($store_id), function($query)use($store_id){
-            return $query->where('store_id', $store_id);
-        })
-        ->whereHas('store', function ($q) use ($request) {
-            return $q->where('module_id', Config::get('module.current_module_id'));
-        })
-        ->when( isset($key), function ($q1) use($key){
-            $q1->where(function ($q) use ($key) {
-                foreach ($key as $value) {
-                    $q->orWhere('name', 'like', "%{$value}%");
-                }
-            });
-        })
-        ->orderBy('name')->get();
-
-        $data=[
-            'data' =>$addons,
-            'search' =>$request['search'] ?? null,
-            'store' => $store_id !='all'? Store::findOrFail($store_id)?->name:null,
-        ];
-        if($request->type == 'csv'){
-            return Excel::download(new AddonExport($data), 'Addons.csv');
+        $directories = [];
+        $items = scandir($path);
+        foreach ($items as $item) {
+            if ($item == '..' || $item == '.')
+                continue;
+            if (is_dir($path . '/' . $item))
+                $directories[] = $item;
         }
-        return Excel::download(new AddonExport($data), 'Addons.xlsx');
+        return $directories;
     }
-
 }

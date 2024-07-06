@@ -4882,4 +4882,6 @@
   'Free_Trial_Disabled_Successfully' => 'Free Trial Disabled Successfully',
   'Are you sure to disable the free trial option?' => 'Are you sure to disable the free trial option?',
   'If disabled, the store can’t get the experience without any business plan.' => 'If disabled, the store can’t get the experience without any business plan.',
+  'You_have_received_new_message' => 'You have received new message',
+  'extra_packaging_amount_can_not_be_empty' => 'Extra packaging amount can not be empty',
 );

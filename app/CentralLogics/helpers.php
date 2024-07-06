@@ -3400,7 +3400,7 @@ class Helpers
 
         try {
             if(($storage  == 'public') && isset($image) && strlen($image) >1 && Storage::disk($storage)->exists($path.$image)){
-                return $src;
+                return asset('storage/app/public') . '/' . $path . '/' . $image;
             }
             if(($storage  == 's3') && isset($image) && strlen($image) >1 && Storage::disk($storage)->exists($path.$image)){
                 $awsUrl = config('filesystems.disks.s3.url');
@@ -3974,6 +3974,12 @@ class Helpers
     public static function getDefaultPaymentMethods()
     {
         if (!Schema::hasTable('addon_settings')) {
+            return [];
+        }
+
+        $digital_payment=\App\CentralLogics\Helpers::get_business_settings('digital_payment');
+
+        if($digital_payment && $digital_payment['status']==0){
             return [];
         }
 

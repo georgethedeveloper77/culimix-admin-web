@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Vendor;
 
-use App\Http\Controllers\Controller;
-use App\Models\StoreConfig;
-use Illuminate\Http\Request;
 use App\Models\Store;
-use App\Models\StoreSchedule;
-use Brian2694\Toastr\Facades\Toastr;
-use App\CentralLogics\Helpers;
+use App\Models\StoreConfig;
 use App\Models\Translation;
+use Illuminate\Http\Request;
+use App\Models\StoreSchedule;
+use App\CentralLogics\Helpers;
+use App\Models\BusinessSetting;
+use App\Http\Controllers\Controller;
+use Brian2694\Toastr\Facades\Toastr;
+use App\Models\StoreNotificationSetting;
 use Illuminate\Support\Facades\Validator;
 
 class BusinessSettingsController extends Controller
@@ -51,14 +53,13 @@ class BusinessSettingsController extends Controller
         $store->order_place_to_schedule_interval = $request->order_place_to_schedule_interval;
         $store->delivery_time = $request->minimum_delivery_time .'-'. $request->maximum_delivery_time.' '.$request->delivery_time_type;
         $store->save();
-        if($request->extra_packaging_amount){
-            $conf = StoreConfig::firstOrNew(
-                ['store_id' =>  $store->id]
-            );
-            $conf->extra_packaging_amount = $request->extra_packaging_amount;
-            $conf->extra_packaging_status = $request->extra_packaging_status ?? 0;
-            $conf->save();
-        }
+        $conf = StoreConfig::firstOrNew(
+            ['store_id' =>  $store->id]
+        );
+        $conf->extra_packaging_amount = $request->extra_packaging_amount ?? 0;
+        $conf->extra_packaging_status = $request->extra_packaging_status ?? 0;
+        $conf->minimum_stock_for_warning = $request->minimum_stock_for_warning ?? 0;
+        $conf->save();
         Toastr::success(translate('messages.store_settings_updated'));
         return back();
     }
@@ -246,5 +247,38 @@ class BusinessSettingsController extends Controller
     public function site_direction_vendor(Request $request){
         session()->put('site_direction_vendor', ($request->status == 1?'ltr':'rtl'));
         return response()->json();
+    }
+
+    public function notification_index()
+    {
+        if(StoreNotificationSetting::where('store_id',Helpers::get_store_id())->count() == 0 ){
+            Helpers::storeNotificationDataSetup(Helpers::get_store_id());
+        }
+        $data= StoreNotificationSetting::where('store_id',Helpers::get_store_id())->get();
+
+
+        $business_name= BusinessSetting::where('key','business_name')->first()?->value;
+        return view('vendor-views.business-settings.notification-index', compact('business_name' ,'data'));
+    }
+
+    public function notification_status_change($key, $type){
+        $data= StoreNotificationSetting::where('store_id',Helpers::get_store_id())->where('key',$key)->first();
+        if(!$data){
+            Toastr::error(translate('messages.Notification_settings_not_found'));
+            return back();
+        }
+        if($type == 'Mail' ) {
+            $data->mail_status =  $data->mail_status == 'active' ? 'inactive' : 'active';
+        }
+        elseif($type == 'push_notification' ) {
+            $data->push_notification_status =  $data->push_notification_status == 'active' ? 'inactive' : 'active';
+        }
+        elseif($type == 'SMS' ) {
+            $data->sms_status =  $data->sms_status == 'active' ? 'inactive' : 'active';
+        }
+        $data?->save();
+
+        Toastr::success(translate('messages.Notification_settings_updated'));
+        return back();
     }
 }

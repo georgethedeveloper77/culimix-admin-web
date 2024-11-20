@@ -297,7 +297,6 @@ class OrderLogic
                         $ref_code_exchange_amt = BusinessSetting::where('key','ref_earning_exchange_rate')->first()->value;
                         $referar_user=User::where('id',$order->customer->ref_by)->first();
                         $refer_wallet_transaction = CustomerLogic::create_wallet_transaction($referar_user->id, $ref_code_exchange_amt, 'referrer',$order->customer->phone);
-                        $mail_status = Helpers::get_mail_status('add_fund_mail_status_user');
 
                         $notification_data = [
                             'title' => translate('messages.Congratulation'),
@@ -307,7 +306,7 @@ class OrderLogic
                             'type' => 'referral_code',
                         ];
 
-                        if($referar_user?->cm_firebase_token){
+                        if(Helpers::getNotificationStatusData('customer','customer_referral_bonus_earning','push_notification_status') && $referar_user?->cm_firebase_token){
                             Helpers::send_push_notif_to_device($referar_user?->cm_firebase_token, $notification_data);
                             DB::table('user_notifications')->insert([
                                 'data' => json_encode($notification_data),
@@ -319,7 +318,8 @@ class OrderLogic
 
 
                         try{
-                            if(config('mail.status') && $mail_status == '1') {
+                            Helpers::add_fund_push_notification($referar_user->id);
+                            if(config('mail.status') && Helpers::get_mail_status('add_fund_mail_status_user') == '1' && Helpers::getNotificationStatusData('customer','customer_add_fund_to_wallet','mail_status') ) {
                                 Mail::to($referar_user->email)->send(new \App\Mail\AddFundToWallet($refer_wallet_transaction));
                             }
                         } catch(\Exception $ex){
@@ -327,7 +327,27 @@ class OrderLogic
                         }
                     }
 
-                    if($order->user_id) CustomerLogic::create_loyalty_point_transaction($order->user_id, $order->id, $order->order_amount, 'order_place');
+                   $create_loyalty_point_transaction= CustomerLogic::create_loyalty_point_transaction($order->user_id, $order->id, $order->order_amount, 'order_place');
+                    if($create_loyalty_point_transaction > 0) {
+                        $notification_data = [
+                            'title' => translate('messages.Congratulation'),
+                            'description' => translate('You_have_received').' '.$create_loyalty_point_transaction.' '.translate('points_as_loyalty_point'),
+                            'order_id' => $order->id,
+                            'image' => '',
+                            'type' => 'loyalty_point',
+                        ];
+
+                        if(Helpers::getNotificationStatusData('customer','customer_loyalty_point_earning','push_notification_status') && $order->customer?->cm_firebase_token){
+                            Helpers::send_push_notif_to_device($order->customer?->cm_firebase_token, $notification_data);
+                            DB::table('user_notifications')->insert([
+                                'data' => json_encode($notification_data),
+                                'user_id' => $order->user_id,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
+
+                    }
                 }
 
 
@@ -616,10 +636,10 @@ class OrderLogic
                 'description' => translate('The_cashback_amount_successfully_added_to_your_wallet') ,
                 'order_id' => $order->id,
                 'image' => '',
-                'type' => 'csahback',
+                'type' => 'cashback',
             ];
 
-            if($order->customer?->cm_firebase_token){
+            if($order->customer?->cm_firebase_token && Helpers::getNotificationStatusData('customer','customer_cashback','push_notification_status')){
                 Helpers::send_push_notif_to_device($order->customer?->cm_firebase_token, $notification_data);
                 DB::table('user_notifications')->insert([
                     'data' => json_encode($notification_data),

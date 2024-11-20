@@ -6,14 +6,12 @@ use App\CentralLogics\Helpers;
 use Carbon\Carbon;
 use App\Scopes\ZoneScope;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Support\Facades\DB;
+use App\Traits\ReportFilter;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory , ReportFilter;
 
     protected $casts = [
         'order_amount' => 'float',
@@ -52,35 +50,42 @@ class Order extends Model
 
     public function getOrderAttachmentFullUrlAttribute(){
         $images = [];
-        $value = is_array($this->order_attachment)?$this->order_attachment:json_decode($this->order_attachment,true);
+        $value = is_array($this->order_attachment)
+            ? $this->order_attachment
+            : ($this->order_attachment && is_string($this->order_attachment) && $this->isValidJson($this->order_attachment)
+                ? json_decode($this->order_attachment, true)
+                : []);
         if ($value){
             foreach ($value as $item){
                 $item = is_array($item)?$item:(is_object($item) && get_class($item) == 'stdClass' ? json_decode(json_encode($item), true):['img' => $item, 'storage' => 'public']);
-                if($item['storage']=='s3'){
-                    $images[] = Helpers::s3_storage_link('order',$item['img']);
-                }else{
-                    $images[] = Helpers::local_storage_link('order',$item['img']);
-                }
+                $images[] = Helpers::get_full_url('order',$item['img'],$item['storage']);
             }
         }
 
         return $images;
     }
+
     public function getOrderProofFullUrlAttribute(){
         $images = [];
-        $value = is_array($this->order_proof)?$this->order_proof:json_decode($this->order_proof,true);
+        $value = is_array($this->order_proof)
+            ? $this->order_proof
+            : ($this->order_proof && is_string($this->order_proof) && $this->isValidJson($this->order_proof)
+                ? json_decode($this->order_proof, true)
+                : []);
         if ($value){
             foreach ($value as $item){
                 $item = is_array($item)?$item:(is_object($item) && get_class($item) == 'stdClass' ? json_decode(json_encode($item), true):['img' => $item, 'storage' => 'public']);
-                if($item['storage']=='s3'){
-                    $images[] = Helpers::s3_storage_link('order',$item['img']);
-                }else{
-                    $images[] = Helpers::local_storage_link('order',$item['img']);
-                }
+                $images[] = Helpers::get_full_url('order',$item['img'],$item['storage']);
             }
         }
 
         return $images;
+    }
+
+    private function isValidJson($string)
+    {
+        json_decode($string);
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 
     public function setDeliveryChargeAttribute($value)

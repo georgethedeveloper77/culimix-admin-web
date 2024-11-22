@@ -2,8 +2,8 @@
 
 namespace App\CentralLogics;
 
-use App\Models\ExternalConfiguration;
 use DateTime;
+use App\Models\Tag;
 use App\Models\Item;
 use App\Models\User;
 use App\Models\Zone;
@@ -13,6 +13,7 @@ use App\Models\Store;
 use App\Library\Payer;
 use App\Models\Module;
 use App\Models\Review;
+use App\Models\Allergy;
 use App\Models\Expense;
 use App\Traits\Payment;
 use App\Mail\PlaceOrder;
@@ -21,11 +22,14 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\DMReview;
 use App\Library\Receiver;
+use App\Models\Nutrition;
 use App\Models\DataSetting;
+use App\Models\GenericName;
 use App\Models\StoreWallet;
 use App\Models\Translation;
 use Illuminate\Support\Str;
 use PayPal\Api\Transaction;
+use App\Models\ItemCampaign;
 use App\Models\FlashSaleItem;
 use Illuminate\Support\Carbon;
 use App\Models\BusinessSetting;
@@ -35,12 +39,14 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\OrderVerificationMail;
 use App\Models\NotificationMessage;
 use App\Models\NotificationSetting;
+
 use App\Models\SubscriptionPackage;
+use App\Traits\PaymentGatewayTrait;
 use Illuminate\Support\Facades\App;
 use App\Mail\SubscriptionSuccessful;
 use Illuminate\Support\Facades\Http;
-
 use Illuminate\Support\Facades\Mail;
+use App\Models\ExternalConfiguration;
 use App\Mail\SubscriptionRenewOrShift;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
@@ -48,12 +54,11 @@ use App\Library\Payment as PaymentInfo;
 use App\Models\SubscriptionTransaction;
 use Illuminate\Support\Facades\Storage;
 use App\Models\StoreNotificationSetting;
+use App\Traits\NotificationDataSetUpTrait;
 use Illuminate\Database\Eloquent\Collection;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 use App\Models\SubscriptionBillingAndRefundHistory;
 use Laravelpkg\Laravelchk\Http\Controllers\LaravelchkController;
-use App\Traits\PaymentGatewayTrait;
-use App\Traits\NotificationDataSetUpTrait;
 
 class Helpers
 {
@@ -207,6 +212,14 @@ class Helpers
         $data['is_prescription_required'] =  (int) $data->pharmacy_item_details?->is_prescription_required ?? 0;
         $data['halal_tag_status'] =  (int) $data->store->storeConfig?->halal_tag_status??0;
 
+        $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
+        $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
+        $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
+
+        unset($data['nutritions']);
+        unset($data['allergies']);
+        unset($data['generic']);
+
         unset($data['pharmacy_item_details']);
         unset($data['store']);
         unset($data['rating']);
@@ -292,6 +305,13 @@ class Helpers
 
                 $item->store['self_delivery_system'] = (int) $item->store->sub_self_delivery;
 
+                $item['nutritions_name']= $item?->nutritions ? Nutrition::whereIn('id',$item?->nutritions->pluck('id') )->pluck('nutrition') : null;
+                $item['allergies_name']= $item?->allergies ?Allergy::whereIn('id',$item?->allergies->pluck('id') )->pluck('allergy') : null;
+                $item['generic_name']= $item?->generic ? GenericName::whereIn('id',$item?->generic->pluck('id') )->pluck('generic_name'): null ;
+
+                unset($item['nutritions']);
+                unset($item['allergies']);
+                unset($item['generic']);
                 unset($item['pharmacy_item_details']);
                 unset($item['store']);
                 unset($item['rating']);
@@ -362,14 +382,27 @@ class Helpers
             $data['is_basic'] =  (int) $data->pharmacy_item_details?->is_basic ?? 0;
             $data['is_prescription_required'] =  (int) $data->pharmacy_item_details?->is_prescription_required ?? 0;
             $data['halal_tag_status'] =  (int) $data->store->storeConfig?->halal_tag_status??0;
+
+            $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
+            $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
+            $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
+
             if($temp_product == true){
-                $data['tags']=\App\Models\Tag::whereIn('id',json_decode($data?->tag_ids) )->get(['tag','id']);
+                $data['tags']=Tag::whereIn('id',json_decode($data?->tag_ids) )->get(['tag','id']);
+                $data['nutritions_data']=Nutrition::whereIn('id',json_decode($data?->nutrition_ids) )->get(['nutrition','id']);
+                $data['allergies_data']=Allergy::whereIn('id',json_decode($data?->allergy_ids) )->get(['allergy','id']);
+                $data['generic_name_data']=GenericName::whereIn('id',json_decode($data?->generic_ids) )->get(['generic_name','id']);
             }
+
             $data->store['self_delivery_system'] = (int) $data->store->sub_self_delivery;
 
             unset($data['pharmacy_item_details']);
             unset($data['store']);
             unset($data['rating']);
+            unset($data['nutritions']);
+            unset($data['allergies']);
+            unset($data['generic']);
+
         }
 
         return $data;
@@ -482,6 +515,14 @@ class Helpers
                 if (!$trans) {
                     unset($item['translations']);
                 }
+
+                $item['nutritions_name']= $item?->nutritions ? Nutrition::whereIn('id',$item?->nutritions->pluck('id') )->pluck('nutrition') : null;
+                $item['allergies_name']= $item?->allergies ?Allergy::whereIn('id',$item?->allergies->pluck('id') )->pluck('allergy') : null;
+                $item['generic_name']= $item?->generic ? GenericName::whereIn('id',$item?->generic->pluck('id') )->pluck('generic_name'): null ;
+
+                unset($item['nutritions']);
+                unset($item['allergies']);
+                unset($item['generic']);
                 unset($item['ecommerce_item_details']);
                 unset($item['pharmacy_item_details']);
                 unset($item['store']);
@@ -586,9 +627,18 @@ class Helpers
                     }
                 }
             }
+
+            $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
+            $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
+            $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
+
+
             if (!$trans) {
                 unset($data['translations']);
             }
+            unset($data['nutritions']);
+            unset($data['allergies']);
+            unset($data['generic']);
             unset($data['ecommerce_item_details']);
             unset($data['pharmacy_item_details']);
             unset($data['store']);
@@ -1127,11 +1177,7 @@ class Helpers
 
     public static function send_push_notif_to_device($fcm_token, $data, $web_push_link = null)
     {
-//        if(isset($data['message'])){
-//            $message = $data['message'];
-//        }else{
-//            $message = '';
-//        }
+
         if(isset($data['conversation_id'])){
             $conversation_id = $data['conversation_id'];
         }else{
@@ -1152,12 +1198,19 @@ class Helpers
         }else{
             $order_type = '';
         }
+        if(isset($data['data_id'])){
+            $data_id = $data['data_id'];
+        }else{
+            $data_id = '';
+        }
 
-//        $click_action = "";
-//        if($web_push_link){
-//            $click_action = ',
-//            "click_action": "'.$web_push_link.'"';
-//        }
+        if(isset($data['advertisement_id'])){
+            $advertisement_id = $data['advertisement_id'];
+        }else{
+            $advertisement_id = '';
+        }
+
+
         $postData = [
             'message' => [
                 "token" => $fcm_token,
@@ -1167,6 +1220,8 @@ class Helpers
                     "image" => (string)$data['image'],
                     "order_id" => (string)$data['order_id'],
                     "type" => (string)$data['type'],
+                    "data_id" => (string)$data_id,
+                    "advertisement_id" => (string)$advertisement_id,
                     "conversation_id" => (string)$conversation_id,
                     "module_id" => (string)$module_id,
                     "sender_type" => (string)$sender_type,
@@ -3436,6 +3491,7 @@ class Helpers
             'reviewer_image' => asset('public/assets/admin/img/100x100/2.jpg'),
             'fixed_header_image' => asset('/public/assets/admin/img/aspect-1.png'),
             'header_icon' => asset('/public/assets/admin/img/aspect-1.png'),
+            'available_zone_image' => asset('public/assets/admin/img/100x100/2.jpg'),
             'why_choose' => asset('/public/assets/admin/img/aspect-1.png'),
             'header_banner' => asset('/public/assets/admin/img/aspect-1.png'),
             'reviewer_company_image' => asset('public/assets/admin/img/100x100/2.jpg'),
@@ -4091,6 +4147,10 @@ class Helpers
     }
     public static function updateAdminNotificationSetupDataSetup(){
         self::updateAdminNotificationSetupData();
+    return true;
+    }
+    public static function addNewAdminNotificationSetupDataSetup(){
+        self::addNewAdminNotificationSetupData();
     return true;
     }
     public static function getStoreNotificationStatusData($store_id,$key,$notification_type){

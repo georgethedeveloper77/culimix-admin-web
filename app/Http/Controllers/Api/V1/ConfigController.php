@@ -347,7 +347,8 @@ class ConfigController extends Controller
         if ($validator->errors()->count() > 0) {
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
-        $zones = Zone::with('modules')->whereContains('coordinates', new Point($request->lat, $request->lng, POINT_SRID))->latest()->get(['id', 'status', 'cash_on_delivery', 'digital_payment', 'offline_payment', 'increased_delivery_fee', 'increased_delivery_fee_status', 'increase_delivery_charge_message']);
+        $zones = Zone::with('modules')->whereContains('coordinates', new Point($request->lat, $request->lng, POINT_SRID))
+            ->selectRaw('zones.*, ABS(ST_Area(coordinates)) as area')->orderBy('area', 'asc')->latest()->get(['id', 'status', 'cash_on_delivery', 'digital_payment', 'offline_payment', 'increased_delivery_fee', 'increased_delivery_fee_status', 'increase_delivery_charge_message']);
         if (count($zones) < 1) {
             return response()->json([
                 'errors' => [
@@ -522,6 +523,9 @@ class ConfigController extends Controller
             $promotional_banners[] = Helpers::get_full_url('promotional_banner', $value['img'], $value['storage'] ?? 'public');
         }
 
+        $zones= Zone::where('status',1)->get();
+        $zones = self::zone_format($zones);
+
         return response()->json(
             [
                 'base_urls' => [
@@ -573,7 +577,7 @@ class ConfigController extends Controller
                 'fixed_newsletter_sub_title' => (isset($settings['fixed_newsletter_sub_title'])) ? $settings['fixed_newsletter_sub_title'] : null,
                 'fixed_footer_description' => (isset($settings['fixed_footer_description'])) ? $settings['fixed_footer_description'] : null,
                 'fixed_promotional_banner' => (isset($settings['fixed_promotional_banner'])) ? $settings['fixed_promotional_banner'] : null,
-                'fixed_promotional_banner_storage' => Helpers::get_full_url('promotional_banner', (isset($settings['fixed_promotional_banner'])) ? $settings['fixed_promotional_banner'] : null, (isset($settings['fixed_promotional_banner_storage'])) ? $settings['fixed_promotional_banner_storage'] : 'public'),
+                'fixed_promotional_banner_full_url' => Helpers::get_full_url('promotional_banner', (isset($settings['fixed_promotional_banner'])) ? $settings['fixed_promotional_banner'] : null, (isset($settings['fixed_promotional_banner_storage'])) ? $settings['fixed_promotional_banner_storage'] : 'public'),
 
 
                 'promotion_banners' => (isset($settings['promotion_banner'])) ? json_decode($settings['promotion_banner'], true) : null,
@@ -582,6 +586,12 @@ class ConfigController extends Controller
                 'download_business_app_links' => (isset($settings['download_business_app_links'])) ? json_decode($settings['download_business_app_links'], true) : null,
                 // 'dm_app_earning_links'=> (isset($settings['dm_app_earning_links']) )  ? json_decode($settings['dm_app_earning_links'], true) : null ,
                 // 'download_user_app_links'=> (isset($settings['download_app_links']) )  ? json_decode($settings['download_app_links'], true) : null ,
+                'available_zone_status' => (int)((isset($settings['available_zone_status'])) ? $settings['available_zone_status'] : 0),
+                'available_zone_title' => (isset($settings['available_zone_title'])) ? $settings['available_zone_title'] : null,
+                'available_zone_short_description' => (isset($settings['available_zone_short_description'])) ? $settings['available_zone_short_description'] : null,
+                'available_zone_image' => (isset($settings['available_zone_image'])) ? $settings['available_zone_image'] : null,
+                'available_zone_image_full_url' => Helpers::get_full_url('available_zone_image', (isset($settings['available_zone_image'])) ? $settings['available_zone_image'] : null, (isset($settings['available_zone_image_storage'])) ? $settings['available_zone_image_storage'] : 'public'),
+                'available_zone_list' => $zones,
             ]);
     }
 
@@ -615,6 +625,9 @@ class ConfigController extends Controller
                 $settings[$key] = $single_value;
             }
         }
+
+        $zones= Zone::where('status',1)->get();
+        $zones = self::zone_format($zones);
 
         $criterias = FlutterSpecialCriteria::where('status', 1)->get();
 
@@ -660,6 +673,12 @@ class ConfigController extends Controller
 
 
                 'download_user_app_links' => (isset($settings['download_user_app_links'])) ? json_decode($settings['download_user_app_links'], true) : null,
+                'available_zone_status' => (int)((isset($settings['available_zone_status'])) ? $settings['available_zone_status'] : 0),
+                'available_zone_title' => (isset($settings['available_zone_title'])) ? $settings['available_zone_title'] : null,
+                'available_zone_short_description' => (isset($settings['available_zone_short_description'])) ? $settings['available_zone_short_description'] : null,
+                'available_zone_image' => (isset($settings['available_zone_image'])) ? $settings['available_zone_image'] : null,
+                'available_zone_image_full_url' => Helpers::get_full_url('available_zone_image', (isset($settings['available_zone_image'])) ? $settings['available_zone_image'] : null, (isset($settings['available_zone_image_storage'])) ? $settings['available_zone_image_storage'] : 'public'),
+                'available_zone_list' => $zones,
             ]);
     }
 
@@ -723,6 +742,22 @@ class ConfigController extends Controller
         $data = OfflinePaymentMethod::where('status', 1)->get();
         $data = $data->count() > 0 ? $data : null;
         return response()->json($data, 200);
+    }
+
+    private function zone_format($data)
+    {
+        $storage = [];
+        foreach ($data as $item) {
+            $storage[] = [
+                'id' => $item['id'],
+                'name' => $item['name'],
+                'display_name' => $item['display_name']?$item['display_name']:$item['name'],
+                'modules' => $item->modules->pluck('module_name')
+            ];
+        }
+        $data = $storage;
+
+        return $data;
     }
 
 }

@@ -333,6 +333,10 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::DELETE('landing-page-settings/{tab}/{key}', 'BusinessSettingsController@delete_landing_page_settings')->name('landing-page-settings-delete');
 
             Route::get('login-url-setup', 'BusinessSettingsController@login_url_page')->name('login_url_page');
+            // Centerlize login
+
+            Route::get('login_page', 'BusinessSettingsController@login_page')->name('login_page');
+
             Route::post('login-url-setup/update', 'BusinessSettingsController@login_url_page_update')->name('login_url_update');
 
             Route::get('email-setup/{type}/{tab?}', 'BusinessSettingsController@email_index')->name('email-setup');
@@ -461,6 +465,11 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::put('order-cancel-reasons/update', 'OrderCancelReasonController@update')->name('order-cancel-reasons.update');
             Route::delete('order-cancel-reasons/destroy/{id}', 'OrderCancelReasonController@destroy')->name('order-cancel-reasons.destroy');
 
+            Route::post('automated-message/store', 'AutomatedMessageController@store')->name('automated_message.store');
+            Route::put('automated-message/update', 'AutomatedMessageController@update')->name('automated_message.update');
+            Route::get('automated-message/status/{id}/{status}', 'AutomatedMessageController@status')->name('automated_message.status');
+            Route::delete('automated-message/destroy/{id}', 'AutomatedMessageController@destroy')->name('automated_message.destroy');
+
             Route::group(['namespace' => 'System','prefix' => 'system-addon', 'as' => 'system-addon.', 'middleware'=>['module:user_management']], function () {
                 Route::get('/', 'AddonController@index')->name('index');
                 Route::post('publish', 'AddonController@publish')->name('publish');
@@ -485,7 +494,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
 
                 // Subscribed customer Routes
                 Route::get('subscribed', 'CustomerController@subscribedCustomers')->name('subscribed');
-                Route::post('subscriber-search', 'CustomerController@subscriberMailSearch')->name('subscriberMailSearch');
+                // Route::post('subscriber-search', 'CustomerController@subscriberMailSearch')->name('subscriberMailSearch');
                 Route::get('subscriber-search', 'CustomerController@subscribed_customer_export')->name('subscriber-export');
 
                 Route::get('loyalty-point/report', 'LoyaltyPointController@report')->name('loyalty-point.report');
@@ -518,6 +527,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
                 Route::post('customer-store', 'POSController@customer_store')->name('customer-store');
                 Route::post('add-delivery-address', 'POSController@addDeliveryInfo')->name('add-delivery-address');
                 Route::get('data', 'POSController@extra_charge')->name('extra_charge');
+                Route::get('get-user-data', 'POSController@getUserData')->name('getUserData');
             });
         });
 
@@ -619,7 +629,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
 
                     // Subscribed customer Routes
                     Route::get('subscribed', 'CustomerController@subscribedCustomers')->name('subscribed');
-                    Route::post('subscriber-search', 'CustomerController@subscriberMailSearch')->name('subscriberMailSearch');
+                    // Route::post('subscriber-search', 'CustomerController@subscriberMailSearch')->name('subscriberMailSearch');
                     Route::get('subscriber-search', 'CustomerController@subscribed_customer_export')->name('subscriber-export');
 
                     Route::get('loyalty-point/report', 'LoyaltyPointController@report')->name('loyalty-point.report');

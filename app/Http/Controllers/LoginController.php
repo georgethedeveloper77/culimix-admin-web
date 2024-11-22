@@ -150,19 +150,21 @@ class LoginController extends Controller
             'password' => 'required|min:6',
             'role' => 'required'
         ]);
-
+// dd($request->all());
         $recaptcha = Helpers::get_business_settings('recaptcha');
-        if (isset($recaptcha) && $recaptcha['status'] == 1) {
+        if (isset($recaptcha) && $recaptcha['status'] == 1 && !$request?->set_default_captcha) {
             $request->validate([
                 'g-recaptcha-response' => [
                     function ($attribute, $value, $fail) {
                         $secret_key = Helpers::get_business_settings('recaptcha')['secret_key'];
-                        $response = $value;
-                        $url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . $secret_key . '&response=' . $response;
-                        $response = Http::get($url);
-                        $response = $response->json();
-                        if (!isset($response['success']) || !$response['success']) {
-                            $fail(translate('messages.ReCAPTCHA Failed'));
+                        $gResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                            'secret' => $secret_key,
+                            'response' => $value,
+                            'remoteip' => \request()->ip(),
+                        ]);
+
+                        if (!$gResponse->successful()) {
+                            $fail(translate('ReCaptcha Failed'));
                         }
                     },
                 ],
@@ -467,10 +469,10 @@ class LoginController extends Controller
             session()->forget('subscription_renew_close_btn');
             session()->forget('subscription_cancel_close_btn');
         } else {
-            if (!auth()?->guard('admin')?->user()?->role_id == 1) {
+            if (auth()?->guard('admin')?->user()?->role_id == 1) {
+                    $user_link = Helpers::get_login_url('admin_login_url');
+                } else {
                 $user_link = Helpers::get_login_url('admin_employee_login_url');
-            } else {
-                $user_link = Helpers::get_login_url('admin_login_url');
             }
             auth()?->guard('admin')?->logout();
         }

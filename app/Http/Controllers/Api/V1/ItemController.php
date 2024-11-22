@@ -6,7 +6,10 @@ use App\Models\Item;
 use App\Models\Order;
 use App\Models\Store;
 use App\Models\Review;
+use App\Models\Allergy;
 use App\Models\Category;
+use App\Models\Nutrition;
+use App\Models\GenericName;
 use App\Models\PriorityList;
 use Illuminate\Http\Request;
 use App\CentralLogics\Helpers;
@@ -191,6 +194,27 @@ class ItemController extends Controller
                     };
                 });
             });
+            $q->orWhereHas('nutritions',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('nutrition', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('allergies',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('allergy', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('generic',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('generic_name', 'like', "%{$value}%");
+                    };
+                });
+            });
             $q->orWhereHas('category.parent',function($query)use($key){
                 $query->where(function($q)use($key){
                     foreach ($key as $value) {
@@ -243,7 +267,7 @@ class ItemController extends Controller
             $query->withCount(['campaigns'=> function($query){
                 $query->Running();
             }]);
-        })  
+        })
         ->select(['items.*'])
         ->selectSub(function ($subQuery) {
             $subQuery->selectRaw('active as temp_available')
@@ -307,6 +331,27 @@ class ItemController extends Controller
                 $query->where(function($q)use($key){
                     foreach ($key as $value) {
                         $q->where('tag', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('nutritions',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('nutrition', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('allergies',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('allergy', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('generic',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('generic_name', 'like', "%{$value}%");
                     };
                 });
             });
@@ -425,6 +470,27 @@ class ItemController extends Controller
                     };
                 });
             });
+            $q->orWhereHas('nutritions',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('nutrition', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('allergies',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('allergy', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('generic',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('generic_name', 'like', "%{$value}%");
+                    };
+                });
+            });
         })->select(['name','image'])
 
         ->paginate($limit, ['*'], 'page', $offset);
@@ -526,7 +592,7 @@ class ItemController extends Controller
     {
         try {
 
-            $item = Item::withCount('whislists')->with(['tags','reviews','reviews.customer'])->active()
+            $item = Item::withCount('whislists')->with(['tags','nutritions','allergies','reviews','reviews.customer'])->active()
             ->when(config('module.current_module_data'), function($query){
                 $query->module(config('module.current_module_data')['id']);
             })
@@ -553,7 +619,7 @@ class ItemController extends Controller
                 $store['category_details'] = Category::whereIn('id',$store['category_ids'])->get();
                 $store['price_range']  = Item::withoutGlobalScopes()->where('store_id', $item->store_id)
                 ->select(DB::raw('MIN(price) AS min_price, MAX(price) AS max_price'))
-                ->get(['min_price','max_price']);
+                ->get(['min_price','max_price'])->toArray();
             }
             $item = Helpers::product_data_formatting($item, false, false, app()->getLocale());
             $item['store_details'] = $store;
@@ -812,6 +878,20 @@ class ItemController extends Controller
                     };
                 });
             });
+            $q->orWhereHas('nutritions',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('nutrition', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('allergies',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('allergy', 'like', "%{$value}%");
+                    };
+                });
+            });
             $q->orWhereHas('category.parent',function($query)use($key){
                 $query->where(function($q)use($key){
                     foreach ($key as $value) {
@@ -823,6 +903,13 @@ class ItemController extends Controller
                 $query->where(function($q)use($key){
                     foreach ($key as $value) {
                         $q->where('name', 'like', "%{$value}%");
+                    };
+                });
+            });
+            $q->orWhereHas('generic',function($query)use($key){
+                $query->where(function($q)use($key){
+                    foreach ($key as $value) {
+                        $q->where('generic_name', 'like', "%{$value}%");
                     };
                 });
             });
@@ -1006,6 +1093,21 @@ class ItemController extends Controller
 
         $items['products'] = Helpers::product_data_formatting($items['products'], true, false, app()->getLocale());
         return response()->json($items, 200);
+    }
+
+
+
+    public function getGenericNameList(){
+        $names= GenericName::select(['generic_name'])->pluck('generic_name');
+        return response()->json($names, 200);
+    }
+    public function getAllergyNameList(){
+        $names= Allergy::select(['allergy'])->pluck('allergy');
+        return response()->json($names, 200);
+    }
+    public function getNutritionNameList(){
+        $names= Nutrition::select(['nutrition'])->pluck('nutrition');
+        return response()->json($names, 200);
     }
 
 

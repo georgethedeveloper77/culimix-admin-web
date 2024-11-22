@@ -364,7 +364,7 @@ $countryCode= strtolower($country?$country->value:'auto');
         });
         $(".testimonial-slider").owlCarousel({
             loop: false,
-            margin: 15,
+            margin: 22,
             responsiveClass: true,
             nav: false,
             dots: false,
@@ -376,15 +376,12 @@ $countryCode= strtolower($country?$country->value:'auto');
             responsive: {
                 768: {
                     items: 2,
-                    margin: 20,
                 },
                 992: {
                     items: 3,
-                    margin: 20,
                 },
                 1200: {
                     items: 3,
-                    margin: 22,
                 },
             },
         });

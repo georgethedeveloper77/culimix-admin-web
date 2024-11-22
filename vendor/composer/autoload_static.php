@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
+class ComposerStaticInit90508d1a62c2f3e950569ddeb423adfe
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -1291,7 +1291,6 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
         'App\\Http\\Controllers\\Api\\V1\\DeliverymanController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/DeliverymanController.php',
         'App\\Http\\Controllers\\Api\\V1\\ExternalConfigurationController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/ExternalConfigurationController.php',
         'App\\Http\\Controllers\\Api\\V1\\FlashSaleController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/FlashSaleController.php',
-        'App\\Http\\Controllers\\Api\\V1\\HomeController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/HomeController.php',
         'App\\Http\\Controllers\\Api\\V1\\ItemController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/ItemController.php',
         'App\\Http\\Controllers\\Api\\V1\\LoyaltyPointController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/LoyaltyPointController.php',
         'App\\Http\\Controllers\\Api\\V1\\ModuleController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/ModuleController.php',
@@ -1494,7 +1493,6 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
         'App\\Models\\Advertisement' => __DIR__ . '/../..' . '/app/Models/Advertisement.php',
         'App\\Models\\Allergy' => __DIR__ . '/../..' . '/app/Models/Allergy.php',
         'App\\Models\\AllergyItem' => __DIR__ . '/../..' . '/app/Models/AllergyItem.php',
-        'App\\Models\\AllergyItemCampaign' => __DIR__ . '/../..' . '/app/Models/AllergyItemCampaign.php',
         'App\\Models\\Attribute' => __DIR__ . '/../..' . '/app/Models/Attribute.php',
         'App\\Models\\AutomatedMessage' => __DIR__ . '/../..' . '/app/Models/AutomatedMessage.php',
         'App\\Models\\Banner' => __DIR__ . '/../..' . '/app/Models/Banner.php',
@@ -1534,8 +1532,6 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
         'App\\Models\\Guest' => __DIR__ . '/../..' . '/app/Models/Guest.php',
         'App\\Models\\Item' => __DIR__ . '/../..' . '/app/Models/Item.php',
         'App\\Models\\ItemCampaign' => __DIR__ . '/../..' . '/app/Models/ItemCampaign.php',
-        'App\\Models\\ItemCampaignGenericName' => __DIR__ . '/../..' . '/app/Models/ItemCampaignGenericName.php',
-        'App\\Models\\ItemCampaignNutrition' => __DIR__ . '/../..' . '/app/Models/ItemCampaignNutrition.php',
         'App\\Models\\ItemGenericName' => __DIR__ . '/../..' . '/app/Models/ItemGenericName.php',
         'App\\Models\\ItemNutrition' => __DIR__ . '/../..' . '/app/Models/ItemNutrition.php',
         'App\\Models\\ItemTag' => __DIR__ . '/../..' . '/app/Models/ItemTag.php',
@@ -16057,10 +16053,10 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit90508d1a62c2f3e950569ddeb423adfe::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit90508d1a62c2f3e950569ddeb423adfe::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit90508d1a62c2f3e950569ddeb423adfe::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit90508d1a62c2f3e950569ddeb423adfe::$classMap;
 
         }, null, ClassLoader::class);
     }

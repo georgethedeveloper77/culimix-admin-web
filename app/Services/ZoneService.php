@@ -14,12 +14,14 @@ class ZoneService
         $value = $request['coordinates'];
 
 
+        // dd($value);
         foreach(explode('),(',trim($value,'()')) as $index=>$single_array){
             if($index == 0)
             {
                 $lastCord = explode(',',$single_array);
             }
             $coords = explode(',',$single_array);
+// dd($coords);
 
             $polygon[] = new Point($coords[0], $coords[1]);
         }
@@ -53,9 +55,6 @@ class ZoneService
         return [
             'name' => $request->name[array_search('default', $request->lang)],
             'display_name' => $request->display_name[array_search('default', $request->lang)],
-            'store_wise_topic' => 'zone_'.$zoneId.'_store',
-            'customer_wise_topic' => 'zone_'.$zoneId.'_customer',
-            'deliveryman_wise_topic' => 'zone_'.$zoneId.'_delivery_man',
             'coordinates' => new Polygon([new LineString($polygon)]),
         ];
     }

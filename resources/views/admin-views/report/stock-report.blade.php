@@ -1,9 +1,7 @@
 @extends('layouts.admin.app')
 
-@section('title',translate('low_stock_list'))
-@section('low_stock_list')
-active
-@endsection
+@section('title',translate('stock_report'))
+
 @section('content')
 
 <div class="content container-fluid">
@@ -14,8 +12,7 @@ active
                 <img src="{{asset('public/assets/admin/img/report.png')}}" class="w--22" alt="">
             </span>
             <span>
-                {{translate('low_stock_list')}}
-                <span class="badge badge-soft-secondary" id="">{{ $items->total() }}</span>
+                {{translate('stock_report')}}
             </span>
         </h1>
     </div>
@@ -25,7 +22,7 @@ active
         <!-- Header -->
         <div class="card-header border-0 py-2">
             <div class="search--button-wrapper justify-content-end">
-                <form class="search-form">
+                <form action="javascript:" id="search-form" class="search-form">
                     <!-- Search -->
                     <div class="input-group input--group">
                         <input id="datatableSearch" name="search" type="search" class="form-control" placeholder="{{translate('ex_:_search_name')}}" aria-label="{{translate('messages.search_here')}}" value="{{request()->query('search')}}">
@@ -175,29 +172,24 @@ active
     </div>
     <!-- End Card -->
 </div>
-<div class="modal fade update-quantity-modal" id="update-quantity" tabindex="-1">
-    <div class="modal-dialog modal-dialog-scrollable">
+<div class="modal fade" id="update-quantity" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body pt-0">
-
+            <div class="modal-body py-2">
                 <form action="{{route('admin.item.stock-update')}}" method="post">
                     @csrf
                     <div class="mt-2 rest-part w-100"></div>
                     <div class="btn--container justify-content-end">
-                        <button type="reset" data-dismiss="modal" aria-label="Close" class="btn btn--reset">{{translate('cancel')}}</button>
-                        <button type="submit" id="submit_new_customer" class="btn btn--primary">{{translate('update_stock')}}</button>
+                        <button type="button" class="btn btn--danger" data-dismiss="modal" aria-label="Close">
+                            {{translate('messages.close')}}
+                        </button>
+                        <button class="btn btn--primary" type="submit">{{translate('messages.update')}}</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 @endsection
 
 
@@ -248,12 +240,12 @@ active
                 data: function(params) {
                     return {
                         q: params.term, // search term
-                        all:true,
+                        // all:true,
                         @if(isset($zone))
                             zone_ids: [{{$zone->id}}],
                         @endif
-                        @if(Config::get('module.current_module_id'))
-                        module_id: {{Config::get('module.current_module_id')}}
+                        @if(request('module_id'))
+                        module_id: {{request('module_id')}}
                         ,
                         @endif
                         page: params.page
@@ -276,6 +268,32 @@ active
         });
     });
 
+        $('#search-form').on('submit', function (e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            $.post({
+                url: '{{route('admin.transactions.report.stock-search')}}',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    $('#loading').show();
+                },
+                success: function (data) {
+                    $('#set-rows').html(data.view);
+                    $('.page-area').hide();
+                },
+                complete: function () {
+                    $('#loading').hide();
+                },
+            });
+        });
 </script>
 
 

@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use App\Models\EmailTemplate;
 use App\CentralLogics\Helpers;
 use App\Models\BusinessSetting;
-use App\Models\Coupon;
 use App\Traits\ActivationClass;
 use Illuminate\Support\Facades\DB;
 use App\Models\NotificationSetting;
@@ -41,15 +40,9 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('BUYER_USERNAME', $request['username']);
         Helpers::setEnvironmentValue('PURCHASE_CODE', $request['purchase_key']);
         Helpers::setEnvironmentValue('APP_MODE', 'live');
-        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.11');
+        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.10');
         Helpers::setEnvironmentValue('REACT_APP_KEY', '45370351');
         Helpers::setEnvironmentValue('APP_NAME', '6amMart' . time());
-
-        // $data = Helpers::requestSender();
-        // if (!$data['active']) {
-        if (!$this->actch()) {
-            return redirect(base64_decode('aHR0cHM6Ly82YW10ZWNoLmNvbS9zb2Z0d2FyZS1hY3RpdmF0aW9u'));
-        }
 
         Artisan::call('migrate', ['--force' => true]);
         $previousRouteServiceProvier = base_path('app/Providers/RouteServiceProvider.php');
@@ -183,7 +176,6 @@ class UpdateController extends Controller
         Helpers::addNewAdminNotificationSetupDataSetup();
 
         Helpers::insert_business_settings_key('country_picker_status', '1');
-        Helpers::insert_business_settings_key('manual_login_status', '1');
 
         $this->firebase_message_config_file_gen();
 
@@ -197,12 +189,6 @@ class UpdateController extends Controller
             ]);
             $recaptcha->save();
         }
-
-        Coupon::where('coupon_type', 'store_wise')
-        ->whereNull('store_id')
-        ->update([
-            'store_id' => DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$[0]'))")
-        ]);
 
         $data = DataSetting::where('type', 'login_admin')->pluck('value')->first();
         return redirect('/login/'.$data);

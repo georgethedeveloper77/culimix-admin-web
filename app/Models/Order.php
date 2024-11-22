@@ -6,12 +6,14 @@ use App\CentralLogics\Helpers;
 use Carbon\Carbon;
 use App\Scopes\ZoneScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\ReportFilter;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
-    use HasFactory , ReportFilter;
+    use HasFactory;
 
     protected $casts = [
         'order_amount' => 'float',

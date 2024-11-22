@@ -15,6 +15,7 @@ use App\Http\Controllers\PaypalPaymentController;
 use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\SslCommerzPaymentController;
 use App\Http\Controllers\FirebaseController;
+use App\CentralLogics\Helpers;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,7 @@ Route::post('newsletter/subscribe', 'NewsletterController@newsLetterSubscribe')-
 Route::get('subscription-invoice/{id}', 'HomeController@subscription_invoice')->name('subscription_invoice');
 
 Route::get('login/{tab}', 'LoginController@login')->name('login');
+Route::post('external-login-from-drivemond', 'LoginController@externalLoginFromDrivemond');
 Route::post('login_submit', 'LoginController@submit')->name('login_post')->middleware('actch');
 Route::get('logout', 'LoginController@logout')->name('logout');
 Route::get('/reload-captcha', 'LoginController@reloadCaptcha')->name('reload-captcha');
@@ -95,6 +97,8 @@ if (!$is_published) {
             Route::get('pay', [StripePaymentController::class, 'index'])->name('pay');
             Route::get('token', [StripePaymentController::class, 'payment_process_3d'])->name('token');
             Route::get('success', [StripePaymentController::class, 'success'])->name('success');
+            Route::get('canceled', [StripePaymentController::class, 'canceled'])
+                ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
         });
 
         //RAZOR-PAY
@@ -158,9 +162,10 @@ if (!$is_published) {
         });
 
         //MERCADOPAGO
+
         Route::group(['prefix' => 'mercadopago', 'as' => 'mercadopago.'], function () {
             Route::get('pay', [MercadoPagoController::class, 'index'])->name('index');
-            Route::post('make-payment', [MercadoPagoController::class, 'make_payment'])->name('make_payment');
+            Route::any('make-payment', [MercadoPagoController::class, 'make_payment'])->name('make_payment')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
             Route::get('success', [MercadoPagoController::class, 'success'])->name('success');
             Route::get('failed', [MercadoPagoController::class, 'failed'])->name('failed');
         });

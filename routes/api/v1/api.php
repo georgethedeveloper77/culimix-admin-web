@@ -16,6 +16,12 @@ use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 */
 
 Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function () {
+    Route::group(['prefix' => 'configurations'], function () {
+        Route::get('/', 'ExternalConfigurationController@getConfiguration');
+        Route::get('/get-external', 'ExternalConfigurationController@getExternalConfiguration');
+        Route::post('/store', 'ExternalConfigurationController@updateConfiguration');
+    });
+
     Route::get('zone/list', 'ZoneController@get_zones');
     Route::get('zone/check', 'ZoneController@zonesCheck');
 
@@ -23,6 +29,7 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
     Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
         Route::post('sign-up', 'CustomerAuthController@register');
         Route::post('login', 'CustomerAuthController@login');
+        Route::post('external-login', 'CustomerAuthController@customerLoginFromDrivemond');
         Route::post('verify-phone', 'CustomerAuthController@verify_phone');
 
         Route::post('check-email', 'CustomerAuthController@check_email');
@@ -30,6 +37,7 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
 
         Route::post('forgot-password', 'PasswordResetController@reset_password_request');
         Route::post('verify-token', 'PasswordResetController@verify_token');
+        Route::post('firebase-verify-token', 'CustomerAuthController@firebase_auth_verify');
         Route::put('reset-password', 'PasswordResetController@reset_password_submit');
 
         Route::post('guest/request','CustomerAuthController@guest_request');
@@ -40,6 +48,7 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
 
             Route::post('forgot-password', 'DMPasswordResetController@reset_password_request');
             Route::post('verify-token', 'DMPasswordResetController@verify_token');
+            Route::post('firebase-verify-token', 'DMPasswordResetController@firebase_auth_verify');
             Route::put('reset-password', 'DMPasswordResetController@reset_password_submit');
         });
         Route::group(['prefix' => 'vendor'], function () {
@@ -298,6 +307,8 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
 
     Route::group(['middleware'=>['module-check']], function(){
         Route::group(['prefix' => 'customer', 'middleware' => 'auth:api'], function () {
+            Route::post('get-data', 'CustomerController@getCustomer');
+            Route::post('external-update-data', 'CustomerController@externalUpdateCustomer')->withoutMiddleware(['auth:api','module-check']);
             Route::get('notifications', 'NotificationController@get_notifications');
             Route::get('info', 'CustomerController@info');
             Route::get('update-zone', 'CustomerController@update_zone');
@@ -340,6 +351,9 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
                 Route::get('transactions', 'WalletController@transactions');
                 Route::get('bonuses', 'WalletController@get_bonus');
                 Route::post('add-fund', 'WalletController@add_fund');
+                #handshake
+                Route::post('transfer-mart-to-drivemond', 'WalletController@transferMartToDrivemondWallet');
+                Route::post('transfer-mart-from-drivemond', 'WalletController@transferMartFromDrivemondWallet')->withoutMiddleware('auth:api');
             });
 
             Route::get('visit-again', 'OrderController@order_again');

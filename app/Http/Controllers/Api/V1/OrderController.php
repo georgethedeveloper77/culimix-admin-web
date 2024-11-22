@@ -54,6 +54,10 @@ class OrderController extends Controller
         }
         $user_id = $request?->user?->id ;
 
+        if ($request['contact_number'] && (substr($request['contact_number'], 0, 1) !== '+')) {
+            $request['contact_number'] = '+' . $request['contact_number'];
+        }
+
         $order = Order::with(['store','store.store_sub' ,'delivery_man.rating', 'parcel_category', 'refund','payments'])->withCount('details')
         ->where('id', $request['order_id'])
         ->when($request->user, function ($query) use ($user_id) {
@@ -474,7 +478,7 @@ class OrderController extends Controller
 
         $address = [
             'contact_person_name' => $request->contact_person_name ? $request->contact_person_name : ($request->user?$request->user->f_name . ' ' . $request->user->f_name:''),
-            'contact_person_number' => $request->contact_person_number ? str_replace('+', '', $request->contact_person_number) : ($request->user?$request->user->phone:''),
+            'contact_person_number' => $request->contact_person_number ? $request->contact_person_number : ($request->user?$request->user->phone:''),
 //            'contact_person_number' => $request->contact_person_number ? ($request->user ? $request->contact_person_number :str_replace('+', '', $request->contact_person_number)) : ($request->user?$request->user->phone:''),
             'contact_person_email' => $request->contact_person_email ? $request->contact_person_email : ($request->user?$request->user->email:''),
             'address_type' => $request->address_type ? $request->address_type : 'Delivery',

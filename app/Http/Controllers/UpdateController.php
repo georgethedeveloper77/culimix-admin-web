@@ -40,7 +40,7 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('BUYER_USERNAME', $request['username']);
         Helpers::setEnvironmentValue('PURCHASE_CODE', $request['purchase_key']);
         Helpers::setEnvironmentValue('APP_MODE', 'live');
-        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.9');
+        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '2.9.1');
         Helpers::setEnvironmentValue('REACT_APP_KEY', '45370351');
         Helpers::setEnvironmentValue('APP_NAME', '6amMart' . time());
 
@@ -172,9 +172,11 @@ class UpdateController extends Controller
         if(NotificationSetting::count() == 0 ){
             Helpers::notificationDataSetup();
         }
+        Helpers::updateAdminNotificationSetupDataSetup();
+
         Helpers::insert_business_settings_key('country_picker_status', '1');
 
-
+        $this->firebase_message_config_file_gen();
         $data = DataSetting::where('type', 'login_admin')->pluck('value')->first();
         return redirect('/login/'.$data);
     }
@@ -424,6 +426,60 @@ class UpdateController extends Controller
                 'mode' => 'test',
                 'is_active' => 0,
             ]);
+        }
+    }
+
+    private function firebase_message_config_file_gen()
+    {
+        $config = Helpers::get_business_settings('fcm_credentials');
+
+        $apiKey = $config['apiKey'] ?? '';
+        $authDomain = $config['authDomain'] ?? '';
+        $projectId = $config['projectId'] ?? '';
+        $storageBucket = $config['storageBucket'] ?? '';
+        $messagingSenderId = $config['messagingSenderId'] ?? '';
+        $appId = $config['appId'] ?? '';
+        $measurementId = $config['measurementId'] ?? '';
+
+        $filePath = base_path('firebase-messaging-sw.js');
+
+        try {
+            if (file_exists($filePath) && !is_writable($filePath)) {
+                if (!chmod($filePath, 0644)) {
+                    throw new \Exception('File is not writable and permission change failed: ' . $filePath);
+                }
+            }
+
+            $fileContent = <<<JS
+                importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js');
+                importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-messaging.js');
+
+                firebase.initializeApp({
+                    apiKey: "$apiKey",
+                    authDomain: "$authDomain",
+                    projectId: "$projectId",
+                    storageBucket: "$storageBucket",
+                    messagingSenderId: "$messagingSenderId",
+                    appId: "$appId",
+                    measurementId: "$measurementId"
+                });
+
+                const messaging = firebase.messaging();
+                messaging.setBackgroundMessageHandler(function (payload) {
+                    return self.registration.showNotification(payload.data.title, {
+                        body: payload.data.body ? payload.data.body : '',
+                        icon: payload.data.icon ? payload.data.icon : ''
+                    });
+                });
+                JS;
+
+
+            if (file_put_contents($filePath, $fileContent) === false) {
+                throw new \Exception('Failed to write to file: ' . $filePath);
+            }
+
+        } catch (\Exception $e) {
+            //
         }
     }
 

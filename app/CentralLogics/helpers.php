@@ -3,7 +3,6 @@
 namespace App\CentralLogics;
 
 use DateTime;
-use App\Models\Tag;
 use App\Models\Item;
 use App\Models\User;
 use App\Models\Zone;
@@ -13,7 +12,6 @@ use App\Models\Store;
 use App\Library\Payer;
 use App\Models\Module;
 use App\Models\Review;
-use App\Models\Allergy;
 use App\Models\Expense;
 use App\Traits\Payment;
 use App\Mail\PlaceOrder;
@@ -22,14 +20,11 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\DMReview;
 use App\Library\Receiver;
-use App\Models\Nutrition;
 use App\Models\DataSetting;
-use App\Models\GenericName;
 use App\Models\StoreWallet;
 use App\Models\Translation;
 use Illuminate\Support\Str;
 use PayPal\Api\Transaction;
-use App\Models\ItemCampaign;
 use App\Models\FlashSaleItem;
 use Illuminate\Support\Carbon;
 use App\Models\BusinessSetting;
@@ -39,14 +34,12 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\OrderVerificationMail;
 use App\Models\NotificationMessage;
 use App\Models\NotificationSetting;
-
 use App\Models\SubscriptionPackage;
-use App\Traits\PaymentGatewayTrait;
 use Illuminate\Support\Facades\App;
 use App\Mail\SubscriptionSuccessful;
 use Illuminate\Support\Facades\Http;
+
 use Illuminate\Support\Facades\Mail;
-use App\Models\ExternalConfiguration;
 use App\Mail\SubscriptionRenewOrShift;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
@@ -54,15 +47,15 @@ use App\Library\Payment as PaymentInfo;
 use App\Models\SubscriptionTransaction;
 use Illuminate\Support\Facades\Storage;
 use App\Models\StoreNotificationSetting;
-use App\Traits\NotificationDataSetUpTrait;
 use Illuminate\Database\Eloquent\Collection;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 use App\Models\SubscriptionBillingAndRefundHistory;
 use Laravelpkg\Laravelchk\Http\Controllers\LaravelchkController;
+use App\Traits\PaymentGatewayTrait;
 
 class Helpers
 {
-    use PaymentGatewayTrait , NotificationDataSetUpTrait;
+    use PaymentGatewayTrait;
     public static function error_processor($validator)
     {
         $err_keeper = [];
@@ -212,14 +205,6 @@ class Helpers
         $data['is_prescription_required'] =  (int) $data->pharmacy_item_details?->is_prescription_required ?? 0;
         $data['halal_tag_status'] =  (int) $data->store->storeConfig?->halal_tag_status??0;
 
-        $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
-        $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
-        $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
-
-        unset($data['nutritions']);
-        unset($data['allergies']);
-        unset($data['generic']);
-
         unset($data['pharmacy_item_details']);
         unset($data['store']);
         unset($data['rating']);
@@ -295,8 +280,8 @@ class Helpers
                 $item['rating_count'] = (int)($item->rating ? array_sum(json_decode($item->rating, true)) : 0);
                 $item['avg_rating'] = (float)($item->avg_rating ? $item->avg_rating : 0);
                 $item['recommended'] =(int) $item->recommended;
-                $item['min_delivery_time'] =  (int) explode('-',$item?->store?->delivery_time)[0] ?? 0;
-                $item['max_delivery_time'] =  (int) explode('-',$item?->store?->delivery_time)[1] ?? 0;
+                $item['min_delivery_time'] =  (int) explode('-',$item->store?->delivery_time)[0] ?? 0;
+                $item['max_delivery_time'] =  (int) explode('-',$item->store?->delivery_time)[1] ?? 0;
                 $item['common_condition_id'] =  (int) $item->pharmacy_item_details?->common_condition_id ?? 0;
                 $item['brand_id'] =  (int) $item->ecommerce_item_details?->brand_id ?? 0;
                 $item['is_basic'] =  (int) $item->pharmacy_item_details?->is_basic ?? 0;
@@ -305,13 +290,6 @@ class Helpers
 
                 $item->store['self_delivery_system'] = (int) $item->store->sub_self_delivery;
 
-                $item['nutritions_name']= $item?->nutritions ? Nutrition::whereIn('id',$item?->nutritions->pluck('id') )->pluck('nutrition') : null;
-                $item['allergies_name']= $item?->allergies ?Allergy::whereIn('id',$item?->allergies->pluck('id') )->pluck('allergy') : null;
-                $item['generic_name']= $item?->generic ? GenericName::whereIn('id',$item?->generic->pluck('id') )->pluck('generic_name'): null ;
-
-                unset($item['nutritions']);
-                unset($item['allergies']);
-                unset($item['generic']);
                 unset($item['pharmacy_item_details']);
                 unset($item['store']);
                 unset($item['rating']);
@@ -382,27 +360,14 @@ class Helpers
             $data['is_basic'] =  (int) $data->pharmacy_item_details?->is_basic ?? 0;
             $data['is_prescription_required'] =  (int) $data->pharmacy_item_details?->is_prescription_required ?? 0;
             $data['halal_tag_status'] =  (int) $data->store->storeConfig?->halal_tag_status??0;
-
-            $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
-            $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
-            $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
-
             if($temp_product == true){
-                $data['tags']=Tag::whereIn('id',json_decode($data?->tag_ids) )->get(['tag','id']);
-                $data['nutritions_data']=Nutrition::whereIn('id',json_decode($data?->nutrition_ids) )->get(['nutrition','id']);
-                $data['allergies_data']=Allergy::whereIn('id',json_decode($data?->allergy_ids) )->get(['allergy','id']);
-                $data['generic_name_data']=GenericName::whereIn('id',json_decode($data?->generic_ids) )->get(['generic_name','id']);
+                $data['tags']=\App\Models\Tag::whereIn('id',json_decode($data?->tag_ids) )->get(['tag','id']);
             }
-
             $data->store['self_delivery_system'] = (int) $data->store->sub_self_delivery;
 
             unset($data['pharmacy_item_details']);
             unset($data['store']);
             unset($data['rating']);
-            unset($data['nutritions']);
-            unset($data['allergies']);
-            unset($data['generic']);
-
         }
 
         return $data;
@@ -515,14 +480,6 @@ class Helpers
                 if (!$trans) {
                     unset($item['translations']);
                 }
-
-                $item['nutritions_name']= $item?->nutritions ? Nutrition::whereIn('id',$item?->nutritions->pluck('id') )->pluck('nutrition') : null;
-                $item['allergies_name']= $item?->allergies ?Allergy::whereIn('id',$item?->allergies->pluck('id') )->pluck('allergy') : null;
-                $item['generic_name']= $item?->generic ? GenericName::whereIn('id',$item?->generic->pluck('id') )->pluck('generic_name'): null ;
-
-                unset($item['nutritions']);
-                unset($item['allergies']);
-                unset($item['generic']);
                 unset($item['ecommerce_item_details']);
                 unset($item['pharmacy_item_details']);
                 unset($item['store']);
@@ -627,18 +584,9 @@ class Helpers
                     }
                 }
             }
-
-            $data['nutritions_name']= $data?->nutritions ? Nutrition::whereIn('id',$data?->nutritions->pluck('id') )->pluck('nutrition') : null;
-            $data['allergies_name']= $data?->allergies ?Allergy::whereIn('id',$data?->allergies->pluck('id') )->pluck('allergy') : null;
-            $data['generic_name']= $data?->generic ? GenericName::whereIn('id',$data?->generic->pluck('id') )->pluck('generic_name'): null ;
-
-
             if (!$trans) {
                 unset($data['translations']);
             }
-            unset($data['nutritions']);
-            unset($data['allergies']);
-            unset($data['generic']);
             unset($data['ecommerce_item_details']);
             unset($data['pharmacy_item_details']);
             unset($data['store']);
@@ -826,7 +774,6 @@ class Helpers
         } else {
             $data->load('storeConfig');
             $data['is_recommended'] = false;
-            $data['minimum_stock_for_warning'] =   (int) $data?->storeConfig?->minimum_stock_for_warning ?? 0;
             $data['halal_tag_status'] =   (bool) $data?->storeConfig?->halal_tag_status;
             $extra_packaging_data = \App\Models\BusinessSetting::where('key', 'extra_packaging_data')->first()?->value ?? '';
             $extra_packaging_data =json_decode($extra_packaging_data , true);
@@ -990,11 +937,11 @@ class Helpers
             $item['item_details'] = json_decode($item['item_details'], true);
             if ($item['item_id']){
                 $product = \App\Models\Item::where(['id' => $item['item_details']['id']])->first();
-                $item['image_full_url'] = $product?->image_full_url;
+                $item['image_full_url'] = $product->image_full_url;
                 $item['images_full_url'] = $product->images_full_url;
             }else{
                $product = \App\Models\ItemCampaign::where(['id' => $item['item_details']['id']])->first();
-                $item['image_full_url'] = $product?->image_full_url;
+                $item['image_full_url'] = $product->image_full_url;
                 $item['images_full_url'] = [];
             }
             array_push($storage, $item);
@@ -1077,18 +1024,6 @@ class Helpers
 
         if ($paymentmethod) {
             $config = $paymentmethod->value;
-        }
-
-        return $config;
-    }
-    public static function get_external_data($name)
-    {
-        $config = null;
-
-        $paymentmethod = ExternalConfiguration::where('key', $name)->first();
-
-        if ($paymentmethod) {
-            $config = $paymentmethod?->value;
         }
 
         return $config;
@@ -1178,7 +1113,11 @@ class Helpers
 
     public static function send_push_notif_to_device($fcm_token, $data, $web_push_link = null)
     {
-
+//        if(isset($data['message'])){
+//            $message = $data['message'];
+//        }else{
+//            $message = '';
+//        }
         if(isset($data['conversation_id'])){
             $conversation_id = $data['conversation_id'];
         }else{
@@ -1199,19 +1138,12 @@ class Helpers
         }else{
             $order_type = '';
         }
-        if(isset($data['data_id'])){
-            $data_id = $data['data_id'];
-        }else{
-            $data_id = '';
-        }
 
-        if(isset($data['advertisement_id'])){
-            $advertisement_id = $data['advertisement_id'];
-        }else{
-            $advertisement_id = '';
-        }
-
-
+//        $click_action = "";
+//        if($web_push_link){
+//            $click_action = ',
+//            "click_action": "'.$web_push_link.'"';
+//        }
         $postData = [
             'message' => [
                 "token" => $fcm_token,
@@ -1221,8 +1153,6 @@ class Helpers
                     "image" => (string)$data['image'],
                     "order_id" => (string)$data['order_id'],
                     "type" => (string)$data['type'],
-                    "data_id" => (string)$data_id,
-                    "advertisement_id" => (string)$advertisement_id,
                     "conversation_id" => (string)$conversation_id,
                     "module_id" => (string)$module_id,
                     "sender_type" => (string)$sender_type,
@@ -1474,7 +1404,7 @@ class Helpers
 
     public static function get_store_discount($store)
     {
-        if ($store?->discount) {
+        if ($store->discount) {
             if (date('Y-m-d', strtotime($store->discount->start_date)) <= now()->format('Y-m-d') && date('Y-m-d', strtotime($store->discount->end_date)) >= now()->format('Y-m-d') && date('H:i', strtotime($store->discount->start_time)) <= now()->format('H:i') && date('H:i', strtotime($store->discount->end_time)) >= now()->format('H:i')) {
                 return [
                     'discount' => $store->discount->discount,
@@ -1703,7 +1633,7 @@ class Helpers
                         'order_type' => $order->order_type,
                         'image' => '',
                     ];
-                    if($order->zone && self::getNotificationStatusData('deliveryman','deliveryman_order_notification','push_notification_status')){
+                    if($order->zone){
                         if($order->dm_vehicle_id){
 
                             $topic = 'delivery_man_'.$order->zone_id.'_'.$order->dm_vehicle_id;
@@ -1726,7 +1656,7 @@ class Helpers
                     'order_type' => 'parcel_order',
                     'image' => '',
                 ];
-                if($order->zone && self::getNotificationStatusData('deliveryman','deliveryman_order_notification','push_notification_status')){
+                if($order->zone){
                     if($order->dm_vehicle_id){
 
                         $topic = 'delivery_man_'.$order->zone_id.'_'.$order->dm_vehicle_id;
@@ -1784,7 +1714,7 @@ class Helpers
             }
 
             if ($order->order_status == 'confirmed' && $order->order_type != 'take_away' && config('order_confirmation_model') == 'deliveryman' && $order->payment_method == 'cash_on_delivery') {
-                if ($order->store->sub_self_delivery && $push_notification_status) {
+                if ($order->store->sub_self_delivery) {
                     $data = [
                         'title' => translate('Order_Notification'),
                         'description' => translate('messages.new_order_push_description'),
@@ -1828,10 +1758,10 @@ class Helpers
                     'order_type' => $order->order_type,
                     'image' => '',
                 ];
-                if ($order->store->sub_self_delivery && $push_notification_status) {
+                if ($order->store->sub_self_delivery) {
                     self::send_push_notif_to_topic($data, "restaurant_dm_" . $order->store_id, 'order_request',null);
                 } else
-                {if($order->zone && self::getNotificationStatusData('deliveryman','deliveryman_order_notification','push_notification_status')){
+                {if($order->zone){
                     if($order->dm_vehicle_id){
 
                         $topic = 'delivery_man_'.$order->zone_id.'_'.$order->dm_vehicle_id;
@@ -3492,7 +3422,6 @@ class Helpers
             'reviewer_image' => asset('public/assets/admin/img/100x100/2.jpg'),
             'fixed_header_image' => asset('/public/assets/admin/img/aspect-1.png'),
             'header_icon' => asset('/public/assets/admin/img/aspect-1.png'),
-            'available_zone_image' => asset('public/assets/admin/img/100x100/2.jpg'),
             'why_choose' => asset('/public/assets/admin/img/aspect-1.png'),
             'header_banner' => asset('/public/assets/admin/img/aspect-1.png'),
             'reviewer_company_image' => asset('public/assets/admin/img/100x100/2.jpg'),
@@ -4136,23 +4065,727 @@ class Helpers
         }
 
     public static function notificationDataSetup(){
+        $data []=[
+            'title' => 'forget_password',
+            'key' => 'forget_password',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'active',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_forget_password',
+        ];
+        $data []=[
+            'title' => 'deliveryman_self_registration',
+            'key' => 'deliveryman_self_registration',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_deliveryman_self_registration',
+        ];
+        $data []=[
+            'title' => 'store_self_registration',
+            'key' => 'store_self_registration',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_store_self_registration',
+        ];
+        $data []=[
+            'title' => 'campaign_join_request',
+            'key' => 'campaign_join_request',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_campaign_join_request',
+        ];
+        $data []=[
+            'title' => 'withdraw_request',
+            'key' => 'withdraw_request',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_withdraw_request',
+        ];
+        $data []=[
+            'title' => 'order_refund_request',
+            'key' => 'order_refund_request',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_order_refund_request',
+        ];
 
-        $data=self::getAdminNotificationSetupData();
+        $data []=[
+            'title' => 'advertisement_add',
+            'key' => 'advertisement_add',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_advertisement_add',
+        ];
+        $data []=[
+            'title' => 'advertisement_update',
+            'key' => 'advertisement_update',
+            'type' => 'admin',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_advertisement_update',
+        ];
+
+        //delivery man
+
+        $data []=[
+            'title' => 'deliveryman_registration',
+            'key' => 'deliveryman_registration',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_deliveryman_registration',
+        ];
+        $data []=[
+            'title' => 'deliveryman_registration_approval',
+            'key' => 'deliveryman_registration_approval',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_deliveryman_registration_approval',
+        ];
+        $data []=[
+            'title' => 'deliveryman_registration_deny',
+            'key' => 'deliveryman_registration_deny',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_deliveryman_registration_deny',
+        ];
+        $data []=[
+            'title' => 'deliveryman_account_block',
+            'key' => 'deliveryman_account_block',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_deliveryman_account_block',
+        ];
+        $data []=[
+            'title' => 'deliveryman_account_unblock',
+            'key' => 'deliveryman_account_unblock',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_deliveryman_account_unblock',
+        ];
+        $data []=[
+            'title' => 'deliveryman_forget_password',
+            'key' => 'deliveryman_forget_password',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'active',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_deliveryman_forget_password',
+        ];
+        $data []=[
+            'title' => 'deliveryman_collect_cash',
+            'key' => 'deliveryman_collect_cash',
+            'type' => 'deliveryman',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_deliveryman_collect_cash',
+        ];
+
+        $data []=[
+            'title' => 'deliveryman_order_notification',
+            'key' => 'deliveryman_order_notification',
+            'type' => 'deliveryman',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_order_notification_to_deliveryman',
+        ];
+        $data []=[
+            'title' => 'deliveryman_order_assign_or_unassign',
+            'key' => 'deliveryman_order_assign_unassign',
+            'type' => 'deliveryman',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_deliveryman_order_assign_or_unassign',
+        ];
+
+
+
+        // store
+
+        $data []=[
+            'title' => 'store_registration',
+            'key' => 'store_registration',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_store_registration',
+        ];
+        $data []=[
+            'title' => 'store_registration_approval',
+            'key' => 'store_registration_approval',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_store_registration_approval',
+        ];
+        $data []=[
+            'title' => 'store_registration_deny',
+            'key' => 'store_registration_deny',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_store_registration_deny',
+        ];
+        $data []=[
+            'title' => 'store_account_block',
+            'key' => 'store_account_block',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_account_block',
+        ];
+        $data []=[
+            'title' => 'store_account_unblock',
+            'key' => 'store_account_unblock',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_account_unblock',
+        ];
+        $data []=[
+            'title' => 'store_withdraw_approve',
+            'key' => 'store_withdraw_approve',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_withdraw_approve',
+        ];
+        $data []=[
+            'title' => 'store_withdraw_rejaction',
+            'key' => 'store_withdraw_rejaction',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_withdraw_rejaction',
+        ];
+        $data []=[
+            'title' => 'store_campaign_join_request',
+            'key' => 'store_campaign_join_request',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_store_campaign_join_request',
+        ];
+        $data []=[
+            'title' => 'store_campaign_join_rejaction',
+            'key' => 'store_campaign_join_rejaction',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_campaign_join_rejaction',
+        ];
+        $data []=[
+            'title' => 'store_campaign_join_approval',
+            'key' => 'store_campaign_join_approval',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_campaign_join_approval',
+        ];
+        $data []=[
+            'title' => 'store_order_notification',
+            'key' => 'store_order_notification',
+            'type' => 'store',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_order_notification',
+        ];
+
+        $data []=[
+            'title' => 'store_product_approve',
+            'key' => 'store_product_approve',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_product_approve',
+        ];
+        $data []=[
+            'title' => 'store_product_reject',
+            'key' => 'store_product_reject',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_product_reject',
+        ];
+        $data []=[
+            'title' => 'store_subscription_success',
+            'key' => 'store_subscription_success',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_subscription_success',
+        ];
+        $data []=[
+            'title' => 'store_subscription_renew',
+            'key' => 'store_subscription_renew',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_subscription_renew',
+        ];
+        $data []=[
+            'title' => 'store_subscription_shift',
+            'key' => 'store_subscription_shift',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_subscription_shift',
+        ];
+        $data []=[
+            'title' => 'store_subscription_cancel',
+            'key' => 'store_subscription_cancel',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_subscription_cancel',
+        ];
+        $data []=[
+            'title' => 'store_subscription_plan_update',
+            'key' => 'store_subscription_plan_update',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'inactive',
+            'sub_title' => 'Sent_notification_on_store_subscription_plan_update',
+        ];
+
+
+        $data []=[
+            'title' => 'store_advertisement_create_by_admin',
+            'key' => 'store_advertisement_create_by_admin',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_advertisement_create_by_admin',
+        ];
+        $data []=[
+            'title' => 'store_advertisement_approval',
+            'key' => 'store_advertisement_approval',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_advertisement_approval',
+        ];
+        $data []=[
+            'title' => 'store_advertisement_deny',
+            'key' => 'store_advertisement_deny',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_advertisement_deny',
+        ];
+        $data []=[
+            'title' => 'store_advertisement_resume',
+            'key' => 'store_advertisement_resume',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_advertisement_resume',
+        ];
+        $data []=[
+            'title' => 'store_advertisement_pause',
+            'key' => 'store_advertisement_pause',
+            'type' => 'store',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_store_advertisement_pause',
+        ];
+
+        // Customer
+        $data []=[
+            'title' => 'customer_registration',
+            'key' => 'customer_registration',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_customer_registration',
+        ];
+        $data []=[
+            'title' => 'customer_pos_registration',
+            'key' => 'customer_pos_registration',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Sent_notification_on_customer_pos_registration',
+        ];
+        $data []=[
+            'title' => 'customer_registration_otp',
+            'key' => 'customer_registration_otp',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'active',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_registration_otp',
+        ];
+        $data []=[
+            'title' => 'customer_login_otp',
+            'key' => 'customer_login_otp',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'active',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_login_otp',
+        ];
+        $data []=[
+            'title' => 'customer_forget_password',
+            'key' => 'customer_forget_password',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'active',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_forget_password',
+        ];
+
+        $data []=[
+            'title' => 'customer_order_notification',
+            'key' => 'customer_order_notification',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_order_notification',
+        ];
+
+        $data []=[
+            'title' => 'customer_delivery_verification',
+            'key' => 'customer_delivery_verification',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_delivery_verification',
+        ];
+
+        $data []=[
+            'title' => 'customer_refund_request_approval',
+            'key' => 'customer_refund_request_approval',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_refund_request_approval',
+        ];
+        $data []=[
+            'title' => 'customer_refund_request_rejaction',
+            'key' => 'customer_refund_request_rejaction',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_refund_request_rejaction',
+        ];
+        $data []=[
+            'title' => 'customer_add_fund_to_wallet',
+            'key' => 'customer_add_fund_to_wallet',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_add_fund_to_wallet',
+        ];
+        $data []=[
+            'title' => 'customer_offline_payment_approve',
+            'key' => 'customer_offline_payment_approve',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_offline_payment_approve',
+        ];
+        $data []=[
+            'title' => 'customer_offline_payment_deny',
+            'key' => 'customer_offline_payment_deny',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_offline_payment_deny',
+        ];
+        $data []=[
+            'title' => 'customer_account_block',
+            'key' => 'customer_account_block',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_account_block',
+        ];
+        $data []=[
+            'title' => 'customer_account_unblock',
+            'key' => 'customer_account_unblock',
+            'type' => 'customer',
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_account_unblock',
+        ];
+        $data []=[
+            'title' => 'customer_cashback',
+            'key' => 'customer_cashback',
+            'type' => 'customer',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_cashback',
+        ];
+        $data []=[
+            'title' => 'customer_referral_bonus_earning',
+            'key' => 'customer_referral_bonus_earning',
+            'type' => 'customer',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_referral_bonus_earning',
+        ];
+        $data []=[
+            'title' => 'customer_new_referral_join',
+            'key' => 'customer_new_referral_join',
+            'type' => 'customer',
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Sent_notification_on_customer_new_referral_join',
+        ];
+
+
         $data = NotificationSetting::upsert($data,['key','type'],['title','mail_status','sms_status','push_notification_status','sub_title']);
-        return true;
     }
     public static function storeNotificationDataSetup($id){
-        $data=self::getStoreNotificationSetupData($id);
+        $data []=[
+            'title' => 'account_block',
+            'key' => 'store_account_block',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_account_block',
+        ];
+        $data []=[
+            'title' => 'account_unblock',
+            'key' => 'store_account_unblock',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_account_unblock',
+        ];
+        $data []=[
+            'title' => 'withdraw_approve',
+            'key' => 'store_withdraw_approve',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_withdraw_approve',
+        ];
+        $data []=[
+            'title' => 'withdraw_rejaction',
+            'key' => 'store_withdraw_rejaction',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_withdraw_rejaction',
+        ];
+        $data []=[
+            'title' => 'campaign_join_request',
+            'key' => 'store_campaign_join_request',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'disable',
+            'sub_title' => 'Get_notification_on_campaign_join_request',
+        ];
+        $data []=[
+            'title' => 'campaign_join_rejaction',
+            'key' => 'store_campaign_join_rejaction',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_campaign_join_rejaction',
+        ];
+        $data []=[
+            'title' => 'campaign_join_approval',
+            'key' => 'store_campaign_join_approval',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_campaign_join_approval',
+        ];
+        $data []=[
+            'title' => 'order_notification',
+            'key' => 'store_order_notification',
+            'store_id' => $id,
+            'mail_status' => 'disable',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_order_notification',
+        ];
+
+        $data []=[
+            'title' => 'advertisement_create_by_admin',
+            'key' => 'store_advertisement_create_by_admin',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_advertisement_create_by_admin',
+        ];
+        $data []=[
+            'title' => 'advertisement_approval',
+            'key' => 'store_advertisement_approval',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_advertisement_approval',
+        ];
+        $data []=[
+            'title' => 'advertisement_deny',
+            'key' => 'store_advertisement_deny',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_advertisement_deny',
+        ];
+        $data []=[
+            'title' => 'advertisement_resume',
+            'key' => 'store_advertisement_resume',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_advertisement_resume',
+        ];
+        $data []=[
+            'title' => 'advertisement_pause',
+            'key' => 'store_advertisement_pause',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_advertisement_pause',
+        ];
+
+        $data []=[
+            'title' => 'product_approve',
+            'key' => 'store_product_approve',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_product_approve',
+        ];
+        $data []=[
+            'title' => 'product_reject',
+            'key' => 'store_product_reject',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_product_reject',
+        ];
+        $data []=[
+            'title' => 'subscription_success',
+            'key' => 'store_subscription_success',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_subscription_success',
+        ];
+        $data []=[
+            'title' => 'subscription_renew',
+            'key' => 'store_subscription_renew',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_subscription_renew',
+        ];
+        $data []=[
+            'title' => 'subscription_shift',
+            'key' => 'store_subscription_shift',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_subscription_shift',
+        ];
+        $data []=[
+            'title' => 'subscription_cancel',
+            'key' => 'store_subscription_cancel',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_subscription_cancel',
+        ];
+        $data []=[
+            'title' => 'subscription_plan_update',
+            'key' => 'store_subscription_plan_update',
+            'store_id' => $id,
+            'mail_status' => 'active',
+            'sms_status' => 'disable',
+            'push_notification_status' => 'active',
+            'sub_title' => 'Get_notification_on_subscription_plan_update',
+        ];
+
+
         $data = StoreNotificationSetting::upsert($data,['key','store_id'],['title','mail_status','sms_status','push_notification_status','sub_title']);
-        return true;
-    }
-    public static function updateAdminNotificationSetupDataSetup(){
-        self::updateAdminNotificationSetupData();
-    return true;
-    }
-    public static function addNewAdminNotificationSetupDataSetup(){
-        self::addNewAdminNotificationSetupData();
-    return true;
     }
     public static function getStoreNotificationStatusData($store_id,$key,$notification_type){
         $data= StoreNotificationSetting::where('store_id',$store_id)->where('key',$key)->select($notification_type)->first();
@@ -4287,23 +4920,5 @@ class Helpers
         }
             return 'closed';
         }
-
-    public static function checkExternalConfiguration($externalBaseUrl, $externalTokem, $martToken)
-    {
-        $activationMode = ExternalConfiguration::where('key', 'activation_mode')->first()?->value;
-        $driveMondBaseUrl = ExternalConfiguration::where('key', 'drivemond_base_url')->first()?->value;
-        $driveMondToken = ExternalConfiguration::where('key', 'drivemond_token')->first()?->value;
-        $systemSelfToken = ExternalConfiguration::where('key', 'system_self_token')->first()?->value;
-        return $activationMode == 1 && $driveMondBaseUrl == $externalBaseUrl && $driveMondToken == $externalTokem && $systemSelfToken == $martToken;
-    }
-
-    public static function checkSelfExternalConfiguration()
-    {
-        $activationMode = ExternalConfiguration::where('key', 'activation_mode')->first()?->value;
-        $driveMondBaseUrl = ExternalConfiguration::where('key', 'drivemond_base_url')->first()?->value;
-        $driveMondToken = ExternalConfiguration::where('key', 'drivemond_token')->first()?->value;
-        $systemSelfToken = ExternalConfiguration::where('key', 'system_self_token')->first()?->value;
-        return $activationMode == 1 && $driveMondBaseUrl != null && $driveMondToken != null && $systemSelfToken != null;
-    }
 }
 

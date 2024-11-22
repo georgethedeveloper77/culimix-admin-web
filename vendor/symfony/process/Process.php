@@ -80,7 +80,6 @@ class Process implements \IteratorAggregate
     private WindowsPipes|UnixPipes $processPipes;
 
     private ?int $latestSignal = null;
-    private ?int $cachedExitCode = null;
 
     private static ?bool $sigchild = null;
 
@@ -346,7 +345,7 @@ class Process implements \IteratorAggregate
 
         $process = @proc_open($commandline, $descriptors, $this->processPipes->pipes, $this->cwd, $envPairs, $this->options);
 
-        if (!$process) {
+        if (!\is_resource($process)) {
             throw new RuntimeException('Unable to launch a new process.');
         }
         $this->process = $process;
@@ -1211,7 +1210,7 @@ class Process implements \IteratorAggregate
     {
         static $isTtySupported;
 
-        return $isTtySupported ??= ('/' === \DIRECTORY_SEPARATOR && stream_isatty(\STDOUT) && @is_writable('/dev/tty'));
+        return $isTtySupported ??= ('/' === \DIRECTORY_SEPARATOR && stream_isatty(\STDOUT));
     }
 
     /**
@@ -1291,19 +1290,6 @@ class Process implements \IteratorAggregate
 
         $this->processInformation = proc_get_status($this->process);
         $running = $this->processInformation['running'];
-
-        // In PHP < 8.3, "proc_get_status" only returns the correct exit status on the first call.
-        // Subsequent calls return -1 as the process is discarded. This workaround caches the first
-        // retrieved exit status for consistent results in later calls, mimicking PHP 8.3 behavior.
-        if (\PHP_VERSION_ID < 80300) {
-            if (!isset($this->cachedExitCode) && !$running && -1 !== $this->processInformation['exitcode']) {
-                $this->cachedExitCode = $this->processInformation['exitcode'];
-            }
-
-            if (isset($this->cachedExitCode) && !$running && -1 === $this->processInformation['exitcode']) {
-                $this->processInformation['exitcode'] = $this->cachedExitCode;
-            }
-        }
 
         $this->readPipes($running && $blocking, '\\' !== \DIRECTORY_SEPARATOR || !$running);
 
@@ -1400,9 +1386,8 @@ class Process implements \IteratorAggregate
     private function close(): int
     {
         $this->processPipes->close();
-        if ($this->process) {
+        if (\is_resource($this->process)) {
             proc_close($this->process);
-            $this->process = null;
         }
         $this->exitcode = $this->processInformation['exitcode'];
         $this->status = self::STATUS_TERMINATED;

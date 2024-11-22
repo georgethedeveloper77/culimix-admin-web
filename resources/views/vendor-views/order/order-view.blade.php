@@ -8,7 +8,7 @@
 
     $tax_included =0;
     if (count($order->details) > 0) {
-        $campaign_order = isset($order?->details[0]?->item_campaign_id ) ? true : false;
+        $campaign_order = $order->details[0]->campaign ? true : false;
     }
     $max_processing_time = explode('-', $order['store']['delivery_time'])[0];
     ?>
@@ -310,7 +310,7 @@
                                                         <a class="avatar avatar-xl mr-3"
                                                             href="{{ route('vendor.item.view', $detail->item['id']) }}">
                                                             <img class="img-fluid rounded onerror-image"
-                                                            src="{{ $product->image_full_url  ?? asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                            src="{{ $product->image_full_url }}"
                                                                  data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                                                 alt="Image Description">
                                                         </a>
@@ -421,7 +421,7 @@
                                                     <div class="media media--sm">
                                                         <div class="avatar avatar-xl mr-3">
                                                             <img class="img-fluid onerror-image"
-                                                            src="{{$campaign?->image_full_url ?? asset('public/assets/admin/img/160x160/img2.jpg') }}"
+                                                            src="{{$campaign['image_full_url']}}"
 
                                                                  data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                                                 alt="Image Description">
@@ -1081,11 +1081,9 @@
                                 @if ($proof)
 
                                 @foreach ($proof as $key => $photo)
-                                @php($photo = is_array($photo)?$photo:['img'=>$photo,'storage'=>'public'])
-
                                             <div class="spartan_item_wrapper min-w-176px max-w-176px">
                                                 <img class="img--square"
-                                                    src="{{\App\CentralLogics\Helpers::get_full_url('order',$photo['img'],$photo['storage']) }}"
+                                                    src="{{ asset("storage/app/public/order/$photo") }}"
                                                     alt="order image">
 
                                                 <div class="pen spartan_remove_row"><i class="tio-edit"></i></div>

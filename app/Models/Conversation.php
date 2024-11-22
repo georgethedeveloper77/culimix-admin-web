@@ -48,11 +48,7 @@ class Conversation extends Model
         'sender_id' => 'integer',
         'receiver_id' => 'integer',
         'last_message_id' => 'integer',
-        'unread_message_count' => 'integer',
-        'order_id' => 'integer',
-        'details_count' => 'integer',
-        'order_amount' => 'float',
-
+        'unread_message_count' => 'integer'
     ];
 
     /**

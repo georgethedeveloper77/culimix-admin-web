@@ -136,8 +136,6 @@ class ConversationController extends Controller
         $message->conversation_id = $conversation->id;
         $message->sender_id = $sender->id;
         $message->message = $request->message;
-        $message->order_id = $request?->order_id ?? null;
-
         if($image_name && count($image_name)>0){
             $message->file = json_encode($image_name, JSON_UNESCAPED_SLASHES);
         }
@@ -181,17 +179,7 @@ class ConversationController extends Controller
             info($e->getMessage());
         }
 
-        $messages = Message::where(['conversation_id' => $conversation->id])->with('order')->latest()->paginate($limit, ['*'], 'page', $offset);
-        $messages->getCollection()->transform(function ($message) {
-            if ($message->order) {
-                $message->order->delivery_address = gettype($message->order->delivery_address) == 'string' ? json_decode($message->order->delivery_address,true): $message->order->delivery_address;
-                $message->order->id = (int) $message->order->id;
-                $message->order->order_amount = (float) $message->order->order_amount;
-                $message->order->details_count = (int) $message->order->details_count;
-                }
-
-            return $message;
-        });
+        $messages = Message::where(['conversation_id' => $conversation->id])->latest()->paginate($limit, ['*'], 'page', $offset);
 
         $conv = Conversation::with('sender','receiver','last_message')->find($conversation->id);
 
@@ -416,17 +404,7 @@ class ConversationController extends Controller
                 $conversation->save();
             }
             Message::where(['conversation_id' => $conversation->id])->where('sender_id','!=',$user->id)->update(['is_seen' => 1]);
-            $messages = Message::where(['conversation_id' => $conversation->id])->with('order')->latest()->paginate($limit, ['*'], 'page', $offset);
-            $messages->getCollection()->transform(function ($message) {
-                if ($message->order) {
-                    $message->order->delivery_address = gettype($message->order->delivery_address) == 'string' ? json_decode($message->order->delivery_address,true): $message->order->delivery_address;
-                    $message->order->id = (int) $message->order->id;
-                    $message->order->order_amount = (float) $message->order->order_amount;
-                    $message->order->details_count = (int) $message->order->details_count;
-                    }
-
-                return $message;
-            });
+            $messages = Message::where(['conversation_id' => $conversation->id])->latest()->paginate($limit, ['*'], 'page', $offset);
         }else{
             $messages =[];
             $order=0;

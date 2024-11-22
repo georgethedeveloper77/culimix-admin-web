@@ -19,7 +19,7 @@ class OtherBannerController extends Controller
 
         $banners=ModuleWiseBanner::Active()->where('module_id', $module_id)->where('type','promotional_banner')->get();
 
-        $bannerData = null;
+        $bannerData = [];
 
         if($module->module_type == 'parcel'){
             $bannerData['banners'] = $banners;

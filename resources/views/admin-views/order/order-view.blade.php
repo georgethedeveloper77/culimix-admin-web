@@ -5,7 +5,7 @@
 @section('content')
     <?php
     $deliverman_tips = 0;
-    $campaign_order = isset($order?->details[0]?->item_campaign_id )  ? true : false;
+    $campaign_order = isset($order->details[0]->campaign) ? true : false;
     $reasons=\App\Models\OrderCancelReason::where('status', 1)->where('user_type' ,'admin' )->get();
     $parcel_order = $order->order_type == 'parcel' ? true : false;
     $tax_included =0;
@@ -152,7 +152,7 @@
                             <div class="btn--container ml-auto align-items-center justify-content-end">
 
                                 @if (  !$parcel_order &&  !$editing && in_array($order->order_status, ['pending', 'confirmed', 'processing', 'accepted']) &&
-                                        isset($order->store) && !$campaign_order &&
+                                        isset($order->store) &&
                                         $order->prescription_order == 0 && count($order?->payments) == 0 && $order?->ref_bonus_amount == 0 && $order?->flash_admin_discount_amount == 0 && ($order->payment_method == 'cash_on_delivery'))
                                     <button class="btn btn-sm btn--danger btn-outline-danger font-regular edit-order" type="button">
                                         <i class="tio-edit"></i> {{ translate('messages.edit') }}
@@ -504,8 +504,8 @@
                                                 <?php
                                                 if (!$editing) {
                                                     $detail->item = json_decode($detail->item_details, true);
-                                                }
                                                     $product = \App\Models\Item::where(['id' => $detail->item['id']])->first();
+                                                }
                                                 ?>
 
                                                 <tr>
@@ -641,8 +641,8 @@
                                                 <?php
                                                 if (!$editing) {
                                                     $detail->campaign = json_decode($detail->item_details, true);
-                                                }
                                                     $campaign = \App\Models\ItemCampaign::where(['id' => $detail->campaign['id']])->first();
+                                                }
                                                 ?>
                                                 <tr>
                                                     <td>
@@ -661,7 +661,7 @@
                                                                         class="avatar-status avatar-lg-status avatar-status-dark"><i
                                                                             class="tio-edit"></i></span>
                                                                     <img class="img-fluid rounded onerror-image"
-                                                                        src="{{ $campaign?->image_full_url ?? asset('public/assets/admin/img/900x400/img1.jpg') }}"
+                                                                        src="{{ $campaign['image_full_url'] }}"
                                                                         data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                                                         alt="Image Description">
                                                                 </div>
@@ -669,7 +669,7 @@
                                                                 <a class="avatar avatar-xl mr-3"
                                                                     href="{{ route('admin.campaign.view', ['item', $detail->campaign['id']]) }}">
                                                                     <img class="img-fluid rounded onerror-image"
-                                                                        src="{{ $campaign?->image_full_url ?? asset('public/assets/admin/img/900x400/img1.jpg') }}"
+                                                                        src="{{ $campaign['image_full_url'] }}"
                                                                         data-onerror-image="{{ asset('public/assets/admin/img/160x160/img2.jpg') }}"
                                                                         alt="Image Description">
                                                                 </a>
@@ -1357,18 +1357,6 @@
                                     </span>
                                 </div>
                             </a>
-
-
-                        @elseif($order->is_guest)
-                            <span class="badge badge-soft-success py-2 d-block qcont">
-                                {{ translate('Guest_user') }}
-                            </span>
-
-                        @else
-                            <span class="badge badge-soft-danger py-2 d-block qcont">
-                                {{ translate('Customer Not found!') }}
-                            </span>
-                        @endif
                             @if ($order->receiver_details)
                                 @php($receiver_details = $order->receiver_details)
                                 <h5 class="card-title mt-3">
@@ -1383,28 +1371,28 @@
                                         <span class="info">{{ $receiver_details['contact_person_name'] }}</span>
                                         <span class="name">{{ translate('messages.contact') }}</span>
                                         <a class="deco-none info d-flex"
-                                           href="tel:{{ $receiver_details['contact_person_number'] }}">
+                                            href="tel:{{ $receiver_details['contact_person_number'] }}">
                                             {{ $receiver_details['contact_person_number'] }}</a>
 
                                                 @if (data_get($receiver_details,'floor') != '')
-                                            <span class="name">{{ translate('Floor') }}</span> <span
+                                                <span class="name">{{ translate('Floor') }}</span> <span
                                                 class="info">{{ data_get($receiver_details,'floor', translate('messages.N/A'))  }}</span>
-                                        @endif
-                                        @if ( data_get($receiver_details,'house') != '')
-                                            <span class="name">{{ translate('House') }}</span> <span
+                                                @endif
+                                                @if ( data_get($receiver_details,'house') != '')
+                                                <span class="name">{{ translate('House') }}</span> <span
                                                 class="info">{{data_get($receiver_details,'house', translate('messages.N/A')) }}</span>
-                                        @endif
-                                        @if ( data_get($receiver_details,'road') != '')
-                                            <span class="name">{{ translate('Road') }}</span> <span
+                                                @endif
+                                                @if ( data_get($receiver_details,'road') != '')
+                                                <span class="name">{{ translate('Road') }}</span> <span
                                                 class="info">{{ data_get($receiver_details,'road', translate('messages.N/A')) }}</span>
-                                        @endif
+                                                @endif
 
                                         <hr class="w-100">
 
                                         @if (isset($receiver_details['address']))
                                             @if (isset($receiver_details['latitude']) && isset($receiver_details['longitude']))
                                                 <a class="mt-2 d-flex" target="_blank"
-                                                   href="http://maps.google.com/maps?z=12&t=m&q=loc:{{ $receiver_details['latitude'] }}+{{ $receiver_details['longitude'] }}">
+                                                    href="http://maps.google.com/maps?z=12&t=m&q=loc:{{ $receiver_details['latitude'] }}+{{ $receiver_details['longitude'] }}">
                                                     <i class="tio-poi"></i>{{ $receiver_details['address'] }}
                                                 </a>
                                             @else
@@ -1414,6 +1402,17 @@
                                     </span>
                                 @endif
                             @endif
+
+                        @elseif($order->is_guest)
+                            <span class="badge badge-soft-success py-2 d-block qcont">
+                                {{ translate('Guest_user') }}
+                            </span>
+
+                        @else
+                            <span class="badge badge-soft-danger py-2 d-block qcont">
+                                {{ translate('Customer Not found!') }}
+                            </span>
+                        @endif
 
                         @if ($order->delivery_address)
                             @php($address = json_decode($order->delivery_address, true))

@@ -900,7 +900,8 @@ class VendorController extends Controller
 
     public function discountSetup(Store $store, Request $request)
     {
-        $message = $store->discount?translate('messages.discount_updated_successfully'):translate('messages.discount_added_successfully');
+        $message=translate('messages.discount');
+        $message .= $store->discount?translate('messages.updated_successfully'):translate('messages.added_successfully');
         $store->discount()->updateOrinsert(
         [
             'store_id' => $store->id
@@ -1043,11 +1044,11 @@ class VendorController extends Controller
         $store->save();
         try{
             if($request->status==1){
-                if ( config('mail.status') && Helpers::get_mail_status('approve_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration_approval','mail_status')) {
+                if ( config('mail.status') && Helpers::get_mail_status('approve_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration_approval','mail_status',$store?->id)) {
                     Mail::to($store?->vendor?->email)->send(new \App\Mail\VendorSelfRegistration('approved', $store->vendor->f_name.' '.$store->vendor->l_name));
                 }
             }else{
-                if ( config('mail.status') &&  Helpers::get_mail_status('deny_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration_deny','mail_status')) {
+                if ( config('mail.status') &&  Helpers::get_mail_status('deny_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration_deny','mail_status',$store?->id)) {
                     Mail::to($store?->vendor?->email)->send(new \App\Mail\VendorSelfRegistration('denied', $store->vendor->f_name.' '.$store->vendor->l_name));
                 }
             }

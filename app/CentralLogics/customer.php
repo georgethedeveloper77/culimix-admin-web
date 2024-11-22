@@ -83,7 +83,7 @@ class CustomerLogic
     {
         $settings = array_column(BusinessSetting::whereIn('key', ['loyalty_point_status', 'loyalty_point_exchange_rate', 'loyalty_point_item_purchase_point'])->get()->toArray(), 'value', 'key');
         if ($settings['loyalty_point_status'] != 1) {
-            return false;
+            return true;
         }
 
         $credit = 0;
@@ -115,7 +115,7 @@ class CustomerLogic
             $user->save();
             $loyalty_point_transaction->save();
             DB::commit();
-            return $credit ?? true;
+            return true;
         } catch (\Exception $ex) {
             info($ex->getMessage());
             DB::rollback();

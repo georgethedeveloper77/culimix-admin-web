@@ -5,14 +5,13 @@ namespace Maatwebsite\Excel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\Macroable;
 use Maatwebsite\Excel\Files\Filesystem;
 use Maatwebsite\Excel\Files\TemporaryFile;
 use Maatwebsite\Excel\Helpers\FileTypeDetector;
 
 class Excel implements Exporter, Importer
 {
-    use Macroable, RegistersCustomConcerns;
+    use RegistersCustomConcerns;
 
     const XLSX     = 'Xlsx';
 
@@ -81,12 +80,6 @@ class Excel implements Exporter, Importer
      */
     public function download($export, string $fileName, string $writerType = null, array $headers = [])
     {
-        // Clear output buffer to prevent stuff being prepended to the Excel output.
-        if (ob_get_length() > 0) {
-            ob_end_clean();
-            ob_start();
-        }
-
         return response()->download(
             $this->export($export, $fileName, $writerType)->getLocalPath(),
             $fileName,

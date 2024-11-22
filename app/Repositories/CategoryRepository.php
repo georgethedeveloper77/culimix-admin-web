@@ -54,14 +54,12 @@ class CategoryRepository implements CategoryRepositoryInterface
 
         foreach ($chunkCategories as $key => $chunkCategory) {
 //            DB::table('categories')->upsert($chunkCategory, ['id', 'module_id'], ['name', 'image', 'parent_id', 'position', 'priority', 'status']);
-            foreach ($chunkCategory as $category) {
-                if (isset($category['id']) && DB::table('categories')->where('id', $category['id'])->exists()) {
-                    DB::table('categories')->where('id', $category['id'])->update($category);
-                    Helpers::updateStorageTable(get_class(new Category), $category['id'], $category['image']);
-                } else {
-                    $insertedId = DB::table('categories')->insertGetId($category);
-                    Helpers::updateStorageTable(get_class(new Category), $insertedId, $category['image']);
-                }
+            if (isset($category['id']) && DB::table('categories')->where('id', $category['id'])->exists()) {
+                DB::table('categories')->where('id', $category['id'])->update($category);
+                Helpers::updateStorageTable(get_class(new Category), $category['id'], $category['image']);
+            } else {
+                $insertedId = DB::table('categories')->insertGetId($category);
+                Helpers::updateStorageTable(get_class(new Category), $insertedId, $category['image']);
             }
         }
     }

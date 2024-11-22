@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\OrderPayment;
+use App\Models\ParcelDeliveryInstruction;
+use Illuminate\Validation\Rules\Password;
+use Stripe\Product;
 use App\Models\Cart;
 use App\Models\Item;
-use App\Models\User;
 use App\Models\Zone;
 use App\Models\Admin;
 use App\Models\Order;
@@ -16,15 +19,12 @@ use App\Models\DMVehicle;
 use App\Mail\RefundRequest;
 use App\Models\OrderDetail;
 use App\Models\ItemCampaign;
-use App\Models\OrderPayment;
 use App\Models\RefundReason;
 use Illuminate\Http\Request;
 use App\CentralLogics\Helpers;
 use App\Models\ParcelCategory;
 use App\Models\BusinessSetting;
-use App\Models\CashBackHistory;
 use App\Models\OfflinePayments;
-use App\Models\AutomatedMessage;
 use App\CentralLogics\OrderLogic;
 use App\Models\OrderCancelReason;
 use App\CentralLogics\CouponLogic;
@@ -33,11 +33,11 @@ use App\CentralLogics\ProductLogic;
 use App\Mail\OrderVerificationMail;
 use App\CentralLogics\CustomerLogic;
 use App\Http\Controllers\Controller;
+use App\Models\CashBackHistory;
 use App\Models\OfflinePaymentMethod;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
-use App\Models\ParcelDeliveryInstruction;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class OrderController extends Controller
@@ -53,10 +53,6 @@ class OrderController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
         $user_id = $request?->user?->id ;
-
-        if ($request['contact_number'] && (substr($request['contact_number'], 0, 1) !== '+')) {
-            $request['contact_number'] = '+' . $request['contact_number'];
-        }
 
         $order = Order::with(['store','store.store_sub' ,'delivery_man.rating', 'parcel_category', 'refund','payments'])->withCount('details')
         ->where('id', $request['order_id'])
@@ -143,7 +139,6 @@ class OrderController extends Controller
             $user->phone = $request->contact_person_number;
             $user->password = bcrypt($request->password);
             $user->ref_code = Helpers::generate_referer_code($user);
-            $user->login_medium = 'manual';
             $user->save();
 
             try
@@ -479,7 +474,7 @@ class OrderController extends Controller
 
         $address = [
             'contact_person_name' => $request->contact_person_name ? $request->contact_person_name : ($request->user?$request->user->f_name . ' ' . $request->user->f_name:''),
-            'contact_person_number' => $request->contact_person_number ? $request->contact_person_number : ($request->user?$request->user->phone:''),
+            'contact_person_number' => $request->contact_person_number ? str_replace('+', '', $request->contact_person_number) : ($request->user?$request->user->phone:''),
 //            'contact_person_number' => $request->contact_person_number ? ($request->user ? $request->contact_person_number :str_replace('+', '', $request->contact_person_number)) : ($request->user?$request->user->phone:''),
             'contact_person_email' => $request->contact_person_email ? $request->contact_person_email : ($request->user?$request->user->email:''),
             'address_type' => $request->address_type ? $request->address_type : 'Delivery',
@@ -1625,7 +1620,7 @@ class OrderController extends Controller
         })
             ->when($request->user, function ($query) use ($user_id) {
                 return $query->where('user_id', $user_id);
-            })->findOrFail($request->order_id);
+            })->find($request->order_id);
 
         $details = isset($order->details) ? $order->details : null;
         if ($details != null && $details->count() > 0) {
@@ -2085,23 +2080,5 @@ class OrderController extends Controller
             ]);
         }
         return true;
-    }
-
-
-    public function automatedMessage(Request $request)
-    {
-        $limit = $request->query('limit', 25);
-        $offset = $request->query('offset', 1);
-        $messages = AutomatedMessage::orderBy('id', 'desc')->where('status',1)->select(['id','message'])
-        ->paginate($limit, ['*'], 'page', $offset);
-        $messages->makeHidden(['translations']);
-        $data = [
-            'total_size' => $messages->total(),
-            'limit' => $limit,
-            'offset' => $offset,
-            'data' => $messages->items()
-        ];
-
-        return response()->json($data, 200);
     }
 }

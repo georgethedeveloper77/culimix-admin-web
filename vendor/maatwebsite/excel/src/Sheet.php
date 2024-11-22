@@ -5,7 +5,6 @@ namespace Maatwebsite\Excel;
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\LazyCollection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromGenerator;
@@ -516,13 +515,7 @@ class Sheet
      */
     public function fromIterator(FromIterator $sheetExport)
     {
-        $iterator = class_exists(LazyCollection::class) ? new LazyCollection(function () use ($sheetExport) {
-            foreach ($sheetExport->iterator() as $row) {
-                yield $row;
-            }
-        }) : $sheetExport->iterator();
-
-        $this->appendRows($iterator, $sheetExport);
+        $this->appendRows($sheetExport->iterator(), $sheetExport);
     }
 
     /**
@@ -530,13 +523,7 @@ class Sheet
      */
     public function fromGenerator(FromGenerator $sheetExport)
     {
-        $generator = class_exists(LazyCollection::class) ? new LazyCollection(function () use ($sheetExport) {
-            foreach ($sheetExport->generator() as $row) {
-                yield $row;
-            }
-        }) : $sheetExport->generator();
-
-        $this->appendRows($generator, $sheetExport);
+        $this->appendRows($sheetExport->generator(), $sheetExport);
     }
 
     /**
@@ -653,9 +640,7 @@ class Sheet
             $rows = $sheetExport->prepareRows($rows);
         }
 
-        $rows = $rows instanceof LazyCollection ? $rows : new Collection($rows);
-
-        $rows->flatMap(function ($row) use ($sheetExport) {
+        $rows = (new Collection($rows))->flatMap(function ($row) use ($sheetExport) {
             if ($sheetExport instanceof WithMapping) {
                 $row = $sheetExport->map($row);
             }
@@ -667,13 +652,13 @@ class Sheet
             return ArrayHelper::ensureMultipleRows(
                 static::mapArraybleRow($row)
             );
-        })->chunk(1000)->each(function ($rows) use ($sheetExport) {
-            $this->append(
-                $rows->toArray(),
-                $sheetExport instanceof WithCustomStartCell ? $sheetExport->startCell() : null,
-                $this->hasStrictNullComparison($sheetExport)
-            );
-        });
+        })->toArray();
+
+        $this->append(
+            $rows,
+            $sheetExport instanceof WithCustomStartCell ? $sheetExport->startCell() : null,
+            $this->hasStrictNullComparison($sheetExport)
+        );
     }
 
     /**

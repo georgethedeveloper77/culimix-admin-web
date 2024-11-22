@@ -219,11 +219,8 @@ class DeliverymanController extends Controller
         }
         else
         {
-            $orders = $orders->where(function ($query) {
-                return $query->whereIn('order_status', ['confirmed', 'processing', 'handover'])
-                    ->orWhere(function ($subQuery) {
-                        return  $subQuery->where('order_type', 'parcel')->whereIn('order_status', ['confirmed', 'processing', 'handover']);
-                    });
+            $orders = $orders->where(function($query){
+                $query->whereIn('order_status', ['confirmed','processing','handover'])->orWhere('order_type','parcel');
             });
         }
         if(isset($dm->vehicle_id )){
@@ -613,7 +610,7 @@ class DeliverymanController extends Controller
             return response()->json($details, 200);
         }
         else if ($order->order_type == 'parcel' ) {
-            $order->delivery_address = $order->delivery_address?json_decode($order->delivery_address, true):[];
+            $order->delivery_address = json_decode($order->delivery_address, true);
             return response()->json(($order), 200);
         }
         elseif($order->prescription_order == 1){

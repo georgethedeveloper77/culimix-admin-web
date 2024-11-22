@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
+use App\CentralLogics\Helpers;
 use App\Scopes\ZoneScope;
 use App\Scopes\StoreScope;
-use Illuminate\Support\Str;
-use App\Traits\ReportFilter;
-use App\CentralLogics\Helpers;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Item extends Model
 {
-    use HasFactory , ReportFilter;
+    use HasFactory;
     protected $guarded = ['id'];
     protected $casts = [
         'tax' => 'float',
@@ -185,11 +184,7 @@ class Item extends Model
     }
     public function getImagesFullUrlAttribute(){
         $images = [];
-        $value = is_array($this->images)
-            ? $this->images
-            : ($this->images && is_string($this->images) && $this->isValidJson($this->images)
-                ? json_decode($this->images, true)
-                : []);
+        $value = is_array($this->images)?$this->images:json_decode($this->images,true);
         if ($value){
             foreach ($value as $item){
                 $item = is_array($item)?$item:(is_object($item) && get_class($item) == 'stdClass' ? json_decode(json_encode($item), true):['img' => $item, 'storage' => 'public']);
@@ -199,13 +194,6 @@ class Item extends Model
 
         return $images;
     }
-
-    private function isValidJson($string)
-    {
-        json_decode($string);
-        return (json_last_error() === JSON_ERROR_NONE);
-    }
-
 
     public function store()
     {
@@ -264,28 +252,9 @@ class Item extends Model
         return $query;
     }
 
-    public function scopeAvailable($query,$time)
-    {
-        $query->where(function($q)use($time){
-            $q->where('available_time_starts','<=',$time)->where('available_time_ends','>=',$time);
-        });
-    }
-
     public function tags()
     {
         return $this->belongsToMany(Tag::class);
-    }
-    public function allergies()
-    {
-        return $this->belongsToMany(Allergy::class);
-    }
-    public function generic()
-    {
-        return $this->belongsToMany(GenericName::class,'item_generic_names');
-    }
-    public function nutritions()
-    {
-        return $this->belongsToMany(Nutrition::class);
     }
     public function storage()
     {

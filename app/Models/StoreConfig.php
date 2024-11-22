@@ -21,7 +21,6 @@ class StoreConfig extends Model
 
     protected $casts = [
         'store_id' => 'integer',
-        'minimum_stock_for_warning' => 'integer',
         'is_recommended' => 'boolean',
         'is_recommended_deleted' => 'boolean',
         'halal_tag_status' => 'boolean',

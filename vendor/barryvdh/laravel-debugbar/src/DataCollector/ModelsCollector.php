@@ -9,7 +9,6 @@ use Illuminate\Contracts\Events\Dispatcher;
 
 /**
  * Collector for Models.
- * @deprecated in favor of \DebugBar\DataCollector\ObjectCountCollector
  */
 class ModelsCollector extends DataCollector implements DataCollectorInterface, Renderable
 {

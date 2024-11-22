@@ -24,20 +24,7 @@ class OpenHandlerController extends BaseController
             return call_user_func($open, [$request]);
         }
 
-        if (is_string($open) && class_exists($open)) {
-            return method_exists($open, 'resolve') ? $open::resolve($request) : false;
-        }
-
-        if (is_bool($open)) {
-            return $open;
-        }
-
-        // Allow localhost request when not explicitly allowed/disallowed
-        if (in_array($request->ip(), ['127.0.0.1', '::1'], true)) {
-            return true;
-        }
-
-        return false;
+        return $open;
     }
 
     public function handle(Request $request)

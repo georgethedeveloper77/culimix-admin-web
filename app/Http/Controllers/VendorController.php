@@ -59,14 +59,12 @@ class VendorController extends Controller
                 'g-recaptcha-response' => [
                     function ($attribute, $value, $fail) {
                         $secret_key = Helpers::get_business_settings('recaptcha')['secret_key'];
-                        $gResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                            'secret' => $secret_key,
-                            'response' => $value,
-                            'remoteip' => \request()->ip(),
-                        ]);
-
-                        if (!$gResponse->successful()) {
-                            $fail(translate('ReCaptcha Failed'));
+                        $response = $value;
+                        $url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . $secret_key . '&response=' . $response;
+                        $response = Http::get($url);
+                        $response = $response->json();
+                        if (!isset($response['success']) || !$response['success']) {
+                            $fail(translate('messages.ReCAPTCHA Failed'));
                         }
                     },
                 ],
@@ -160,7 +158,7 @@ class VendorController extends Controller
 
         try{
             $admin= Admin::where('role_id', 1)->first();
-            if(config('mail.status') && Helpers::get_mail_status('registration_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration','mail_status') ){
+            if(config('mail.status') && Helpers::get_mail_status('registration_mail_status_store') == '1' &&  Helpers::getNotificationStatusData('store','store_registration','mail_status',$store->id) ){
                 Mail::to($request['email'])->send(new \App\Mail\VendorSelfRegistration('pending', $vendor->f_name.' '.$vendor->l_name));
             }
             if(config('mail.status') && Helpers::get_mail_status('store_registration_mail_status_admin') == '1' &&  Helpers::getNotificationStatusData('admin','store_self_registration','mail_status') ){

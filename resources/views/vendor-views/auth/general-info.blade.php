@@ -374,7 +374,8 @@
                                         <div class="col-md-6 col-lg-4">
                                             @php($recaptcha = \App\CentralLogics\Helpers::get_business_settings('recaptcha'))
                                             @if(isset($recaptcha) && $recaptcha['status'] == 1)
-                                                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+                                            <div id="recaptcha_element" class="w-100" data-type="image"></div>
+                                            <br />
                                             @else
                                             <div class="row g-3">
                                                 <div class="col-6">
@@ -663,9 +664,7 @@
                 </script>
             @endif
 
-        @if(isset($recaptcha) && $recaptcha['status'] == 1)
-            <script src="https://www.google.com/recaptcha/api.js?render={{$recaptcha['site_key']}}"></script>
-        @endif
+
 <script>
         $(document).on('keyup', 'input[name="password"]', function () {
             const password = $(this).val();
@@ -769,17 +768,6 @@
                         $(window).scrollTop(0);
                     }
                 });
-                @if(isset($recaptcha) && $recaptcha['status'] == 1)
-                if (typeof grecaptcha === 'undefined') {
-                    toastr.error('Invalid recaptcha key provided. Please check the recaptcha configuration.');
-                    return;
-                }
-                grecaptcha.ready(function () {
-                    grecaptcha.execute('{{$recaptcha['site_key']}}', {action: 'submit'}).then(function (token) {
-                        $('#g-recaptcha-response').value = token;
-                    });
-                });
-                @endif
             })
 
             $('#back-to-form').on('click', function(){

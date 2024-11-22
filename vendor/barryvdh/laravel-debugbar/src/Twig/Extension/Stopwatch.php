@@ -2,15 +2,14 @@
 
 namespace Barryvdh\Debugbar\Twig\Extension;
 
-use DebugBar\Bridge\Twig\MeasureTwigExtension;
-use DebugBar\Bridge\Twig\MeasureTwigTokenParser;
+use Barryvdh\Debugbar\Twig\TokenParser\StopwatchTokenParser;
 use Illuminate\Foundation\Application;
 
 /**
- * Access debugbar time measures in your Twig templates.
+ * Access Laravels auth class in your Twig templates.
  * Based on Symfony\Bridge\Twig\Extension\StopwatchExtension
  */
-class Stopwatch extends MeasureTwigExtension
+class Stopwatch extends Extension
 {
     /**
      * @var \Barryvdh\Debugbar\LaravelDebugbar
@@ -18,7 +17,7 @@ class Stopwatch extends MeasureTwigExtension
     protected $debugbar;
 
     /**
-     * Create a new time measure extension.
+     * Create a new auth extension.
      *
      * @param \Illuminate\Foundation\Application $app
      */
@@ -26,44 +25,33 @@ class Stopwatch extends MeasureTwigExtension
     {
         if ($app->bound('debugbar')) {
             $this->debugbar = $app['debugbar'];
+        } else {
+            $this->debugbar = null;
         }
-
-        parent::__construct(null, 'stopwatch');
     }
 
-
-    public function getDebugbar()
+    /**
+     * {@inheritDoc}
+     */
+    public function getName()
     {
-        return $this->debugbar;
+        return 'stopwatch';
     }
 
     public function getTokenParsers()
     {
         return [
             /*
-             * {% measure foo %}
+             * {% stopwatch foo %}
              * Some stuff which will be recorded on the timeline
-             * {% endmeasure %}
+             * {% endstopwatch %}
              */
-            new MeasureTwigTokenParser(!is_null($this->debugbar), $this->tagName, $this->getName()),
+            new StopwatchTokenParser($this->debugbar !== null),
         ];
     }
 
-    public function startMeasure(...$arg)
+    public function getDebugbar()
     {
-        if (!$this->debugbar || !$this->debugbar->hasCollector('time')) {
-            return;
-        }
-
-        $this->debugbar->getCollector('time')->startMeasure(...$arg);
-    }
-
-    public function stopMeasure(...$arg)
-    {
-        if (!$this->debugbar || !$this->debugbar->hasCollector('time')) {
-            return;
-        }
-
-        $this->debugbar->getCollector('time')->stopMeasure(...$arg);
+        return $this->debugbar;
     }
 }

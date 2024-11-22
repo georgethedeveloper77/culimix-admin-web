@@ -25,9 +25,6 @@ class MultiAuthCollector extends DataCollector implements Renderable
     /** @var bool */
     protected $showName = false;
 
-    /** @var bool */
-    protected $showGuardsData = true;
-
     /**
      * @param \Illuminate\Auth\AuthManager $auth
      * @param array $guards
@@ -45,15 +42,6 @@ class MultiAuthCollector extends DataCollector implements Renderable
     public function setShowName($showName)
     {
         $this->showName = (bool) $showName;
-    }
-
-    /**
-     * Set to hide the guards tab, and show only name
-     * @param bool $showGuardsData
-     */
-    public function setShowGuardsData($showGuardsData)
-    {
-        $this->showGuardsData = (bool) $showGuardsData;
     }
 
     /**
@@ -91,9 +79,6 @@ class MultiAuthCollector extends DataCollector implements Renderable
         }
 
         $data['names'] = rtrim($names, ', ');
-        if (!$this->showGuardsData) {
-            unset($data['guards']);
-        }
 
         return $data;
     }
@@ -102,6 +87,11 @@ class MultiAuthCollector extends DataCollector implements Renderable
     {
         if (method_exists($guard, 'hasUser')) {
             return $guard->hasUser();
+        }
+
+        // For Laravel 5.5
+        if (method_exists($guard, 'alreadyAuthenticated')) {
+            return $guard->alreadyAuthenticated();
         }
 
         return false;
@@ -123,16 +113,14 @@ class MultiAuthCollector extends DataCollector implements Renderable
         }
 
         // The default auth identifer is the ID number, which isn't all that
-        // useful. Try username, email and name.
-        $identifier = $user instanceof Authenticatable ? $user->getAuthIdentifier() : $user->getKey();
-        if (is_numeric($identifier) || Str::isUuid($identifier) || Str::isUlid($identifier)) {
+        // useful. Try username and email.
+        $identifier = $user instanceof Authenticatable ? $user->getAuthIdentifier() : $user->id;
+        if (is_numeric($identifier)) {
             try {
                 if (isset($user->username)) {
                     $identifier = $user->username;
                 } elseif (isset($user->email)) {
                     $identifier = $user->email;
-                } elseif (isset($user->name)) {
-                    $identifier = Str::limit($user->name, 24);
                 }
             } catch (\Throwable $e) {
             }
@@ -157,16 +145,14 @@ class MultiAuthCollector extends DataCollector implements Renderable
      */
     public function getWidgets()
     {
-        $widgets = [];
-
-        if ($this->showGuardsData) {
-            $widgets["auth"] = [
+        $widgets = [
+            "auth" => [
                 "icon" => "lock",
                 "widget" => "PhpDebugBar.Widgets.VariableListWidget",
                 "map" => "auth.guards",
-                "default" => "{}",
-            ];
-        }
+                "default" => "{}"
+            ]
+        ];
 
         if ($this->showName) {
             $widgets['auth.name'] = [

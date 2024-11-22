@@ -109,6 +109,7 @@
     const mercadopago = new MercadoPago(publicKey);
 
     loadCardForm();
+
     function loadCardForm() {
         const productCost = '{{$data->payment_amount}}';
 
@@ -203,8 +204,7 @@
                             return response.json();
                         })
                         .then(result => {
-                            if(result.error)
-                            {
+                            if (result.error) {
                                 document.getElementById("loading-message").style.display = "none";
                                 document.getElementById("error_alert").innerText = result.error;
                                 document.getElementById("error_alert").style.display = "block";

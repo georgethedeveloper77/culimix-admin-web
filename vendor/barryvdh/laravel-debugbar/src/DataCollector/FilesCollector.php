@@ -15,7 +15,7 @@ class FilesCollector extends DataCollector implements Renderable
     /**
      * @param \Illuminate\Container\Container $app
      */
-    public function __construct(?Container $app = null)
+    public function __construct(Container $app = null)
     {
         $this->app = $app;
         $this->basePath = base_path();
@@ -50,7 +50,7 @@ class FilesCollector extends DataCollector implements Renderable
             } else {
                 $alreadyCompiled[] = [
                     'message' => "* '" . $this->stripBasePath($file) . "',",
-                    // Mark with *, so know they are compiled anyway.
+                    // Mark with *, so know they are compiled anyways.
                     'is_string' => true,
                 ];
             }

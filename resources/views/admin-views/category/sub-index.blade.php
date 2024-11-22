@@ -169,12 +169,12 @@
                                 <td>{{$category->id}}</td>
                                 <td>
                                     <span class="d-block font-size-sm text-body">
-                                        {{ $category?->parent?->name ? Str::limit($category->parent['name'],20,'...') : translate('Invalid_Category') }}
+                                        {{Str::limit($category->parent['name'],20,'...')}}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <span class="d-block font-size-sm text-body">
-                                        {{Str::limit($category?->name,20,'...')}}
+                                        {{Str::limit($category->name,20,'...')}}
                                     </span>
                                 </td>
                                 <td>

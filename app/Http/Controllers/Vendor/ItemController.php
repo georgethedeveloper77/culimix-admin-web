@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers\Vendor;
 
+use App\Models\Brand;
 use DateTime;
 use Carbon\Carbon;
 use App\Models\Tag;
 use App\Models\Item;
-use App\Models\Brand;
 use App\Models\Review;
-use App\Models\Allergy;
 use App\Models\Category;
-use App\Models\Nutrition;
 use App\Scopes\StoreScope;
-use App\Models\GenericName;
 use App\Models\TempProduct;
 use App\Models\Translation;
 use Illuminate\Support\Str;
@@ -47,7 +44,7 @@ class ItemController extends Controller
             return back();
         }
         $categories = Category::where(['position' => 0])->module(Helpers::get_store_data()->module_id)->get();
-        $conditions = CommonCondition::get(['id','name']);
+        $conditions = CommonCondition::all();
         $brands = Brand::all();
         $module_data = config('module.'. Helpers::get_store_data()->module->module_type);
         return view('vendor-views.product.index', compact('categories','module_data','conditions','brands'));
@@ -142,40 +139,6 @@ class ItemController extends Controller
             }
         }
 
-        $nutrition_ids = [];
-        if ($request->nutritions != null) {
-            $nutritions = $request->nutritions;
-        }
-        if (isset($nutritions)) {
-            foreach ($nutritions as $key => $value) {
-                $nutrition = Nutrition::firstOrNew(
-                    ['nutrition' => $value]
-                );
-                $nutrition->save();
-                array_push($nutrition_ids, $nutrition->id);
-            }
-        }
-        $allergy_ids = [];
-        if ($request->allergies != null) {
-            $allergies = $request->allergies;
-        }
-        if (isset($allergies)) {
-            foreach ($allergies as $key => $value) {
-                $allergy = Allergy::firstOrNew(
-                    ['allergy' => $value]
-                );
-                $allergy->save();
-                array_push($allergy_ids, $allergy->id);
-            }
-        }
-        $generic_ids = [];
-        if ($request->generic_name != null) {
-            $generic_name = GenericName::firstOrNew(
-                ['generic_name' => $request->generic_name]
-            );
-            $generic_name->save();
-            array_push($generic_ids, $generic_name->id);
-        }
 
         $images = [];
 
@@ -299,13 +262,6 @@ class ItemController extends Controller
                 $item = [];
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
-
-
-                if($request->discount_type == 'amount' &&  $item['price']  <   $request->discount){
-                    $validator->getMessageBag()->add('unit_price', translate("Variation price must be greater than discount amount"));
-                    return response()->json(['errors' => Helpers::error_processor($validator)]);
-                }
-
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
                 array_push($variations, $item);
             }
@@ -379,12 +335,8 @@ class ItemController extends Controller
         $food->is_halal = $request->is_halal ?? 0;
         $food->save();
         $food->tags()->sync($tag_ids);
-        $food->nutritions()->sync($nutrition_ids);
-        $food->allergies()->sync($allergy_ids);
 
         if ($module_type == 'pharmacy') {
-
-            $food->generic()->sync($generic_ids);
             $item_details = new PharmacyItemDetails();
             $item_details->item_id = $food->id;
             $item_details->common_condition_id = $request->condition_id;
@@ -407,7 +359,7 @@ class ItemController extends Controller
         $product_approval_datas = \App\Models\BusinessSetting::where('key', 'product_approval_datas')->first()?->value ?? '';
         $product_approval_datas =json_decode($product_approval_datas , true);
         if (Helpers::get_mail_status('product_approval') && data_get($product_approval_datas,'Add_new_product',null) == 1) {
-            $this->store_temp_data($food, $request,$tag_ids, $nutrition_ids,$allergy_ids,$generic_ids);
+            $this->store_temp_data($food, $request,$tag_ids);
             $food->is_approved = 0;
             $food->save();
             return response()->json(['product_approval' => translate('messages.The_product_will_be_published_once_it_receives_approval_from_the_admin.')], 200);
@@ -449,7 +401,7 @@ class ItemController extends Controller
         $product_category = json_decode($product->category_ids);
         $categories = Category::where(['parent_id' => 0])->module(Helpers::get_store_data()->module_id)->get();
         $module_data = config('module.'. Helpers::get_store_data()->module->module_type);
-        $conditions = CommonCondition::get(['id','name']);
+        $conditions = CommonCondition::all();
         $brands = Brand::all();
         return view('vendor-views.product.edit', compact('product', 'product_category', 'categories','module_data', 'temp_product','conditions','brands'));
     }
@@ -544,42 +496,6 @@ class ItemController extends Controller
             }
         }
 
-        $nutrition_ids = [];
-        if ($request->nutritions != null) {
-            $nutritions = $request->nutritions;
-        }
-        if (isset($nutritions)) {
-            foreach ($nutritions as $key => $value) {
-                $nutrition = Nutrition::firstOrNew(
-                    ['nutrition' => $value]
-                );
-                $nutrition->save();
-                array_push($nutrition_ids, $nutrition->id);
-            }
-        }
-        $allergy_ids = [];
-        if ($request->allergies != null) {
-            $allergies = $request->allergies;
-        }
-        if (isset($allergies)) {
-            foreach ($allergies as $key => $value) {
-                $allergy = Allergy::firstOrNew(
-                    ['allergy' => $value]
-                );
-                $allergy->save();
-                array_push($allergy_ids, $allergy->id);
-            }
-        }
-
-        $generic_ids = [];
-        if ($request->generic_name != null) {
-            $generic_name = GenericName::firstOrNew(
-                ['generic_name' => $request->generic_name]
-            );
-            $generic_name->save();
-            array_push($generic_ids, $generic_name->id);
-        }
-
         $p = Item::find($id);
         $p->name = $request->name[array_search('default', $request->lang)];
 
@@ -646,12 +562,6 @@ class ItemController extends Controller
                 $item = [];
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
-
-                if($request->discount_type == 'amount' &&  $item['price']  <   $request->discount){
-                    $validator->getMessageBag()->add('unit_price', translate("Variation price must be greater than discount amount"));
-                    return response()->json(['errors' => Helpers::error_processor($validator)]);
-                }
-
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
                 array_push($variations, $item);
             }
@@ -725,23 +635,13 @@ class ItemController extends Controller
 
         if (Helpers::get_mail_status('product_approval') && ((data_get($product_approval_datas,'Update_anything_in_product_details',null) == 1) || (data_get($product_approval_datas,'Update_product_price',null) == 1 && $old_price !=  $request->price) || ( data_get($product_approval_datas,'Update_product_variation',null) == 1 &&  $variation_changed)) )  {
 
-            $this->store_temp_data($p, $request,$tag_ids,$nutrition_ids,$allergy_ids,$generic_ids,true);
+            $this->store_temp_data($p, $request,$tag_ids, true);
             return response()->json(['product_approval' => translate('your_product_added_for_approval')], 200);
         }
 
         else{
             $p->image = $request->has('image') ? Helpers::update('product/', $p->image, 'png', $request->file('image')) : $p->image;
             $images = $p['images'];
-
-            foreach($p->images as $key=> $value){
-                if( in_array( is_array($value) ?   $value['img'] : $value ,explode(",", $request->removedImageKeys))) {
-                    $value = is_array($value)?$value:['img' => $value, 'storage' => 'public'];
-                    Helpers::check_and_delete('product/' , $value['img']);
-                    unset($images[$key]);
-                }
-                }
-            $images = array_values($images);
-
             if ($request->has('item_images')){
                 foreach ($request->item_images as $img) {
                     $image = Helpers::upload('product/', 'png', $img);
@@ -775,9 +675,6 @@ class ItemController extends Controller
 
         $p->save();
         $p->tags()->sync($tag_ids);
-        $p->nutritions()->sync($nutrition_ids);
-        $p->allergies()->sync($allergy_ids);
-        $p->generic()->sync($generic_ids);
 
         Helpers::add_or_update_translations(request: $request, key_data: 'name', name_field: 'name', model_name: 'Item', data_id: $p->id, data_value: $p->name);
         Helpers::add_or_update_translations(request: $request, key_data: 'description', name_field: 'description', model_name: 'Item', data_id: $p->id, data_value: $p->description);
@@ -805,14 +702,10 @@ class ItemController extends Controller
 
         if($product->image)
         {
+
             Helpers::check_and_delete('product/' , $product['image']);
-        }
 
-        foreach($product->images as $value){
-            $value = is_array($value)?$value:['img' => $value, 'storage' => 'public'];
-            Helpers::check_and_delete('product/' , $value['img']);
         }
-
         $product->translations()->delete();
         $product->delete();
         Toastr::success('Item removed!');
@@ -843,32 +736,10 @@ class ItemController extends Controller
             }
             $result = $tmp;
         }
-        $data = [];
-        foreach ($result as $combination) {
-            $str = '';
-            foreach ($combination as $key => $item) {
-                if ($key > 0) {
-                    $str .= '-' . str_replace(' ', '', $item);
-                } else {
-                    $str .= str_replace(' ', '', $item);
-                }
-            }
-
-            $price_field = 'price_' . $str;
-            $stock_field = 'stock_' . $str;
-            $item_price = $request->input($price_field);
-            $item_stock = $request->input($stock_field);
-
-            $data[] = [
-                'name' => $str,
-                'price' => $item_price ?? $price,
-                'stock' => $item_stock ?? 1
-            ];
-        }
         $combinations = $result;
         $stock = (boolean)$request->stock;
         return response()->json([
-            'view' => view('vendor-views.product.partials._variant-combinations', compact('combinations', 'price', 'product_name','stock','data'))->render(),
+            'view' => view('vendor-views.product.partials._variant-combinations', compact('combinations', 'price', 'product_name','stock'))->render(),
             'length'=>count($combinations),
         ]);
     }
@@ -1103,9 +974,6 @@ class ItemController extends Controller
                             'item_id' => $data[$key]['id'],
                             'slug' => $slug,
                             'tag_ids' => json_encode([]),
-                            'nutrition_ids' => json_encode([]),
-                            'allergy_ids' => json_encode([]),
-                            'generic_ids' => json_encode([]),
                             'choice_options' => $data[$key]['choice_options'],
                             'food_variations' => $data[$key]['food_variations'],
                             'variations' => $data[$key]['variations'],
@@ -1144,10 +1012,10 @@ class ItemController extends Controller
                             $store_sub->decrement('max_product' , $total_item);
                             if (  $store_sub->max_product <= 0 ){
                                 $store->update(['item_section' => 0]);
-                            } else{
-                                Toastr::error(translate('messages.you_have_reached_the_maximum_limit_of_item'));
-                                return back();
                             }
+                        } else{
+                            Toastr::error(translate('messages.you_have_reached_the_maximum_limit_of_item'));
+                            return back();
                         }
 
 
@@ -1300,9 +1168,6 @@ class ItemController extends Controller
                             'item_id' => $data[$key]['id'],
                             // 'slug' => null,
                             'tag_ids' => json_encode([]),
-                            'nutrition_ids' => json_encode([]),
-                            'allergy_ids' => json_encode([]),
-                            'generic_ids' => json_encode([]),
                             'choice_options' => $data[$key]['choice_options'],
 
                             'updated_at' => now()
@@ -1406,7 +1271,6 @@ class ItemController extends Controller
 
     public function stock_limit_list(Request $request)
     {
-
         $category_id = $request->query('category_id', 'all');
         $type = $request->query('type', 'all');
         $items = Item::
@@ -1415,15 +1279,7 @@ class ItemController extends Controller
                 return $q->whereId($category_id)->orWhere('parent_id', $category_id);
             });
         })
-        ->type($type);
-        if( Helpers::get_store_data()->storeConfig?->minimum_stock_for_warning > 0){
-            $items= $items->where('stock' ,'<=' , Helpers::get_store_data()->storeConfig->minimum_stock_for_warning );
-        } else{
-            $items= $items->where('stock',0 );
-        }
-
-        $items=  $items->orderby('stock')
-        ->latest()->paginate(config('default_pagination'));
+        ->type($type)->latest()->paginate(config('default_pagination'));
         $category =$category_id !='all'? Category::findOrFail($category_id):null;
         return view('vendor-views.product.stock_limit_list', compact('items', 'category', 'type'));
 
@@ -1434,17 +1290,10 @@ class ItemController extends Controller
         $product = Item::find($request['id']);
 
         return response()->json([
-            'view' => view('vendor-views.product.partials._get_stock_data', compact('product'))->render()
+            'view' => view('vendor-views.product.partials._update_stock', compact('product'))->render()
         ]);
     }
 
-    public function get_stock(Request $request)
-    {
-        $product = Item::withoutGlobalScope(StoreScope::class)->find($request['id']);
-        return response()->json([
-            'view' => view('vendor-views.product.partials._get_stock_data', compact('product'))->render()
-        ]);
-    }
     public function stock_update(Request $request)
     {
         $variations = [];
@@ -1453,8 +1302,8 @@ class ItemController extends Controller
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = abs($request[ 'price_'.$key.'_'. str_replace('.', '_', $str)]);
-                $item['stock'] = abs($request['stock_'.$key.'_'. str_replace('.', '_', $str)]);
+                $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
+                $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
                 array_push($variations, $item);
             }
         }
@@ -1465,7 +1314,7 @@ class ItemController extends Controller
         $product->stock = $stock_count ?? 0;
         $product->variations = json_encode($variations);
         $product->save();
-        Toastr::success(translate("messages.Stock_updated_successfully"));
+        Toastr::success(translate("messages.product_updated_successfully"));
         return back();
 
 
@@ -1611,13 +1460,16 @@ class ItemController extends Controller
         $product=TempProduct::withoutGlobalScope('translate')->with(['translations','store','unit'])->findOrFail($id);
         return view('vendor-views.product.requested_product_view', compact('product'));
     }
-    public function store_temp_data($data, $request,$tag_ids, $nutrition_ids, $allergy_ids , $generic_ids, $update =null)
+    public function store_temp_data($data, $request,$tag_ids , $update =null)
     {
         $temp_item = TempProduct::firstOrNew(
             ['item_id' => $data->id]
         );
 
         $old_img=$temp_item->image ?? null;
+        $old_images= $temp_item->images ?? [];
+        // $temp_item->image = $data->image;
+        // $temp_item->images = $data->images;
 
 
 
@@ -1644,10 +1496,6 @@ class ItemController extends Controller
         $temp_item->discount = $data->discount;
         $temp_item->discount_type = $data->discount_type;
         $temp_item->tag_ids =json_encode($tag_ids);
-        $temp_item->nutrition_ids =json_encode($nutrition_ids);
-        $temp_item->allergy_ids =json_encode($allergy_ids);
-        $temp_item->generic_ids =json_encode($generic_ids);
-
 
         $temp_item->available_time_starts = $data->available_time_starts;
         $temp_item->available_time_ends = $data->available_time_ends;
@@ -1703,51 +1551,10 @@ class ItemController extends Controller
             $temp_item->image = $newFileName;
         }
 
-        $images= $request?->temp_product == 1 ?   $temp_item->images ?? [] : $data->images ?? [];
-        if($request->removedImageKeys){
-            foreach($images as $key=> $value){
-                if( in_array( is_array($value) ?   $value['img'] : $value ,explode(",", $request->removedImageKeys))) {
-                    unset($images[$key]);
-                    }
-                    }
-                    $images = array_values($images);
-                    }
 
-        foreach($images as $k=> $value){
-                $value = is_array($value)?$value:['img' => $value, 'storage' => 'public'];
-                $oldDisk = $value['storage'];
-                $oldPath = "product/{$value['img']}";
-                $newFileName = Carbon::now()->toDateString() . "-" . uniqid() . ".png";
-                $newPath = "product/{$newFileName}";
-                $dir = 'product/';
-                $newDisk = Helpers::getDisk();
-                try{
-                    if (Storage::disk($oldDisk)->exists($oldPath)) {
-                        if (!Storage::disk($newDisk)->exists($dir)) {
-                            Storage::disk($newDisk)->makeDirectory($dir);
-                        }
-                        $fileContents = Storage::disk($oldDisk)->get($oldPath);
-                        Storage::disk($newDisk)->put($newPath, $fileContents);
-                        unset($images[$k]);
-                        }
-                        } catch (\Exception $e) {
-                        }
-                        $images[]=['img'=>$newFileName, 'storage'=> Helpers::getDisk()];
 
-        }
 
-        $images = array_values($images);
-
-        if($update){
-                if ($request->has('item_images')){
-                    foreach ($request->item_images as $img) {
-                        $image = Helpers::upload('product/', 'png', $img);
-                    array_push($images, ['img'=>$image, 'storage'=> Helpers::getDisk()]);
-                }
-            }
-        }
-
-        $temp_item->images = $images;
+        $temp_item->images = $data->images;
         if($update){
             $temp_item->is_rejected = 0;
         }

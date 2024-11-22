@@ -1576,12 +1576,11 @@ class OrderController extends Controller
             if(Helpers::getNotificationStatusData('customer','customer_refund_request_rejaction','push_notification_status')  && isset($order?->customer?->cm_firebase_token))
             {
                 $data = [
-                    'title' => translate('messages.Refund Canceled'),
-                    'description' => translate('Your Refund request has been Rejected'),
-                    'order_id' => $order->id,
+                    'title' => translate('messages.account_activation'),
+                    'description' => translate('messages.your_account_has_been_activated'),
+                    'order_id' => '',
                     'image' => '',
-                    'type'=> 'order_status',
-                    'order_status' => $order->order_status,
+                    'type'=> 'unblock'
                 ];
                 Helpers::send_push_notif_to_device($order?->customer?->cm_firebase_token, $data);
 

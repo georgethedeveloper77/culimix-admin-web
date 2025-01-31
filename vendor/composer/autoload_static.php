@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
+class ComposerStaticInit3583e4d9ea185b2420b3747553e50f57
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -713,8 +713,8 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
         ),
         'League\\Uri\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/uri-interfaces',
-            1 => __DIR__ . '/..' . '/league/uri',
+            0 => __DIR__ . '/..' . '/league/uri',
+            1 => __DIR__ . '/..' . '/league/uri-interfaces',
         ),
         'League\\OAuth2\\Server\\' => 
         array (
@@ -1601,6 +1601,9 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
         'App\\Models\\WithdrawRequest' => __DIR__ . '/../..' . '/app/Models/WithdrawRequest.php',
         'App\\Models\\WithdrawalMethod' => __DIR__ . '/../..' . '/app/Models/WithdrawalMethod.php',
         'App\\Models\\Zone' => __DIR__ . '/../..' . '/app/Models/Zone.php',
+        'App\\Observers\\BusinessSettingObserver' => __DIR__ . '/../..' . '/app/Observers/BusinessSettingObserver.php',
+        'App\\Observers\\DataSettingObserver' => __DIR__ . '/../..' . '/app/Observers/DataSettingObserver.php',
+        'App\\Observers\\ModuleObserver' => __DIR__ . '/../..' . '/app/Observers/ModuleObserver.php',
         'App\\Observers\\OrderObserver' => __DIR__ . '/../..' . '/app/Observers/OrderObserver.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\AuthServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AuthServiceProvider.php',
@@ -16057,10 +16060,10 @@ class ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitb57305760e5d9c6ab4a6ceff9782d740::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit3583e4d9ea185b2420b3747553e50f57::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit3583e4d9ea185b2420b3747553e50f57::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit3583e4d9ea185b2420b3747553e50f57::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit3583e4d9ea185b2420b3747553e50f57::$classMap;
 
         }, null, ClassLoader::class);
     }

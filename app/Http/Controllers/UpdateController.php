@@ -45,12 +45,6 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('REACT_APP_KEY', '45370351');
         Helpers::setEnvironmentValue('APP_NAME', '6amMart' . time());
 
-        // $data = Helpers::requestSender();
-        // if (!$data['active']) {
-        if (!$this->actch()) {
-            return redirect(base64_decode('aHR0cHM6Ly82YW10ZWNoLmNvbS9zb2Z0d2FyZS1hY3RpdmF0aW9u'));
-        }
-
         // version_2.11.1
         Artisan::call('cache:table');
         Helpers::setEnvironmentValue('CACHE_DRIVER', 'database');

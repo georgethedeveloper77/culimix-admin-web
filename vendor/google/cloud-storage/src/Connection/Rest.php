@@ -22,13 +22,11 @@ use Google\Cloud\Core\RequestBuilder;
 use Google\Cloud\Core\RequestWrapper;
 use Google\Cloud\Core\RestTrait;
 use Google\Cloud\Core\Retry;
-use Google\Cloud\Storage\Connection\RetryTrait;
 use Google\Cloud\Core\Upload\AbstractUploader;
 use Google\Cloud\Core\Upload\MultipartUploader;
 use Google\Cloud\Core\Upload\ResumableUploader;
 use Google\Cloud\Core\Upload\StreamableUploader;
 use Google\Cloud\Core\UriTrait;
-use Google\Cloud\Storage\Connection\ConnectionInterface;
 use Google\Cloud\Storage\StorageClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\MimeType;
@@ -191,6 +189,14 @@ class Rest implements ConnectionInterface
     /**
      * @param array $args
      */
+    public function restoreBucket(array $args = [])
+    {
+        return $this->send('buckets', 'restore', $args);
+    }
+
+    /**
+     * @param array $args
+     */
     public function getBucket(array $args = [])
     {
         return $this->send('buckets', 'get', $args);
@@ -306,6 +312,7 @@ class Rest implements ConnectionInterface
                 $transcodedObj = true;
             }
         };
+        $attempt = null;
         $requestOptions['restRetryListener'] = function (
             \Exception $e,
             $retryAttempt,
@@ -313,10 +320,15 @@ class Rest implements ConnectionInterface
         ) use (
             $resultStream,
             $requestedBytes,
-            $invocationId
+            $invocationId,
+            &$attempt,
         ) {
             // if the exception has a response for us to use
-            if ($e instanceof RequestException && $e->hasResponse()) {
+            if ($e instanceof RequestException
+                && $e->hasResponse()
+                && $e->getResponse()->getStatusCode() >= 200
+                && $e->getResponse()->getStatusCode() < 300
+            ) {
                 $msg = (string) $e->getResponse()->getBody();
 
                 $fetchedStream = Utils::streamFor($msg);
@@ -331,6 +343,9 @@ class Rest implements ConnectionInterface
                 // modify the range headers to fetch the remaining data
                 $arguments[1]['headers']['Range'] = sprintf('bytes=%s-%s', $startByte, $endByte);
                 $arguments[0] = $this->modifyRequestForRetry($arguments[0], $retryAttempt, $invocationId);
+
+                // Copy the final result to the end of the stream
+                $attempt = $retryAttempt;
             }
         };
 
@@ -338,6 +353,13 @@ class Rest implements ConnectionInterface
             $request,
             $requestOptions
         )->getBody();
+
+        // If no retry attempt was made, then we can return the stream as is.
+        // This is important in the case where downloadObject is called to open
+        // the file but not to read from it yet.
+        if ($attempt === null) {
+            return $fetchedStream;
+        }
 
         // If our object is a transcoded object, then Range headers are not honoured.
         // That means even if we had a partial download available, the final obj

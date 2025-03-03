@@ -38,6 +38,7 @@ use Kreait\Firebase\Http\Middleware;
 use Kreait\Firebase\JWT\IdTokenVerifier;
 use Kreait\Firebase\JWT\SessionCookieVerifier;
 use Kreait\Firebase\Messaging\AppInstanceApiClient;
+use Kreait\Firebase\Messaging\RequestFactory;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Http\Message\UriInterface;
@@ -87,15 +88,20 @@ final class Factory
      * @var ServiceAccountShape|null
      */
     private ?array $serviceAccount = null;
+
     private ?FetchAuthTokenInterface $googleAuthTokenCredentials = null;
 
     /**
      * @var non-empty-string|null
      */
     private ?string $projectId = null;
+
     private CacheItemPoolInterface $verifierCache;
+
     private CacheItemPoolInterface $authTokenCache;
+
     private CacheItemPoolInterface $keySetCache;
+
     private ClockInterface $clock;
 
     /**
@@ -117,7 +123,9 @@ final class Factory
      * @var non-empty-string|null
      */
     private ?string $tenantId = null;
+
     private HttpFactory $httpFactory;
+
     private HttpClientOptions $httpClientOptions;
 
     /**
@@ -388,7 +396,6 @@ final class Factory
         return new Database(
             GuzzleUtils::uriFor($databaseUrl),
             new Database\ApiClient($http, $resourceUrlBuilder),
-            $resourceUrlBuilder,
         );
     }
 
@@ -406,7 +413,7 @@ final class Factory
         $projectId = $this->getProjectId();
 
         $errorHandler = new MessagingApiExceptionConverter($this->clock);
-        $requestFactory = new Messaging\RequestFactory(
+        $requestFactory = new RequestFactory(
             requestFactory: $this->httpFactory,
             streamFactory: $this->httpFactory,
         );
@@ -431,6 +438,12 @@ final class Factory
     }
 
     /**
+     * @deprecated 7.14.0 Firebase Dynamic Links is deprecated and should not be used in new projects. The service will
+     *                    shut down on August 25, 2025. The component will remain in the SDK until then, but as the
+     *                    Firebase service is deprecated, this component is also deprecated
+     *
+     * @see https://firebase.google.com/support/dynamic-links-faq Dynamic Links Deprecation FAQ
+     *
      * @param Stringable|non-empty-string|null $defaultDynamicLinksDomain
      */
     public function createDynamicLinksService($defaultDynamicLinksDomain = null): Contract\DynamicLinks
@@ -533,7 +546,7 @@ final class Factory
 
         $config = [...$this->httpClientOptions->guzzleConfig(), ...$config];
 
-        $handler = HandlerStack::create();
+        $handler = HandlerStack::create($config['handler'] ?? null);
 
         if ($this->httpLogMiddleware) {
             $handler->push($this->httpLogMiddleware, 'http_logs');

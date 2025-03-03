@@ -98,8 +98,6 @@ class LoginController extends Controller
     {
         $auth = ($role == 'admin_employee' ? 'admin' : $role);
         if (auth($auth)->attempt(['email' => $email, 'password' => $password], $remember)) {
-
-            // return redirect()->route('vendor.dashboard');
             if ($remember) {
                 Cookie::queue('role', $role, 120);
                 Cookie::queue('e_token', Crypt::encryptString($email), 120);
@@ -150,7 +148,7 @@ class LoginController extends Controller
             'password' => 'required|min:6',
             'role' => 'required'
         ]);
-// dd($request->all());
+
         $recaptcha = Helpers::get_business_settings('recaptcha');
         if (isset($recaptcha) && $recaptcha['status'] == 1 && !$request?->set_default_captcha) {
             $request->validate([
@@ -180,22 +178,24 @@ class LoginController extends Controller
                 return redirect()->back()->withInput($request->only('email', 'remember'))
                     ->withErrors(['Credentials does not match.']);
             }
-        } elseif ($request->role == 'vendor') {
+        }
+        elseif ($request->role == 'admin') {
+            $data = Admin::where('email', $request->email)->where('role_id', 1)->exists();
+            if (!$data) {
+                return redirect()->back()->withInput($request->only('email', 'remember'))
+                    ->withErrors(['Credentials does not match.']);
+            }
+        }
+        elseif ($request->role == 'vendor') {
             $vendor = Vendor::where('email', $request->email)->first();
             if ($vendor) {
+                if($vendor?->stores[0]?->module?->module_type == 'rental'){
+                    if(!addon_published_status('Rental')){
+                        return redirect()->back()->withInput($request->only('email', 'remember'))
+                        ->withErrors([translate('messages.rental_module_is_not_available')]);
+                    }
+                }
                 if ($vendor?->stores[0]?->store_business_model == 'none') {
-                    // $admin_commission= BusinessSetting::where('key','admin_commission')->first();
-                    // $business_name= BusinessSetting::where('key','business_name')->first();
-                    // $packages= SubscriptionPackage::where('status',1)->get();
-
-
-                    // return view('vendor-views.auth.register-step-2',[
-                    //     'store_id' => $vendor?->stores[0]?->id,
-                    //     'packages' =>$packages,
-                    //     'business_name' =>$business_name?->value,
-                    //     'admin_commission' =>$admin_commission?->value,
-                    // ]);
-
                     $key = ['subscription_free_trial_days', 'subscription_free_trial_type', 'subscription_free_trial_status'];
                     $free_trial_settings = BusinessSetting::whereIn('key', $key)->pluck('value', 'key');
 
@@ -205,8 +205,6 @@ class LoginController extends Controller
                         'free_trial_settings' => $free_trial_settings,
                         'payment_methods' => Helpers::getDefaultPaymentMethods(),
                     ]);
-
-
                 }
 
                 if ($vendor?->stores[0]?->status == 0 && $vendor?->status == 0) {
@@ -216,18 +214,16 @@ class LoginController extends Controller
             }
         } elseif ($request->role == 'vendor_employee') {
             $employee = VendorEmployee::where('email', $request->email)->first();
-            if ($employee) {
-
-                if (in_array($employee?->store?->store_business_model, ['none', 'unsubscribed'])) {
+                if($employee?->store?->module?->module_type == 'rental'){
+                    if(!addon_published_status('Rental')){
+                        return redirect()->back()->withInput($request->only('email', 'remember'))
+                        ->withErrors([translate('messages.rental_module_is_not_available')]);
+                    }
+                }
+                if ($employee && (in_array($employee?->store?->store_business_model, ['none', 'unsubscribed']) || $employee?->store?->status == 0)) {
                     return redirect()->back()->withInput($request->only('email', 'remember'))
                         ->withErrors([translate('messages.store_is_inactive')]);
                 }
-
-                if ($employee?->store?->status == 0) {
-                    return redirect()->back()->withInput($request->only('email', 'remember'))
-                        ->withErrors([translate('messages.store_is_inactive')]);
-                }
-            }
         }
 
         $data = $this->login_attemp($request->role, $request->email, $request->password, $request->remember);
@@ -248,6 +244,9 @@ class LoginController extends Controller
                 $employee = VendorEmployee::where('email', $request->email)->first();
                 $employee->is_logged_in = 1;
                 $employee->save();
+            }
+            if(Helpers::get_store_data()?->module_type == 'rental' && addon_published_status('Rental')){
+                return redirect()->route('vendor.providerDashboard');
             }
             return redirect()->route('vendor.dashboard');
         }

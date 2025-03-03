@@ -197,7 +197,7 @@
                                         <div class="icon-file-group">
                                             <div class="icon-file">
                                                 <input type="file" name="image" id="customFileEg1" class="custom-file-input read-url"
-                                                    accept=".jpg, .png, .jpeg, .webp, .gif, .bmp, .tif, .tiff|image/*" >
+                                                    accept=".webp, .jpg, .png, .jpeg, .webp, .gif, .bmp, .tif, .tiff|image/*" >
                                                     <i class="tio-edit"></i>
                                             </div>
                                         </div>
@@ -569,7 +569,7 @@
                                             data-original-title="{{ translate('messages.Required.')}}"> *
                                             </span></label>
                                         <input type="number" min="0" value="{{ $product['discount'] }}"
-                                            max="100000" name="discount" class="form-control"
+                                            max="999999999" name="discount" class="form-control"
                                             placeholder="{{ translate('messages.Ex:') }} 100">
                                     </div>
                                 </div>

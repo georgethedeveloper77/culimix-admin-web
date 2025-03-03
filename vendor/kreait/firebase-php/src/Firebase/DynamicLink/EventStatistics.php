@@ -27,7 +27,9 @@ use function array_filter;
 final class EventStatistics implements Countable, IteratorAggregate
 {
     public const PLATFORM_ANDROID = 'ANDROID';
+
     public const PLATFORM_DESKTOP = 'DESKTOP';
+
     public const PLATFORM_IOS = 'IOS';
 
     // Any click on a Dynamic Link, irrespective to how it is handled and its destinations
@@ -103,12 +105,12 @@ final class EventStatistics implements Countable, IteratorAggregate
 
     public function filterByType(string $type): self
     {
-        return $this->filter(static fn(array $event) => ($event['event'] ?? null) === $type);
+        return $this->filter(static fn(array $event): bool => ($event['event'] ?? null) === $type);
     }
 
     public function filterByPlatform(string $platform): self
     {
-        return $this->filter(static fn(array $event) => ($event['platform'] ?? null) === $platform);
+        return $this->filter(static fn(array $event): bool => ($event['platform'] ?? null) === $platform);
     }
 
     public function filter(callable $filter): self

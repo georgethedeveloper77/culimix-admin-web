@@ -21,13 +21,21 @@ use function preg_replace;
 trait EditUserTrait
 {
     protected ?string $uid = null;
+
     protected ?string $email = null;
+
     protected ?string $displayName = null;
+
     protected ?bool $emailIsVerified = null;
+
     protected ?string $phoneNumber = null;
+
     protected ?string $photoUrl = null;
+
     protected ?bool $markAsEnabled = null;
+
     protected ?bool $markAsDisabled = null;
+
     protected ?string $clearTextPassword = null;
 
     /**
@@ -160,7 +168,7 @@ trait EditUserTrait
             'phoneNumber' => $this->phoneNumber,
             'photoUrl' => $this->photoUrl,
             'password' => $this->clearTextPassword,
-        ], static fn($value) => $value !== null);
+        ], static fn($value): bool => $value !== null);
     }
 
     public function hasUid(): bool

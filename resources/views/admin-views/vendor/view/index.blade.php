@@ -149,7 +149,7 @@
                         <div class="avatar avatar-xxl avatar-circle avatar-border-lg">
                             <img class="avatar-img onerror-image" data-onerror-image="{{asset('public/assets/admin/img/160x160/img1.jpg')}}"
 
-                            src="{{ $store->vendor->image ?? asset('public/assets/admin/img/160x160/img1.jpg') }}"
+                            src="{{ $store->vendor->image_full_url ?? asset('public/assets/admin/img/160x160/img1.jpg') }}"
                             alt="Image Description">
                         </div>
                         <ul class="address-info address-info-2 list-unstyled list-unstyled-py-3 text-dark">
@@ -157,11 +157,11 @@
                                 <h5 class="name">{{$store->vendor->f_name}} {{$store->vendor->l_name}}</h5>
                             </li>
                             <li>
-                                <i class="tio-call-talking nav-icon"></i>
+                                <i class="tio-email nav-icon"></i>
                                 <span class="pl-1"><a href="mailto:{{$store->vendor->email}}">{{$store->vendor->email}}</a> </span>
                             </li>
                             <li>
-                                <i class="tio-email nav-icon"></i>
+                                <i class="tio-call-talking nav-icon"></i>
                                 <span class="pl-1"> <a href="tel:{{$store->vendor->phone}}"> {{$store->vendor->phone}} </a></span>
                             </li>
                         </ul>

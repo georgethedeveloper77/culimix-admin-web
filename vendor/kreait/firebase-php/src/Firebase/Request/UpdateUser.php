@@ -20,8 +20,11 @@ final class UpdateUser implements Request
 {
     /** @phpstan-use EditUserTrait<self> */
     use EditUserTrait;
+
     public const DISPLAY_NAME = 'DISPLAY_NAME';
+
     public const PHOTO_URL = 'PHOTO_URL';
+
     public const EMAIL = 'EMAIL';
 
     /**
@@ -145,7 +148,7 @@ final class UpdateUser implements Request
                 case 'removeproviders':
                     $request = array_reduce(
                         (array) $value,
-                        static fn(self $request, $provider) => $request->withRemovedProvider($provider),
+                        static fn(self $request, $provider): \Kreait\Firebase\Request\UpdateUser => $request->withRemovedProvider($provider),
                         $request,
                     );
 
